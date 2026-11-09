@@ -1,0 +1,6 @@
+# Логи компиляции и работы MetaTrader
+*.log
+
+# Временные файлы ОС
+Thumbs.db
+.DS_Store
