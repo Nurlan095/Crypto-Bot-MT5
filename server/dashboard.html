@@ -1554,6 +1554,8 @@
 
       // Что делает робот
       const ch = st.checklist || {};
+      const stratMode = (st.settings && st.settings.InpStrategyMode) ? Number(st.settings.InpStrategyMode) : 2;
+      const fg = (st.market && st.market.fibo_grid) ? st.market.fibo_grid : {};
       if (!st.is_running) {
         document.getElementById('humanStatusBox').innerHTML = `
           <div><span style="color:#f59e0b;">●</span> Робот поставлен на паузу</div>
@@ -1562,13 +1564,25 @@
         document.getElementById('humanStatusBox').innerHTML = `
           <div><span style="color:#10b981;">●</span> Открыта сделка в MetaTrader 5!</div>
           <div><span style="color:#10b981;">●</span> Робот следит за ценой и защищает прибыль...</div>`;
+      } else if (stratMode === 4) {
+        const fibLvl = fg.lvl_236 ? fmtNum(fg.lvl_236) : fmtNum(st.market.bid);
+        document.getElementById('humanStatusBox').innerHTML = `
+          <div><span style="color:#10b981;">●</span> Стратегия: Метод Давида Трульяса (Фибоначчи)</div>
+          <div><span style="color:#10b981;">●</span> Ждет пробоя Фибо 23.6% (${fibLvl}) + MACD + RSI</div>`;
       } else {
         document.getElementById('humanStatusBox').innerHTML = `
           <div><span style="color:#10b981;">●</span> Робот сканирует график ${st.symbol} (M15)</div>
           <div><span style="color:#10b981;">●</span> Ждет пробоя уровня ${fmtNum(st.market.swing_high)} или ${fmtNum(st.market.swing_low)}</div>`;
       }
 
-      const items = [
+      const items = stratMode === 4 ? [
+        ['Сетка Фибоначчи', Boolean(fg.is_active)],
+        ['Дивергенция MACD', Boolean(fg.macd_div)],
+        ['Фильтр RSI (14)', Boolean(fg.rsi_confirm)],
+        ['Объем Volume', Boolean(fg.vol_confirm)],
+        ['Пробой 23.6%', Boolean(fg.trigger_buy || fg.trigger_sell)],
+        ['Новости USD', !st.news.is_paused]
+      ] : [
         ['Коробка Мандарин', ch.box_valid],
         ['Спокойный рынок', ch.is_squeeze],
         ['Сильная свеча', ch.is_marubozu],
@@ -1712,7 +1726,7 @@
     let latestApkUrl = SERVER_URL + '/Crypto_Bot_v2_50.apk';
 
     async function checkAppUpdateOnStartup() {
-      let localCode = 262;
+      let localCode = 263;
       if (hasNative && window.AndroidBridge.getAppVersionCode) {
         try { localCode = Number(window.AndroidBridge.getAppVersionCode()); } catch(e) {}
       }
