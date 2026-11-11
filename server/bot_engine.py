@@ -758,36 +758,35 @@ class CryptoBotEngine:
 
         # 3. Volume SMA(20)
         avg_vol = sum(vols[-21:-1]) / 20.0 if len(vols) >= 21 else max(1.0, vols[-1])
-        vol_confirm = (self.m15_candles[1]["volume"] >= avg_vol * 0.95)
+        vol_confirm = (self.m15_candles[0]["volume"] >= avg_vol * 0.55) or (self.m15_candles[1]["volume"] >= avg_vol * 0.75)
 
-        # 4. Находим последний значимый импульс для натяжки сетки Фибоначчи (100% -> 0%)
-        window = self.m15_candles[1:25]
-        high_idx = max(range(len(window)), key=lambda idx: window[idx]["high"]) + 1
-        low_idx = min(range(len(window)), key=lambda idx: window[idx]["low"]) + 1
+        # 4. Находим актуальный импульс для натяжки сетки Фибоначчи (100% -> 0%)
+        window = self.m15_candles[0:18]
+        high_idx = max(range(len(window)), key=lambda idx: window[idx]["high"])
+        low_idx = min(range(len(window)), key=lambda idx: window[idx]["low"])
         high_val = self.m15_candles[high_idx]["high"]
         low_val = self.m15_candles[low_idx]["low"]
-        impulse = high_val - low_val
+        impulse = max(high_val - low_val, atr * 1.5)
 
-        if impulse < atr * 1.2:
-            self.fibo_grid = default_grid
-            return default_grid
+        live_px = self.bid_price if self.bid_price > 0 else self.m15_candles[0]["close"]
+        mid_px = (high_val + low_val) * 0.5
+        bullish_bias = (macd_rev[0] >= macd_rev[1]) or (live_px >= mid_px and rsi_rev[0] >= 48.0)
 
-        c1 = self.m15_candles[1]
-        close1, open1 = c1["close"], c1["open"]
-
-        # Если минимум сформировался позже максимума -> нисходящий импульс (100% вверху, 0% внизу) -> ищем BUY откат за 23.6%
-        if low_idx < high_idx:
-            price_100 = high_val
+        if bullish_bias:
             price_0 = low_val
+            price_100 = high_val
             lvl_236 = round(price_0 + impulse * 0.236, 2)
             lvl_382 = round(price_0 + impulse * 0.382, 2)
             lvl_500 = round(price_0 + impulse * 0.500, 2)
             lvl_618 = round(price_0 + impulse * 0.618, 2)
 
-            prev_lows = [i for i in range(low_idx + 3, min(38, len(self.m15_candles))) if self.m15_candles[i]["low"] <= price_0 * 1.003]
-            macd_div = any(macd_rev[low_idx] > macd_rev[p] for p in prev_lows) or (macd_rev[1] > macd_rev[2] and (macd_rev[1] - sig_rev[1]) > (macd_rev[2] - sig_rev[2]))
-            rsi_confirm = (rsi_rev[low_idx] <= 42.0 or rsi_rev[1] > rsi_rev[2])
-            trigger_buy = (close1 > open1) and (close1 >= lvl_236) and (close1 < lvl_382) and macd_div and rsi_confirm
+            macd_div = bool(
+                macd_rev[0] >= macd_rev[1]
+                or macd_rev[1] >= macd_rev[2]
+                or (macd_rev[0] - sig_rev[0]) >= (macd_rev[1] - sig_rev[1])
+            )
+            rsi_confirm = bool(42.0 <= rsi_rev[0] <= 76.0)
+            trigger_buy = bool((live_px >= lvl_236) and macd_div and rsi_confirm)
 
             self.fibo_grid = {
                 "is_active": True,
@@ -805,18 +804,20 @@ class CryptoBotEngine:
                 "trigger_sell": False,
             }
         else:
-            # Максимум сформировался позже минимума -> восходящий импульс (100% внизу, 0% вверху) -> ищем SELL откат за 23.6%
-            price_100 = low_val
             price_0 = high_val
+            price_100 = low_val
             lvl_236 = round(price_0 - impulse * 0.236, 2)
             lvl_382 = round(price_0 - impulse * 0.382, 2)
             lvl_500 = round(price_0 - impulse * 0.500, 2)
             lvl_618 = round(price_0 - impulse * 0.618, 2)
 
-            prev_highs = [i for i in range(high_idx + 3, min(38, len(self.m15_candles))) if self.m15_candles[i]["high"] >= price_0 * 0.997]
-            macd_div = any(macd_rev[high_idx] < macd_rev[p] for p in prev_highs) or (macd_rev[1] < macd_rev[2] and (macd_rev[1] - sig_rev[1]) < (macd_rev[2] - sig_rev[2]))
-            rsi_confirm = (rsi_rev[high_idx] >= 58.0 or rsi_rev[1] < rsi_rev[2])
-            trigger_sell = (close1 < open1) and (close1 <= lvl_236) and (close1 > lvl_382) and macd_div and rsi_confirm
+            macd_div = bool(
+                macd_rev[0] <= macd_rev[1]
+                or macd_rev[1] <= macd_rev[2]
+                or (macd_rev[0] - sig_rev[0]) <= (macd_rev[1] - sig_rev[1])
+            )
+            rsi_confirm = bool(24.0 <= rsi_rev[0] <= 58.0)
+            trigger_sell = bool((live_px <= lvl_236) and macd_div and rsi_confirm)
 
             self.fibo_grid = {
                 "is_active": True,
@@ -1613,7 +1614,7 @@ class CryptoBotEngine:
             "news_paused": self.news_paused,
         }
 
-        # 5. Execute new trade if bot is running and on a new bar
+        # 5. Execute new trade if bot is running
         if not self.settings["InpUseAutoLot"] and self.settings["InpFixedLot"] <= 0:
             return
         if not self.settings["is_running"]:
@@ -1621,13 +1622,15 @@ class CryptoBotEngine:
         if self.news_paused:
             return
 
-        if cur_bar_time == self.last_bar_time:
-            return
-
         symbol = self.settings["symbol"]
         has_open = any(p["symbol"] == symbol for p in self.get_open_positions())
         if has_open:
             self.last_bar_time = cur_bar_time
+            return
+
+        now_ts = time.time()
+        last_auto_ts = getattr(self, "_last_auto_trade_ts", 0.0)
+        if now_ts - last_auto_ts < 180.0:
             return
 
         max_spread = int(self.settings["InpMaxSpreadPoints"])
@@ -1638,19 +1641,41 @@ class CryptoBotEngine:
 
         # Единственная активная стратегия: Метод Давида Трульяса Вила (Фибоначчи 23.6% -> 38.2% / 50.0% / 61.8% + MACD + RSI)
         if fibo_state.get("trigger_buy") and allow_buy_news:
+            self._last_auto_trade_ts = now_ts
             self.open_position("BUY", comment="Trullas Fibo 23.6 Buy")
         elif fibo_state.get("trigger_sell") and allow_sell_news:
+            self._last_auto_trade_ts = now_ts
             self.open_position("SELL", comment="Trullas Fibo 23.6 Sell")
 
     def get_trade_history(self, limit: int = 30) -> List[Dict[str, Any]]:
+        bal = max(100.0, float(self.mt5_balance if self.is_mt5_live() and self.mt5_balance > 0 else self.settings.get("balance", 10000.0)))
         if self.is_mt5_live() and self.mt5_history:
-            return self.mt5_history[:limit]
-        with self._get_conn() as conn:
-            rows = conn.execute(
-                "SELECT * FROM trade_history ORDER BY id DESC LIMIT ?",
-                (limit,),
-            ).fetchall()
-        return [dict(r) for r in rows]
+            raw_list = [dict(item) for item in self.mt5_history[:limit]]
+        else:
+            with self._get_conn() as conn:
+                rows = conn.execute(
+                    "SELECT * FROM trade_history ORDER BY id DESC LIMIT ?",
+                    (limit,),
+                ).fetchall()
+            raw_list = [dict(r) for r in rows]
+
+        enriched: List[Dict[str, Any]] = []
+        for h in raw_list:
+            op = float(h.get("open_price") or 0.0)
+            cp = float(h.get("close_price") or 0.0)
+            vol = max(0.01, float(h.get("volume") or 0.01))
+            pnl = float(h.get("pnl") or 0.0)
+            ptype = str(h.get("pos_type") or "BUY").upper()
+            if abs(op - cp) < 0.01 and cp > 0 and abs(pnl) > 0.001:
+                diff = pnl / vol
+                if abs(diff) < cp * 0.25:
+                    op = round(cp - diff, 2) if ptype == "BUY" else round(cp + diff, 2)
+            h["open_price"] = round(op, 2)
+            h["close_price"] = round(cp, 2)
+            h["pnl_pct"] = round((pnl / bal) * 100.0, 2)
+            h["status"] = "ЗАКРЫТА"
+            enriched.append(h)
+        return enriched
 
     def get_full_state(self) -> Dict[str, Any]:
         symbol = self.settings["symbol"]

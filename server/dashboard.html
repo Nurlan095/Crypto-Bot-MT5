@@ -747,7 +747,8 @@
     <!-- Мои открытые сделки -->
     <div style="flex-shrink:0;">
       <div class="sec-title">
-        <span>Мои открытые сделки</span>
+        <span>Мои сделки (Авто-робот MT5)</span>
+        <span id="dealsSummaryBadge" style="font-size:10.5px;color:#34d399;font-weight:700;"></span>
       </div>
       <div class="buy-sell-row">
         <button class="btn-buy" onclick="manualOrder('BUY')">↑ Купить (BUY)</button>
@@ -798,7 +799,8 @@
 
     <div class="glass-card" style="flex:1;min-height:0;overflow-y:auto;">
       <div class="gc-head">
-        <span class="gc-title">📊 История закрытых сделок MT5</span>
+        <span class="gc-title">📊 Сделки MT5 (Открытые и Закрытые)</span>
+        <span id="historyTotalBadge" class="badge-gold" style="color:#34d399;border-color:rgba(16,185,129,0.35);background:rgba(16,185,129,0.12);">Итого: +$0.00 (0%)</span>
       </div>
       <div id="historyList" style="display:flex;flex-direction:column;"></div>
     </div>
@@ -1480,39 +1482,71 @@
         mt5Badge.textContent = st.mt5_connected ? 'ПОДКЛЮЧЕН' : 'ОНЛАЙН';
       }
 
+      const bal = Math.max(100, Number(st.account.balance || 10000));
+      const allHist = st.history || [];
+      const totalClosedPnl = allHist.reduce((acc, h) => acc + Number(h.pnl || 0), 0);
+      const totalClosedPct = (totalClosedPnl / bal) * 100;
+
       const pnl = st.account.floating_pnl || 0;
-      const pnlStr = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2);
+      const posList = st.positions || [];
+      const activePnl = posList.length > 0 ? pnl : totalClosedPnl;
+      const activePct = (activePnl / bal) * 100;
+      const pnlStr = (activePnl >= 0 ? '+' : '') + '$' + activePnl.toFixed(2) + ` (${activePct >= 0 ? '+' : ''}${activePct.toFixed(2)}%)`;
+
       document.getElementById('valBalance').textContent = '$' + st.account.balance.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-      document.getElementById('valEquity').innerHTML = `Прибыль: <b style="color:${pnl>=0?'#34d399':'#f87171'}">${pnlStr}</b>`;
+      document.getElementById('valEquity').innerHTML = `${posList.length > 0 ? 'В сделке' : 'Заработано'}: <b style="color:${activePnl>=0?'#34d399':'#f87171'}">${pnlStr}</b>`;
       document.getElementById('valPrice').textContent = fmtNum(st.market.bid);
       document.getElementById('valSpread').textContent = `Шаг ATR: ${st.market.atr.toFixed(1)}`;
       document.getElementById('valLot').textContent = `${st.account.preview_lot.toFixed(2)} лот`;
       document.getElementById('valRisk').textContent = `Риск ${st.account.risk_percent}%`;
 
-      // Открытая сделка как на макете
-      const posList = st.positions || [];
+      const sumBadge = document.getElementById('dealsSummaryBadge');
+      if (sumBadge) {
+        sumBadge.textContent = `Открыто: ${posList.length} · Закрыто: ${allHist.length} (${totalClosedPct >= 0 ? '+' : ''}${totalClosedPct.toFixed(2)}%)`;
+      }
+
+      // Открытая сделка + показ последней закрытой сделки
       const posEl = document.getElementById('positionsList');
       if (posList.length === 0) {
+        const lastH = allHist.length > 0 ? allHist[0] : null;
+        let lastDealHtml = '';
+        if (lastH) {
+          const hPnl = Number(lastH.pnl || 0);
+          const hPct = lastH.pnl_pct !== undefined ? Number(lastH.pnl_pct) : ((hPnl / bal) * 100);
+          const hSign = hPnl >= 0 ? '+' : '';
+          const hCol = hPnl >= 0 ? '#34d399' : '#f87171';
+          lastDealHtml = `
+            <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);display:flex;justify-content:space-between;align-items:center;font-size:11px;">
+              <span><b style="color:#34d399;">✅ ЗАКРЫТА:</b> ${lastH.pos_type} · ${fmtNum(lastH.open_price)} → ${fmtNum(lastH.close_price)}</span>
+              <b style="color:${hCol};">${hSign}$${hPnl.toFixed(2)} (${hSign}${hPct.toFixed(2)}%)</b>
+            </div>`;
+        }
         posEl.innerHTML = `
-          <div class="trade-card" style="text-align:center;padding:10px;color:var(--muted);font-size:11.5px;">
-            Сейчас открытых сделок нет — робот ждет сигнала по Фибоначчи 23.6%
+          <div class="trade-card" style="padding:9px 11px;font-size:11.5px;">
+            <div style="text-align:center;color:#e2e8f0;font-weight:600;">
+              🤖 Авто-торговля включена — робот сам откроет сделку по Фибо 23.6%
+            </div>
+            ${lastDealHtml}
           </div>`;
       } else {
         const p = posList[0];
         const isBuy = p.pos_type === 'BUY';
+        const pPct = ((Number(p.pnl || 0) / bal) * 100);
+        const pSign = p.pnl >= 0 ? '+' : '';
         posEl.innerHTML = `
           <div class="trade-card">
             <div class="trade-head">
               <div class="trade-sym">
+                <span style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.4);padding:2px 6px;border-radius:5px;font-size:10px;font-weight:800;">🟢 ОТКРЫТА</span>
                 <span>${p.symbol}</span>
                 <span class="${isBuy ? 'tag-buy' : 'tag-sell'}">${p.pos_type}</span>
-                <span style="color:var(--muted);font-weight:600;font-size:11.5px;">${p.volume.toFixed(2)} лот</span>
+                <span style="color:var(--muted);font-weight:600;font-size:11px;">${p.volume.toFixed(2)} лот</span>
               </div>
-              <span style="color:${p.pnl>=0?'#34d399':'#f87171'};font-weight:800;font-size:14px;">${p.pnl>=0?'+':''}$${p.pnl.toFixed(2)}</span>
+              <span style="color:${p.pnl>=0?'#34d399':'#f87171'};font-weight:800;font-size:13.5px;">${pSign}$${p.pnl.toFixed(2)} (${pSign}${pPct.toFixed(2)}%)</span>
             </div>
             <div class="trade-table">
               <div class="trade-cell">
-                <div class="tc-lbl">Вход</div>
+                <div class="tc-lbl">Открытие</div>
                 <div class="tc-val">${fmtNum(p.open_price)}</div>
               </div>
               <div class="trade-cell">
@@ -1520,16 +1554,16 @@
                 <div class="tc-val">${fmtNum(p.current_price)}</div>
               </div>
               <div class="trade-cell">
-                <div class="tc-lbl">${p.is_breakeven ? 'Стоп в безубытке' : 'Стоп-лосс (SL)'}</div>
+                <div class="tc-lbl">${p.is_breakeven ? 'В безубытке' : 'Стоп (SL)'}</div>
                 <div class="tc-val">${p.is_breakeven ? '🛡 ' : ''}${fmtNum(p.sl)}</div>
               </div>
               <div class="trade-cell">
-                <div class="tc-lbl">Тейк</div>
+                <div class="tc-lbl">Тейк (TP)</div>
                 <div class="tc-val">${fmtNum(p.tp)}</div>
               </div>
             </div>
             <div class="safe-status-line">
-              <span>Сейф 50%: <b style="color:${p.is_partial_done?'#34d399':'#fbbf24'}">${p.is_partial_done ? '✓ Забрали' : 'Ждет +1.5 ATR'}</b></span>
+              <span>Сейф 50% (Фибо 38.2%): <b style="color:${p.is_partial_done?'#34d399':'#fbbf24'}">${p.is_partial_done ? '✓ Забрали' : 'Авто-контроль'}</b></span>
             </div>
             <div class="trade-actions">
               <button class="t-act-btn" onclick="safePos(${p.ticket})">💰 Сейф 50%</button>
@@ -1547,13 +1581,13 @@
           <div><span style="color:#8b9bb4;">●</span> Нажмите «Пуск» вверху для старта</div>`;
       } else if (posList.length > 0) {
         document.getElementById('humanStatusBox').innerHTML = `
-          <div><span style="color:#10b981;">●</span> Открыта сделка в MetaTrader 5!</div>
-          <div><span style="color:#10b981;">●</span> Робот следит за ценой и защищает прибыль...</div>`;
+          <div><span style="color:#10b981;">●</span> Сделка ОТКРЫТА в MetaTrader 5!</div>
+          <div><span style="color:#10b981;">●</span> Авто-фиксация: 38.2% БУ/Сейф → 61.8% Тейк</div>`;
       } else {
         const fibLvl = fg.lvl_236 ? fmtNum(fg.lvl_236) : fmtNum(st.market.bid);
         document.getElementById('humanStatusBox').innerHTML = `
-          <div><span style="color:#10b981;">●</span> Стратегия: Метод Давида Трульяса (Фибоначчи)</div>
-          <div><span style="color:#10b981;">●</span> Ждет пробоя Фибо 23.6% (${fibLvl}) + MACD + RSI</div>`;
+          <div><span style="color:#10b981;">●</span> Робот сам откроет сделку при сигнале Фибо 23.6% (${fibLvl})</div>
+          <div><span style="color:#10b981;">●</span> Фильтры: Сетка Фибоначчи + MACD + RSI (АВТО 24/7)</div>`;
       }
 
       const items = [
@@ -1614,26 +1648,67 @@
               </div>`;
           }).join('');
 
-      // Экран 2: История сделок
-      const hist = (st.history || []).slice(0, 5);
-      document.getElementById('historyList').innerHTML = hist.length === 0
-        ? '<div style="font-size:12px;color:var(--muted);padding:6px 0;">Закрытых сделок пока нет</div>'
-        : hist.map(h => {
-            const isBtc = h.symbol.includes('BTC');
-            const isBuy = h.pos_type === 'BUY';
-            const dt = new Date((h.close_time || 0) * 1000);
-            const tm = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
-            return `
-              <div class="deal-row">
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span class="coin-ico ${isBtc ? 'coin-btc' : 'coin-xau'}">${isBtc ? '₿' : '🥇'}</span>
-                  <b>${h.symbol}</b>
-                  <span class="${isBuy ? 'tag-buy' : 'tag-sell'}">${h.pos_type}</span>
-                </div>
-                <span style="color:var(--muted);font-size:11.5px;">${tm}</span>
-                <span style="color:${h.pnl>=0?'#34d399':'#f87171'};font-weight:800;">${h.pnl>=0?'+':''}$${h.pnl.toFixed(2)}</span>
-              </div>`;
-          }).join('');
+      // Экран 2: История сделок (Открытые + Закрытые с ценами и %)
+      const histTotalBadge = document.getElementById('historyTotalBadge');
+      if (histTotalBadge) {
+        const totSign = totalClosedPnl >= 0 ? '+' : '';
+        histTotalBadge.textContent = `Итого: ${totSign}$${totalClosedPnl.toFixed(2)} (${totSign}${totalClosedPct.toFixed(2)}%)`;
+      }
+
+      const openRowsHtml = posList.map(p => {
+        const isBuy = p.pos_type === 'BUY';
+        const pPnl = Number(p.pnl || 0);
+        const pPct = (pPnl / bal) * 100;
+        const pSign = pPnl >= 0 ? '+' : '';
+        return `
+          <div class="deal-row" style="background:rgba(16,185,129,0.08);border-radius:8px;padding:6px 8px;margin-bottom:4px;">
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="background:#10b981;color:#04131d;font-weight:900;font-size:9.5px;padding:1px 5px;border-radius:4px;">🟢 ОТКРЫТА</span>
+                <b>${p.symbol}</b>
+                <span class="${isBuy ? 'tag-buy' : 'tag-sell'}">${p.pos_type}</span>
+                <span style="color:var(--muted);font-size:10.5px;">${p.volume.toFixed(2)} лот</span>
+              </div>
+              <div style="font-size:10.5px;color:#94a3b8;">
+                Открытие: <b style="color:#e2e8f0;">${fmtNum(p.open_price)}</b> → Сейчас: <b style="color:#38bdf8;">${fmtNum(p.current_price)}</b>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="color:${pPnl>=0?'#34d399':'#f87171'};font-weight:800;font-size:12.5px;">${pSign}$${pPnl.toFixed(2)}</div>
+              <div style="color:${pPnl>=0?'#34d399':'#f87171'};font-size:10.5px;font-weight:700;">${pSign}${pPct.toFixed(2)}%</div>
+            </div>
+          </div>`;
+      }).join('');
+
+      const hist = allHist.slice(0, 6);
+      const closedRowsHtml = hist.map(h => {
+        const isBuy = h.pos_type === 'BUY';
+        const dt = new Date((h.close_time || 0) * 1000);
+        const tm = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+        const hPnl = Number(h.pnl || 0);
+        const hPct = h.pnl_pct !== undefined ? Number(h.pnl_pct) : ((hPnl / bal) * 100);
+        const hSign = hPnl >= 0 ? '+' : '';
+        return `
+          <div class="deal-row" style="padding:5px 0;">
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="background:rgba(148,163,184,0.16);color:#cbd5e1;font-weight:800;font-size:9.5px;padding:1px 5px;border-radius:4px;">✅ ЗАКРЫТА</span>
+                <b>${h.symbol}</b>
+                <span class="${isBuy ? 'tag-buy' : 'tag-sell'}">${h.pos_type}</span>
+                <span style="color:var(--muted);font-size:10.5px;">${tm}</span>
+              </div>
+              <div style="font-size:10.5px;color:#94a3b8;">
+                Открытие: <b style="color:#cbd5e1;">${fmtNum(h.open_price)}</b> → Закрытие: <b style="color:#fff;">${fmtNum(h.close_price)}</b>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="color:${hPnl>=0?'#34d399':'#f87171'};font-weight:800;font-size:12.5px;">${hSign}$${hPnl.toFixed(2)}</div>
+              <div style="color:${hPnl>=0?'#34d399':'#f87171'};font-size:10.5px;font-weight:700;">${hSign}${hPct.toFixed(2)}%</div>
+            </div>
+          </div>`;
+      }).join('');
+
+      document.getElementById('historyList').innerHTML = (openRowsHtml + closedRowsHtml) || '<div style="font-size:12px;color:var(--muted);padding:6px 0;">Сделок пока нет</div>';
 
       // Экран 2: Журнал событий (таймлайн)
       const notifs = (st.notifications || []).slice(0, 4);
@@ -1700,7 +1775,7 @@
     let latestApkUrl = SERVER_URL + '/Crypto_Bot_v2_50.apk';
 
     async function checkAppUpdateOnStartup() {
-      let localCode = 264;
+      let localCode = 265;
       if (hasNative && window.AndroidBridge.getAppVersionCode) {
         try { localCode = Number(window.AndroidBridge.getAppVersionCode()); } catch(e) {}
       }
