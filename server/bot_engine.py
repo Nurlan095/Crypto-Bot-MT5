@@ -1648,7 +1648,7 @@ class CryptoBotEngine:
             self.open_position("SELL", comment="Trullas Fibo 23.6 Sell")
 
     def get_trade_history(self, limit: int = 30) -> List[Dict[str, Any]]:
-        bal = max(100.0, float(self.mt5_balance if self.is_mt5_live() and self.mt5_balance > 0 else self.settings.get("balance", 10000.0)))
+        bal = max(100.0, float(self.get_account_metrics().get("balance") or self.settings.get("balance", 10000.0)))
         if self.is_mt5_live() and self.mt5_history:
             raw_list = [dict(item) for item in self.mt5_history[:limit]]
         else:
