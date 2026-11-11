@@ -1,6 +1,6 @@
 {
-    "changelog":  "v2.68: Защита Анти-минус, фильтр тренда H1/M15, снайперский вход Фибо 23.6%-42% и автообновление APK",
-    "version_code":  268,
+    "changelog":  "v2.69: Добавлена вкладка График (TradingView Pro + инструменты рисования, таймфреймы и индикаторы)",
+    "version_code":  269,
     "apk_url":  "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk",
-    "version_name":  "2.68"
+    "version_name":  "2.69"
 }

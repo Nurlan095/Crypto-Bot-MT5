@@ -634,7 +634,7 @@
       border: 1px solid #1e2c42;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       z-index: 100;
     }
     .nav-btn {
@@ -646,19 +646,146 @@
       align-items: center;
       justify-content: center;
       gap: 3px;
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       cursor: pointer;
     }
     .nav-btn svg {
-      width: 20px;
-      height: 20px;
+      width: 19px;
+      height: 19px;
       stroke: currentColor;
       fill: none;
       stroke-width: 2;
     }
     .nav-btn.active {
       color: #10b981;
+    }
+
+    /* ЭКРАН ГРАФИКА (TradingView Pro) */
+    .tv-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 5px 9px;
+      flex-shrink: 0;
+    }
+    .tv-sym-block {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .tv-price-big {
+      font-size: 14px;
+      font-weight: 800;
+      color: #34d399;
+    }
+    .tv-mode-btn {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      color: #34d399;
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 7px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tv-toolbar-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex-shrink: 0;
+      padding: 1px 0;
+    }
+    .tv-toolbar-row::-webkit-scrollbar { display: none; }
+    .tv-chip {
+      background: #0e1625;
+      border: 1px solid #1e2d45;
+      color: #94a3b8;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 4px 7px;
+      border-radius: 7px;
+      white-space: nowrap;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .tv-chip.active {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: #10b981;
+      color: #34d399;
+    }
+    .tv-chip.draw-active {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: #f59e0b;
+      color: #fbbf24;
+    }
+    .tv-sep {
+      width: 1px;
+      height: 16px;
+      background: #1e2d45;
+      flex-shrink: 0;
+      margin: 0 2px;
+    }
+    .tv-stage {
+      flex: 1;
+      min-height: 220px;
+      background: #080d16;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+    }
+    #tvProCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+    .tv-ohlc-overlay {
+      position: absolute;
+      top: 5px;
+      left: 7px;
+      right: 62px;
+      pointer-events: none;
+      font-size: 9.5px;
+      color: #cbd5e1;
+      line-height: 1.35;
+      background: rgba(8, 13, 22, 0.72);
+      padding: 3px 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(30, 45, 69, 0.6);
+      z-index: 5;
+    }
+    .tv-quick-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 5px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 5px 8px;
+      flex-shrink: 0;
+    }
+    .tv-q-btn {
+      border: none;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 6px 9px;
+      color: #fff;
+      cursor: pointer;
+      white-space: nowrap;
     }
 
     /* Модальное окно автообновления */
@@ -709,7 +836,7 @@
         <img class="app-logo" src="data:image/webp;base64,UklGRowIAABXRUJQVlA4IIAIAACQJgCdASpYAFgAPjEWiEMiISEVzYzcIAMEtQBkwDIoZ+P5AvkbxV0h54+yv+N0gPzf7AH6o9ID9lvUB+zf7K9hf0CP7H50nsAfth7AH7AemX+3nwXft3+3PwG/sx/9q2hyG+AfYbaAPUD6A/bvyy/KX4v/y3iPwAvwz+T/3r8vtnT6Bfc7/Cfb56LGqz3g9FP9C/1nGw0APzf/1/Zc/m/+95Vvn//kf3X4CP5b/S/9z/ee1p6LH7Cm6v8euWW2CVXN3dYSBWlM6AXRTrHFoTZjeAfVe+FVmv0U71uPLP5P1jj8E6TFPA0i1BnwC/wsAisdWCC2pXUE3LmozIlHjDPhmGy5SE1vpi95evPH7SE8Uk1RrYjI3W+aOntd3Ow1iub2KyPz1vSP6cbPWvIm/KoQY4OVJ5gXvVIdfQoW4AD+/uwdldJ/ff/FdTLH5BHIf7OLDIzm08VN6mD3pTkcwpheD7hDV7RlrRque2Yf6r8LBvk/JgGmr6xujv+N5KrbtR9phJhnanjxzJRNMmDvP9/4zFnq4PjvM6MpdZyMUIz/vw9KNZvA9VOYamhiGAaCXkMcRL8JQKzpFMOxeSpMBE6tZRyV7rNo/HM/sH+VODgLYsukEGjttQHcRt8bkD2zzc+ORGPhaQ9+f4eSnKJtf98V5oW/SxYd438e5NcbFt0vJ9hPvMJC5I+8p6dyVGvt/Y+tc+3lyR7dsXnW0s3PsVTgJdtvgpd2A9t3jlmbet8A2xzCURFFom28UevCT0GKgAAZkDCCa9hImTZp7T0SE/rn93Gz8wFqH79o+LFVq/ur8fRyJ7FJRBRcAf62POaC9OOyL83zHKjmz8yZJ6AAO+dv6WQYmhl+TWSgsZ/uoBacwZH0KKn9WRH/DcituCIcuFW5O8HE88c5YnPhYn3lPntDNz7K65dDDKiXf2cq0MvZ6jbNYkBcNpq4O7QvCadBLHSnZIR3c2RdIak/mQ65vUG+P2F6ioQtJQMUSOod4zzgMPycaAkRNM6JGwMV+sXHtzZue9lUyfBkGrBA+js1GKRHFuncCbDBSOYrvP5W/t0aFywHC8XHdtJn9AyZVhHY8tej33w45uJTRVpJEfoC35Y1OvN3Lp+MKEi4/IsP3yOn1ARRgc1pUPp/RloWuN7qyjP+PjCZCoFPKJiU9eCS9xHOIf6H25H4FINCayaY7XMENUtw4fiH1f9nqThhVQLm6tXzsR7yUyKS1Z8Rg6vG/XZ8mRje+/oU3A9QLtIU+Oup14j/jSV8M9E8R0lfuEquvuWKK/XoX6PZeQ12aXhza1aV9G4snJ8ymyPyjjznw9zvnGe8vf+suWcd7+1N4E4jLK/cPEO96CtO0/4i9pF1Fmf05t33w5jiJc/8UKfiq9s2dOqCJ+suX4t7cDOG34EoYqJ8xvyuu8tbLVABu7ee9NfO5/ylJiGSxyl8B+dszTH4Awu3nQJcriqwFhFcRdExCgUdHFTDDstQ3TEUuHKtvXLgDSqi1cYe0RYmVgv+//o5zWd4Y7TUEAANSt/mC9LhfbosCNNjmhCciUoa3wWCnwehB/0qjkq2xSJgkLJGOZncn5r+jv/qK8IoiXjw/cWhZ2flyWcJtngy/zB3xkhogJ8extXVSjBRj4CQJZJ0sk4CowVgFzmg/OhHexuaUXGNHfHDGj53ARs2pka0eaJYLnmWIOAYxlDvqDf0E6KmTbQj111hYs6GbgCIHw3ycUh//DhFvlWYdqLELOnw/f+fsrz95fL63TJCSI3tKmjR9ejnFp19b/kDN9lgz+kgG2iKaDMm4UP5C4EDtzQxb7MP3PdH/w0ijlS672PnbJ+nd4s+pQpC5j6DPcoFBTDlEV1tnVSw9LiFVSOVTpBwhwR/kDYALc1ereH1la/OVjyaukEte4ZOFzFys13EserF1rWplucThnh4dit7F9Fpkn8FHMgPyNcWyV59Sas8l+b0q6CJ9oUpS8fxV+Xgpb+v4FEeM3LomqhP/f2q7iXu134F9m2IRQhLX2IoIGjynKPlTCue/v4qWvbHVYWuyEKk3s//5jhD8ivv+YilDUx8UJ3wf2/jrGsC+7jI+Z46tF5D9T3vrsWrMzZmhI1qePaINHyhvk3tzS/5zJDEI+DqIQaLHAuGsECcbRTdpoKzsRFxqRxT8jj1c+K+IU4HD+jFJ0jRouTReMMEM/Hm/b9iGeyeN9rz8ifnamN+hrg451daqk26WH5O03MG2xwBd3Sq5Mvg2h3whHxWFgjJN6vUsXUvFCtCh1muN3Zi0cvv4+IBz4jC9Yxt69mCUaoO9fRTZOsr2eeVpupTG7zpQLEZyNRAahdbfDjLGt2hOTqGVujNZkVjxrZkAOlY5uCv2Rv+Prj39bgLi8qrjHMtKyAr9aai7cm6IPsH/KreaXlqJGU117iuVAyGAkrwunlfBkoQtvSYL7exAPCvZzkloG2N8I5uemA0Iw6bwtHgaqVLvpBfTpPIDr4mX5nVAEmHOwecaOSFxXNxcHxG4U492OQn4euAbz5/paSdWGH85Jeos5VKuwa/Apxu1eIvWCh5HaeZb3/6BItvLSHmoLW7TBxTZlnGI3LNTxDSLAK+w8ldwTbueM9fR01IWwXDkrGro3MVQ5s2lkdMqmP+VD0Rs7WtG80HGtUcfnlgC5nHSm6CvPP5P8PLWA4P0kI/ID05cayuhoyDVm95otR+pm9wxKOjP+OuGq9kW+epOBK8cO1jvkM2+tOCBM+j1QPTnyVKPQDBx3h7FiyCstLOHB4BVA1OeLZ87hdoh2kHB1AtkAz9TUgO/qOAcvaTZL48EdTDa4lyB2u1VZ82K7UlA5BcuzIxhMoSk//kaN996JDJFruWkwVj/8CPYHSCh3mRUB3SjJysYJea4HyXQgFEZctZu+wHcsVEAAAA" alt="Logo" />
         <div>
           <div class="brand-title-row">
-            <span class="brand-name">Crypto Bot <span id="appVerLabel" style="font-size:10px;color:#34d399;font-weight:700;">v2.68</span></span>
+            <span class="brand-name">Crypto Bot <span id="appVerLabel" style="font-size:10px;color:#34d399;font-weight:700;">v2.69</span></span>
             <span id="statusBadge" class="badge-active">● АКТИВЕН</span>
           </div>
           <div class="brand-sub" id="sourceSub">
@@ -914,11 +1041,95 @@
     <button class="btn-save-main" onclick="saveBotSettings()">💾 Сохранить настройки</button>
   </div>
 
+  <!-- ==================================================================== -->
+  <!-- ЭКРАН 4: ГРАФИК TRADINGVIEW PRO + ИНСТРУМЕНТЫ                        -->
+  <!-- ==================================================================== -->
+  <div id="tab-chart" class="tab-pane">
+    <!-- Верхняя шапка графика -->
+    <div class="tv-header">
+      <div class="tv-sym-block">
+        <span style="color:#f59e0b;font-weight:900;font-size:15px;">₿</span>
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:13px;font-weight:800;color:#fff;">BTCUSD</span>
+            <span id="tvHeaderTfBadge" style="font-size:9.5px;background:#162236;color:#38bdf8;padding:1px 5px;border-radius:4px;font-weight:800;">M15</span>
+            <span id="tvHeaderPrice" class="tv-price-big">74 287.00</span>
+          </div>
+          <div id="tvHeaderSub" style="font-size:9.5px;color:var(--muted);">MT5 AMarkets #8112287 · Метод Трульяса (Фибо)</div>
+        </div>
+      </div>
+      <button class="tv-mode-btn" id="btnTvModeSwitch" onclick="toggleTvEmbedMode()">🌐 TV Виджет</button>
+    </div>
+
+    <!-- Панель 1: Таймфреймы + Тип графика -->
+    <div class="tv-toolbar-row" id="tvBarTf">
+      <button class="tv-chip" onclick="setTvTf('1m', 'M1', this)">M1</button>
+      <button class="tv-chip" onclick="setTvTf('5m', 'M5', this)">M5</button>
+      <button class="tv-chip active" onclick="setTvTf('15m', 'M15', this)">M15</button>
+      <button class="tv-chip" onclick="setTvTf('1h', 'H1', this)">H1</button>
+      <button class="tv-chip" onclick="setTvTf('4h', 'H4', this)">H4</button>
+      <button class="tv-chip" onclick="setTvTf('1d', 'D1', this)">D1</button>
+      <div class="tv-sep"></div>
+      <button class="tv-chip active" id="tvStyle_candles" onclick="setTvStyle('candles')">🕯 Свечи</button>
+      <button class="tv-chip" id="tvStyle_heikin" onclick="setTvStyle('heikin')">🟩 Хейкен</button>
+      <button class="tv-chip" id="tvStyle_bars" onclick="setTvStyle('bars')">📊 Бары</button>
+      <button class="tv-chip" id="tvStyle_line" onclick="setTvStyle('line')">📈 Линия</button>
+    </div>
+
+    <!-- Панель 2: Индикаторы -->
+    <div class="tv-toolbar-row" id="tvBarInd">
+      <button class="tv-chip active" id="tvInd_fibo" onclick="toggleTvInd('fibo')">📐 Авто-Фибо</button>
+      <button class="tv-chip active" id="tvInd_ema" onclick="toggleTvInd('ema')">〰️ EMA 21/50</button>
+      <button class="tv-chip" id="tvInd_bb" onclick="toggleTvInd('bb')">🟣 Боллинджер</button>
+      <button class="tv-chip active" id="tvInd_osc" onclick="toggleTvInd('osc')">📊 MACD + RSI</button>
+      <button class="tv-chip active" id="tvInd_orders" onclick="toggleTvInd('orders')">🎯 Сделки MT5</button>
+    </div>
+
+    <!-- Панель 3: Инструменты рисования (как в TradingView) -->
+    <div class="tv-toolbar-row" id="tvBarDraw">
+      <button class="tv-chip draw-active" id="tvTool_cross" onclick="setTvTool('cross')">✚ Прицел</button>
+      <button class="tv-chip" id="tvTool_pan" onclick="setTvTool('pan')">✋ Двигать</button>
+      <button class="tv-chip" id="tvTool_trend" onclick="setTvTool('trend')">╱ Тренд</button>
+      <button class="tv-chip" id="tvTool_hline" onclick="setTvTool('hline')">━ Уровень</button>
+      <button class="tv-chip" id="tvTool_fibo" onclick="setTvTool('fibo')">📐 Своя Фибо</button>
+      <button class="tv-chip" id="tvTool_ruler" onclick="setTvTool('ruler')">📏 Линейка</button>
+      <div class="tv-sep"></div>
+      <button class="tv-chip" onclick="tvZoom(1.25)">➕</button>
+      <button class="tv-chip" onclick="tvZoom(0.8)">➖</button>
+      <button class="tv-chip" onclick="tvUndoDrawing()">↩</button>
+      <button class="tv-chip" onclick="tvClearDrawings()">🗑</button>
+    </div>
+
+    <!-- Холст графика + TradingView Original Iframe -->
+    <div class="tv-stage" id="tvStageBox">
+      <div class="tv-ohlc-overlay" id="tvOhlcLegend">
+        BTCUSD · O: — H: — L: — C: — · RSI(14): — · MACD: —
+      </div>
+      <canvas id="tvProCanvas"></canvas>
+      <div id="tvEmbedContainer" style="display:none;width:100%;height:100%;background:#080d16;"></div>
+    </div>
+
+    <!-- Нижняя панель быстрых сделок прямо с графика -->
+    <div class="tv-quick-bar">
+      <div id="tvQuickPosInfo" style="font-size:10.5px;color:#cbd5e1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        Сделок нет · Авто-лот
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;" id="tvQuickBtns">
+        <button class="tv-q-btn" style="background:#10b981;" onclick="manualOrder('BUY')">↑ BUY</button>
+        <button class="tv-q-btn" style="background:#ef4444;" onclick="manualOrder('SELL')">↓ SELL</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Нижняя панель навигации -->
   <div class="bottom-nav">
     <button class="nav-btn active" onclick="switchTab('main', this)">
       <svg viewBox="0 0 24 24"><path d="M6 4v16M6 8h3v8H6zM15 4v16M15 7h3v10h-3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Терминал</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('chart', this)">
+      <svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 7 22 7 22 13" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>График</span>
     </button>
     <button class="nav-btn" onclick="switchTab('history', this)">
       <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
@@ -1023,6 +1234,12 @@
       document.getElementById('tab-' + name).classList.add('active');
       if (btn) btn.classList.add('active');
       if (name === 'main' && currentState) setTimeout(() => drawChart(currentState), 20);
+      if (name === 'chart') {
+        setTimeout(() => {
+          if (tvCandles.length === 0) fetchTvCandles();
+          renderTvProChart();
+        }, 25);
+      }
     }
 
     async function setSymbol(sym) {
@@ -1536,13 +1753,13 @@
         posEl.innerHTML = `
           <div class="trade-card">
             <div class="trade-head">
-              <div class="trade-sym">
-                <span style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.4);padding:2px 6px;border-radius:5px;font-size:10px;font-weight:800;">🟢 ОТКРЫТА</span>
+              <div class="trade-sym" style="gap:4px;font-size:12px;min-width:0;overflow:hidden;">
+                <span style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.4);padding:2px 5px;border-radius:5px;font-size:9.5px;font-weight:800;white-space:nowrap;">🟢 ОТКРЫТА</span>
                 <span>${p.symbol}</span>
                 <span class="${isBuy ? 'tag-buy' : 'tag-sell'}">${p.pos_type}</span>
-                <span style="color:var(--muted);font-weight:600;font-size:11px;">${p.volume.toFixed(2)} лот</span>
+                <span style="color:var(--muted);font-weight:600;font-size:10.5px;white-space:nowrap;">${p.volume.toFixed(2)} л.</span>
               </div>
-              <span style="color:${p.pnl>=0?'#34d399':'#f87171'};font-weight:800;font-size:13.5px;">${pSign}$${p.pnl.toFixed(2)} (${pSign}${pPct.toFixed(2)}%)</span>
+              <span style="color:${p.pnl>=0?'#34d399':'#f87171'};font-weight:800;font-size:11.5px;white-space:nowrap;flex-shrink:0;">${pSign}$${p.pnl.toFixed(2)} (${pSign}${pPct.toFixed(2)}%)</span>
             </div>
             <div class="trade-table">
               <div class="trade-cell">
@@ -1740,6 +1957,7 @@
 
       updateSoundButtonUI();
       drawChart(st);
+      renderTvProChart();
       updateCandleCountdown();
     }
 
@@ -1782,10 +2000,750 @@
       } catch(e) {}
     }
 
+    // =====================================================================
+    // ЭКРАН 4: TRADINGVIEW PRO ГРАФИК + ИНСТРУМЕНТЫ РИСОВАНИЯ + ИНДИКАТОРЫ
+    // =====================================================================
+    let tvTf = '15m';
+    let tvTfLabel = 'M15';
+    let tvStyle = 'candles'; // candles | heikin | bars | line
+    let tvInd = { fibo: true, ema: true, bb: false, osc: true, orders: true };
+    let tvTool = 'cross';    // cross | pan | trend | hline | fibo | ruler
+    let tvCandles = [];
+    let tvVisibleBars = 48;
+    let tvScrollRightOffset = 0; // сколько баров от правого края прокручено назад
+    let tvCrosshair = null;      // { x, y }
+    let tvDrawings = [];
+    try {
+      const savedDrw = localStorage.getItem('cb_tv_drawings');
+      if (savedDrw) tvDrawings = JSON.parse(savedDrw) || [];
+    } catch(e) {}
+    let tvActiveDrag = null;
+    let tvEmbedActive = false;
+
+    function saveTvDrawings() {
+      try { localStorage.setItem('cb_tv_drawings', JSON.stringify(tvDrawings.slice(-30))); } catch(e) {}
+    }
+
+    function toggleTvEmbedMode() {
+      tvEmbedActive = !tvEmbedActive;
+      const btn = document.getElementById('btnTvModeSwitch');
+      const wrap = document.getElementById('tvEmbedContainer');
+      const cvs = document.getElementById('tvProCanvas');
+      const leg = document.getElementById('tvOhlcLegend');
+      const barInd = document.getElementById('tvBarInd');
+      const barDraw = document.getElementById('tvBarDraw');
+      if (tvEmbedActive) {
+        btn.textContent = '⚡ Pro График';
+        cvs.style.display = 'none';
+        leg.style.display = 'none';
+        barInd.style.display = 'none';
+        barDraw.style.display = 'none';
+        wrap.style.display = 'block';
+        const tfMap = { '1m': '1', '5m': '5', '15m': '15', '1h': '60', '4h': '240', '1d': 'D' };
+        const tvInt = tfMap[tvTf] || '15';
+        wrap.innerHTML = `<iframe src="https://s.tradingview.com/widgetembed/?symbol=BINANCE%3ABTCUSDT&interval=${tvInt}&theme=dark&style=1&locale=ru&toolbarbg=0d1524&hide_side_toolbar=0&allow_symbol_change=0&save_image=0" style="width:100%;height:100%;border:none;" allowfullscreen></iframe>`;
+      } else {
+        btn.textContent = '🌐 TV Виджет';
+        wrap.style.display = 'none';
+        wrap.innerHTML = '';
+        cvs.style.display = 'block';
+        leg.style.display = 'block';
+        barInd.style.display = 'flex';
+        barDraw.style.display = 'flex';
+        renderTvProChart();
+      }
+    }
+
+    async function fetchTvCandles() {
+      try {
+        const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${tvTf}&limit=120`;
+        const data = await httpGetJson(url);
+        if (Array.isArray(data) && data.length > 10) {
+          tvCandles = data.map(k => ({
+            time: Math.floor(Number(k[0]) / 1000),
+            open: parseFloat(k[1]),
+            high: parseFloat(k[2]),
+            low: parseFloat(k[3]),
+            close: parseFloat(k[4]),
+            volume: parseFloat(k[5])
+          }));
+          renderTvProChart();
+          return;
+        }
+      } catch(e) {}
+      if (currentState && Array.isArray(currentState.chart_candles) && currentState.chart_candles.length > 0) {
+        tvCandles = currentState.chart_candles.map(c => ({
+          time: c.time, open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume || 1
+        }));
+        renderTvProChart();
+      }
+    }
+
+    function setTvTf(tf, label, btnEl) {
+      tvTf = tf;
+      tvTfLabel = label;
+      tvScrollRightOffset = 0;
+      document.querySelectorAll('#tvBarTf .tv-chip').forEach(b => {
+        if (['M1','M5','M15','H1','H4','D1'].includes(b.textContent.trim())) b.classList.remove('active');
+      });
+      if (btnEl) btnEl.classList.add('active');
+      const badge = document.getElementById('tvHeaderTfBadge');
+      if (badge) badge.textContent = label;
+      if (tvEmbedActive) {
+        toggleTvEmbedMode();
+        toggleTvEmbedMode();
+      } else {
+        fetchTvCandles();
+      }
+    }
+
+    function setTvStyle(st) {
+      tvStyle = st;
+      ['candles', 'heikin', 'bars', 'line'].forEach(k => {
+        const el = document.getElementById('tvStyle_' + k);
+        if (el) el.classList.toggle('active', k === st);
+      });
+      renderTvProChart();
+    }
+
+    function toggleTvInd(key) {
+      tvInd[key] = !tvInd[key];
+      const el = document.getElementById('tvInd_' + key);
+      if (el) el.classList.toggle('active', tvInd[key]);
+      renderTvProChart();
+    }
+
+    function setTvTool(tool) {
+      tvTool = tool;
+      ['cross', 'pan', 'trend', 'hline', 'fibo', 'ruler'].forEach(k => {
+        const el = document.getElementById('tvTool_' + k);
+        if (el) el.classList.toggle('draw-active', k === tool);
+      });
+      if (tool !== 'cross') tvCrosshair = null;
+      renderTvProChart();
+    }
+
+    function tvZoom(factor) {
+      tvVisibleBars = Math.max(16, Math.min(110, Math.round(tvVisibleBars / factor)));
+      renderTvProChart();
+    }
+
+    function tvUndoDrawing() {
+      if (tvDrawings.length > 0) {
+        tvDrawings.pop();
+        saveTvDrawings();
+        renderTvProChart();
+      }
+    }
+
+    function tvClearDrawings() {
+      tvDrawings = [];
+      tvScrollRightOffset = 0;
+      tvVisibleBars = 48;
+      tvCrosshair = null;
+      saveTvDrawings();
+      renderTvProChart();
+      showToast('График очищен', 'Все нарисованные линии удалены, масштаб сброшен');
+    }
+
+    function calcEmaArray(vals, period) {
+      const k = 2 / (period + 1);
+      const out = [];
+      let cur = vals[0] || 0;
+      for (let i = 0; i < vals.length; i++) {
+        cur = vals[i] * k + cur * (1 - k);
+        out.push(cur);
+      }
+      return out;
+    }
+
+    function calcRsiArray(closes, period) {
+      const out = new Array(closes.length).fill(50);
+      if (closes.length <= period) return out;
+      let gains = 0, losses = 0;
+      for (let i = 1; i <= period; i++) {
+        const d = closes[i] - closes[i - 1];
+        if (d >= 0) gains += d; else losses -= d;
+      }
+      let avgG = gains / period;
+      let avgL = losses / period;
+      out[period] = avgL === 0 ? 100 : 100 - (100 / (1 + avgG / avgL));
+      for (let i = period + 1; i < closes.length; i++) {
+        const d = closes[i] - closes[i - 1];
+        const g = d > 0 ? d : 0;
+        const l = d < 0 ? -d : 0;
+        avgG = (avgG * (period - 1) + g) / period;
+        avgL = (avgL * (period - 1) + l) / period;
+        out[i] = avgL === 0 ? 100 : 100 - (100 / (1 + avgG / avgL));
+      }
+      return out;
+    }
+
+    function updateTvQuickBar() {
+      const priceEl = document.getElementById('tvHeaderPrice');
+      const bidNow = liveDisplayBid > 0 ? liveDisplayBid : (currentState && currentState.market ? currentState.market.bid : 0);
+      if (priceEl && bidNow > 0) {
+        priceEl.textContent = fmtNum(bidNow);
+        priceEl.style.color = lastPriceTickDir >= 0 ? '#34d399' : '#f87171';
+      }
+      const infoEl = document.getElementById('tvQuickPosInfo');
+      const btnsEl = document.getElementById('tvQuickBtns');
+      if (!infoEl || !btnsEl || !currentState) return;
+      const posList = currentState.positions || [];
+      if (posList.length > 0) {
+        const p = posList[0];
+        const sign = p.pnl >= 0 ? '+' : '';
+        const col = p.pnl >= 0 ? '#34d399' : '#f87171';
+        infoEl.innerHTML = `<span style="color:${col};font-weight:800;">● ${p.pos_type} ${p.volume.toFixed(2)}</span> · <span style="color:${col};font-weight:800;">${sign}$${p.pnl.toFixed(2)}</span>`;
+        btnsEl.innerHTML = `
+          <button class="tv-q-btn" style="background:#162032;border:1px solid #283a56;" onclick="safePos(${p.ticket})">💰 Сейф</button>
+          <button class="tv-q-btn" style="background:#162032;border:1px solid #283a56;" onclick="bePos(${p.ticket})">🛡 В БУ</button>
+          <button class="tv-q-btn" style="background:#ef4444;" onclick="closePos(${p.ticket})">✕ Закрыть</button>
+        `;
+      } else {
+        const lot = (currentState.account && currentState.account.preview_lot) ? currentState.account.preview_lot.toFixed(2) : '0.02';
+        infoEl.innerHTML = `Сделок нет · Авто-лот: <b style="color:#fff;">${lot}</b>`;
+        btnsEl.innerHTML = `
+          <button class="tv-q-btn" style="background:#10b981;" onclick="manualOrder('BUY')">↑ BUY</button>
+          <button class="tv-q-btn" style="background:#ef4444;" onclick="manualOrder('SELL')">↓ SELL</button>
+        `;
+      }
+    }
+
+    function renderTvProChart() {
+      updateTvQuickBar();
+      const tabEl = document.getElementById('tab-chart');
+      if (!tabEl || !tabEl.classList.contains('active') || tvEmbedActive) return;
+
+      const canvas = document.getElementById('tvProCanvas');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width < 20 || rect.height < 20) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      const W = rect.width;
+      const H = rect.height;
+      ctx.fillStyle = '#080d16';
+      ctx.fillRect(0, 0, W, H);
+
+      let srcCandles = tvCandles.length > 5
+        ? tvCandles.map(c => ({ ...c }))
+        : ((currentState && currentState.chart_candles) ? currentState.chart_candles.map(c => ({ ...c })) : []);
+      if (srcCandles.length === 0) return;
+
+      // Обновляем последнюю свечу живым тиком
+      const liveBid = liveDisplayBid > 0 ? liveDisplayBid : (currentState && currentState.market ? currentState.market.bid : 0);
+      if (liveBid > 0) {
+        const lastC = srcCandles[srcCandles.length - 1];
+        lastC.close = liveBid;
+        if (liveBid > lastC.high) lastC.high = liveBid;
+        if (liveBid < lastC.low) lastC.low = liveBid;
+      }
+
+      // Индикаторы на всем массиве
+      const allCloses = srcCandles.map(c => c.close);
+      const ema21All = calcEmaArray(allCloses, 21);
+      const ema50All = calcEmaArray(allCloses, 50);
+      const ema12All = calcEmaArray(allCloses, 12);
+      const ema26All = calcEmaArray(allCloses, 26);
+      const macdLineAll = ema12All.map((v, i) => v - ema26All[i]);
+      const sigLineAll = calcEmaArray(macdLineAll, 9);
+      const macdHistAll = macdLineAll.map((v, i) => v - sigLineAll[i]);
+      const rsiAll = calcRsiArray(allCloses, 14);
+
+      // Видимое окно свечей
+      const total = srcCandles.length;
+      const count = Math.min(total, tvVisibleBars);
+      const endIdx = Math.max(count, total - tvScrollRightOffset);
+      const startIdx = Math.max(0, endIdx - count);
+      const vis = srcCandles.slice(startIdx, endIdx);
+
+      // Разметка областей
+      const rightAxisW = 60;
+      const bottomTimeH = 16;
+      const chartW = W - rightAxisW;
+      const hasOsc = Boolean(tvInd.osc);
+      const priceH = hasOsc ? Math.round((H - bottomTimeH) * 0.72) : (H - bottomTimeH);
+      const oscTop = priceH + 2;
+      const oscH = hasOsc ? (H - bottomTimeH - oscTop) : 0;
+
+      // Диапазон цен
+      let maxP = -Infinity, minP = Infinity;
+      vis.forEach(c => {
+        if (c.high > maxP) maxP = c.high;
+        if (c.low < minP) minP = c.low;
+      });
+      if (tvInd.orders && currentState && currentState.positions && currentState.positions.length > 0) {
+        const p0 = currentState.positions[0];
+        if (p0.sl > 0) { maxP = Math.max(maxP, p0.sl); minP = Math.min(minP, p0.sl); }
+        if (p0.tp > 0) { maxP = Math.max(maxP, p0.tp); minP = Math.min(minP, p0.tp); }
+      }
+      const padP = Math.max((maxP - minP) * 0.10, 15);
+      maxP += padP;
+      minP -= padP;
+
+      const py = p => 8 + (1 - (p - minP) / Math.max(0.01, maxP - minP)) * (priceH - 16);
+      const yp = y => maxP - ((y - 8) / Math.max(1, priceH - 16)) * (maxP - minP);
+      const stepX = chartW / vis.length;
+      const ix = i => (i + 0.5) * stepX;
+
+      // Сохраняем геометрию для тач-рисования
+      canvas._tvGeom = { chartW, priceH, maxP, minP, startIdx, count: vis.length, stepX, py, yp, vis };
+
+      // 1. Сетка цен и правая шкала
+      ctx.strokeStyle = '#121c2d';
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#64748b';
+      ctx.font = '9.5px sans-serif';
+      for (let g = 0; g <= 5; g++) {
+        const p = maxP - (g / 5) * (maxP - minP);
+        const y = py(p);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(chartW, y);
+        ctx.stroke();
+        ctx.fillText(fmtNum(p), chartW + 4, y + 3);
+      }
+
+      // Вертикальные линии сетки и время внизу
+      for (let i = 0; i < vis.length; i++) {
+        if (i % Math.max(4, Math.floor(vis.length / 5)) === 0) {
+          const x = ix(i);
+          ctx.strokeStyle = '#101827';
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, H - bottomTimeH);
+          ctx.stroke();
+          const dt = new Date(vis[i].time * 1000);
+          const lbl = tvTf === '1d'
+            ? `${String(dt.getDate()).padStart(2,'0')}.${String(dt.getMonth()+1).padStart(2,'0')}`
+            : `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+          ctx.fillStyle = '#64748b';
+          ctx.fillText(lbl, Math.max(2, x - 14), H - 4);
+        }
+      }
+
+      // 2. Авто-сетка Фибоначчи Давида Трульяса
+      if (tvInd.fibo) {
+        let hi = -Infinity, lo = Infinity, hiIdx = 0, loIdx = 0;
+        vis.forEach((c, idx) => {
+          if (c.high > hi) { hi = c.high; hiIdx = idx; }
+          if (c.low < lo) { lo = c.low; loIdx = idx; }
+        });
+        const isUp = loIdx <= hiIdx;
+        const p0 = isUp ? hi : lo;
+        const p100 = isUp ? lo : hi;
+        const diff = p100 - p0;
+        const fibLevels = [
+          { r: 0.0,   lbl: '0.0%',          col: '#64748b' },
+          { r: 0.236, lbl: '23.6% (Вход)',  col: '#a855f7' },
+          { r: 0.382, lbl: '38.2% (Сейф)',  col: '#f59e0b' },
+          { r: 0.500, lbl: '50.0% (Трейл)', col: '#38bdf8' },
+          { r: 0.618, lbl: '61.8% (TP)',    col: '#10b981' },
+          { r: 1.0,   lbl: '100%',          col: '#64748b' }
+        ];
+        // Подсветка золотой зоны 23.6% - 61.8%
+        const y236 = py(p0 + diff * 0.236);
+        const y618 = py(p0 + diff * 0.618);
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.045)';
+        ctx.fillRect(0, Math.min(y236, y618), chartW, Math.abs(y618 - y236));
+
+        fibLevels.forEach(fl => {
+          const fp = p0 + diff * fl.r;
+          const fy = py(fp);
+          if (fy >= 4 && fy <= priceH - 4) {
+            ctx.save();
+            ctx.setLineDash([4, 3]);
+            ctx.strokeStyle = fl.col;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, fy);
+            ctx.lineTo(chartW, fy);
+            ctx.stroke();
+            ctx.fillStyle = fl.col;
+            ctx.font = 'bold 9px sans-serif';
+            ctx.fillText(`Фибо ${fl.lbl} · ${fmtNum(fp)}`, 6, fy - 3);
+            ctx.restore();
+          }
+        });
+      }
+
+      // 3. Полосы Боллинджера (20, 2)
+      if (tvInd.bb && vis.length >= 5) {
+        const upPts = [], loPts = [];
+        for (let i = 0; i < vis.length; i++) {
+          const gIdx = startIdx + i;
+          const win = allCloses.slice(Math.max(0, gIdx - 19), gIdx + 1);
+          const mean = win.reduce((a, b) => a + b, 0) / win.length;
+          const variance = win.reduce((a, b) => a + (b - mean) * (b - mean), 0) / win.length;
+          const sd = Math.sqrt(variance);
+          upPts.push({ x: ix(i), y: py(mean + 2 * sd) });
+          loPts.push({ x: ix(i), y: py(mean - 2 * sd) });
+        }
+        ctx.save();
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.65)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        upPts.forEach((pt, idx) => idx === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+        ctx.stroke();
+        ctx.beginPath();
+        loPts.forEach((pt, idx) => idx === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 4. EMA 21 и EMA 50
+      if (tvInd.ema) {
+        const drawCurve = (arr, color) => {
+          ctx.save();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          for (let i = 0; i < vis.length; i++) {
+            const val = arr[startIdx + i];
+            const x = ix(i), y = py(val);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+          ctx.restore();
+        };
+        drawCurve(ema21All, '#38bdf8');
+        drawCurve(ema50All, '#f59e0b');
+      }
+
+      // 5. Свечи / Хейкен Аши / Бары / Линия
+      const bw = Math.max(2.5, Math.min(12, stepX * 0.66));
+      if (tvStyle === 'line') {
+        ctx.save();
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        vis.forEach((c, i) => {
+          const x = ix(i), y = py(c.close);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        let prevHaOpen = vis[0].open, prevHaClose = vis[0].close;
+        vis.forEach((c, i) => {
+          let o = c.open, h = c.high, l = c.low, cl = c.close;
+          if (tvStyle === 'heikin') {
+            cl = (c.open + c.high + c.low + c.close) / 4;
+            o = i === 0 ? (c.open + c.close) / 2 : (prevHaOpen + prevHaClose) / 2;
+            h = Math.max(c.high, o, cl);
+            l = Math.min(c.low, o, cl);
+            prevHaOpen = o;
+            prevHaClose = cl;
+          }
+          const x = ix(i);
+          const isUp = cl >= o;
+          const col = isUp ? '#10b981' : '#ef4444';
+          ctx.strokeStyle = col;
+          ctx.fillStyle = col;
+          ctx.lineWidth = 1.2;
+
+          if (tvStyle === 'bars') {
+            ctx.beginPath();
+            ctx.moveTo(x, py(h));
+            ctx.lineTo(x, py(l));
+            ctx.moveTo(x - bw / 2, py(o));
+            ctx.lineTo(x, py(o));
+            ctx.moveTo(x, py(cl));
+            ctx.lineTo(x + bw / 2, py(cl));
+            ctx.stroke();
+          } else {
+            ctx.beginPath();
+            ctx.moveTo(x, py(h));
+            ctx.lineTo(x, py(l));
+            ctx.stroke();
+            const topY = py(Math.max(o, cl));
+            const botY = py(Math.min(o, cl));
+            ctx.fillRect(x - bw / 2, topY, bw, Math.max(1.8, botY - topY));
+          }
+        });
+      }
+
+      // 6. Уровни открытых сделок MT5 (OPEN, SL, TP)
+      if (tvInd.orders && currentState && currentState.positions && currentState.positions.length > 0) {
+        const p0 = currentState.positions[0];
+        const drawOrderLine = (price, label, color) => {
+          if (!price || price <= 0) return;
+          const y = py(price);
+          if (y < 4 || y > priceH - 4) return;
+          ctx.save();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.3;
+          ctx.setLineDash([5, 3]);
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(chartW, y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = color;
+          const tw = ctx.measureText(label).width + 10;
+          ctx.fillRect(chartW - tw - 4, y - 8, tw, 15);
+          ctx.fillStyle = '#06111c';
+          ctx.font = 'bold 9px sans-serif';
+          ctx.fillText(label, chartW - tw + 1, y + 3);
+          ctx.restore();
+        };
+        const sign = p0.pnl >= 0 ? '+' : '';
+        drawOrderLine(p0.open_price, `${p0.pos_type} ${p0.volume.toFixed(2)} (${sign}$${p0.pnl.toFixed(2)})`, '#38bdf8');
+        drawOrderLine(p0.sl, `SL ${fmtNum(p0.sl)}`, '#f87171');
+        drawOrderLine(p0.tp, `TP ${fmtNum(p0.tp)}`, '#34d399');
+      }
+
+      // 7. Пользовательские рисунки (Трендовые, Горизонтальные уровни, Своя Фибо, Линейка)
+      const allDrw = tvActiveDrag ? [...tvDrawings, tvActiveDrag] : tvDrawings;
+      allDrw.forEach(d => {
+        const x1 = ix(d.i1 - startIdx);
+        const y1 = py(d.p1);
+        const x2 = ix((d.i2 !== undefined ? d.i2 : d.i1) - startIdx);
+        const y2 = py(d.p2 !== undefined ? d.p2 : d.p1);
+
+        ctx.save();
+        if (d.type === 'hline') {
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(0, y1);
+          ctx.lineTo(chartW, y1);
+          ctx.stroke();
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 9.5px sans-serif';
+          ctx.fillText(`━ ${fmtNum(d.p1)}`, 8, y1 - 4);
+        } else if (d.type === 'trend') {
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath(); ctx.arc(x1, y1, 3.5, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(x2, y2, 3.5, 0, Math.PI * 2); ctx.fill();
+        } else if (d.type === 'fibo') {
+          const ratios = [0, 0.236, 0.382, 0.5, 0.618, 1];
+          const leftX = Math.min(x1, x2), rightX = Math.max(x1, x2);
+          ratios.forEach(r => {
+            const fp = d.p1 + (d.p2 - d.p1) * r;
+            const fy = py(fp);
+            ctx.strokeStyle = r === 0.236 ? '#a855f7' : (r === 0.618 ? '#10b981' : '#fbbf24');
+            ctx.lineWidth = 1.1;
+            ctx.beginPath();
+            ctx.moveTo(leftX, fy);
+            ctx.lineTo(rightX, fy);
+            ctx.stroke();
+            ctx.fillStyle = ctx.strokeStyle;
+            ctx.font = '8.5px sans-serif';
+            ctx.fillText(`${(r * 100).toFixed(1)}% (${fmtNum(fp)})`, leftX + 3, fy - 2);
+          });
+        } else if (d.type === 'ruler') {
+          const rx = Math.min(x1, x2), ry = Math.min(y1, y2);
+          const rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1);
+          const diffP = d.p2 - d.p1;
+          const pct = (diffP / Math.max(1, d.p1)) * 100;
+          const isPos = diffP >= 0;
+          ctx.fillStyle = isPos ? 'rgba(16, 185, 129, 0.16)' : 'rgba(239, 68, 68, 0.16)';
+          ctx.strokeStyle = isPos ? '#10b981' : '#ef4444';
+          ctx.lineWidth = 1.3;
+          ctx.fillRect(rx, ry, rw, rh);
+          ctx.strokeRect(rx, ry, rw, rh);
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 9.5px sans-serif';
+          const sign = isPos ? '+' : '';
+          ctx.fillText(`${sign}${diffP.toFixed(2)}$ (${sign}${pct.toFixed(2)}%)`, rx + 4, ry + 12);
+        }
+        ctx.restore();
+      });
+
+      // Бейдж живой цены справа
+      if (liveBid > 0) {
+        const by = Math.max(10, Math.min(priceH - 10, py(liveBid)));
+        const isUpTick = lastPriceTickDir >= 0;
+        ctx.fillStyle = isUpTick ? '#10b981' : '#ef4444';
+        ctx.fillRect(chartW, by - 9, rightAxisW, 18);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9.5px sans-serif';
+        ctx.fillText(fmtNum(liveBid), chartW + 3, by + 3);
+      }
+
+      // 8. Нижняя панель MACD (12,26,9) + RSI (14)
+      if (hasOsc && oscH > 24) {
+        ctx.strokeStyle = '#1e2c42';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, oscTop);
+        ctx.lineTo(W, oscTop);
+        ctx.stroke();
+
+        const oscMid = oscTop + oscH * 0.52;
+        ctx.strokeStyle = '#141f31';
+        ctx.beginPath();
+        ctx.moveTo(0, oscMid);
+        ctx.lineTo(chartW, oscMid);
+        ctx.stroke();
+
+        // Гистограмма MACD
+        let maxM = 1;
+        for (let i = 0; i < vis.length; i++) {
+          maxM = Math.max(maxM, Math.abs(macdHistAll[startIdx + i] || 0));
+        }
+        for (let i = 0; i < vis.length; i++) {
+          const mh = macdHistAll[startIdx + i] || 0;
+          const bh = (Math.abs(mh) / maxM) * (oscH * 0.38);
+          const x = ix(i);
+          ctx.fillStyle = mh >= 0 ? 'rgba(16, 185, 129, 0.55)' : 'rgba(239, 68, 68, 0.55)';
+          if (mh >= 0) ctx.fillRect(x - bw / 2, oscMid - bh, bw, bh);
+          else ctx.fillRect(x - bw / 2, oscMid, bw, bh);
+        }
+
+        // Кривая RSI (14)
+        ctx.save();
+        ctx.strokeStyle = '#c084fc';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        for (let i = 0; i < vis.length; i++) {
+          const rVal = rsiAll[startIdx + i] || 50;
+          const rx = ix(i);
+          const ry = oscTop + 4 + (1 - rVal / 100) * (oscH - 8);
+          if (i === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        const lastRsi = rsiAll[endIdx - 1] || 50;
+        const lastMacd = macdHistAll[endIdx - 1] || 0;
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '8.5px sans-serif';
+        ctx.fillText(`MACD(12,26,9): ${lastMacd.toFixed(1)} · RSI(14): ${lastRsi.toFixed(1)}`, 6, oscTop + 10);
+        ctx.fillText('70', chartW + 4, oscTop + oscH * 0.3);
+        ctx.fillText('30', chartW + 4, oscTop + oscH * 0.7);
+      }
+
+      // 9. Перекрестие (Crosshair) и обновление верхней легенды OHLC
+      let focusIdx = vis.length - 1;
+      if (tvCrosshair && tvCrosshair.x >= 0 && tvCrosshair.x <= chartW) {
+        focusIdx = Math.max(0, Math.min(vis.length - 1, Math.floor(tvCrosshair.x / stepX)));
+        const cx = ix(focusIdx);
+        const cy = Math.max(0, Math.min(H - bottomTimeH, tvCrosshair.y));
+        ctx.save();
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx, 0);
+        ctx.lineTo(cx, H - bottomTimeH);
+        ctx.moveTo(0, cy);
+        ctx.lineTo(chartW, cy);
+        ctx.stroke();
+        ctx.restore();
+
+        if (cy <= priceH) {
+          const cp = yp(cy);
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(chartW, cy - 8, rightAxisW, 16);
+          ctx.fillStyle = '#38bdf8';
+          ctx.font = 'bold 9px sans-serif';
+          ctx.fillText(fmtNum(cp), chartW + 3, cy + 3);
+        }
+      }
+
+      const fc = vis[focusIdx] || vis[vis.length - 1];
+      const fGlobalIdx = startIdx + focusIdx;
+      const fRsi = (rsiAll[fGlobalIdx] || 50).toFixed(1);
+      const fMacd = (macdHistAll[fGlobalIdx] || 0).toFixed(1);
+      const legEl = document.getElementById('tvOhlcLegend');
+      if (legEl && fc) {
+        legEl.innerHTML = `<b>BTCUSD (${tvTfLabel})</b> · O: <b>${fmtNum(fc.open)}</b> H: <b>${fmtNum(fc.high)}</b> L: <b>${fmtNum(fc.low)}</b> C: <b>${fmtNum(fc.close)}</b><br><span style="color:#38bdf8;">EMA21: ${fmtNum(ema21All[fGlobalIdx])}</span> · <span style="color:#f59e0b;">EMA50: ${fmtNum(ema50All[fGlobalIdx])}</span> · <span style="color:#c084fc;">RSI: ${fRsi}</span> · MACD: ${fMacd}`;
+      }
+    }
+
+    function setupTvCanvasInteractions() {
+      const canvas = document.getElementById('tvProCanvas');
+      if (!canvas) return;
+      let panStartX = 0;
+      let panStartOffset = 0;
+
+      const getPos = ev => {
+        const r = canvas.getBoundingClientRect();
+        const t = (ev.touches && ev.touches[0]) ? ev.touches[0] : ((ev.changedTouches && ev.changedTouches[0]) ? ev.changedTouches[0] : ev);
+        return { x: t.clientX - r.left, y: t.clientY - r.top };
+      };
+
+      const onStart = ev => {
+        const g = canvas._tvGeom;
+        if (!g) return;
+        const pos = getPos(ev);
+        if (tvTool === 'cross') {
+          tvCrosshair = pos;
+          renderTvProChart();
+        } else if (tvTool === 'pan') {
+          panStartX = pos.x;
+          panStartOffset = tvScrollRightOffset;
+        } else if (['trend', 'hline', 'fibo', 'ruler'].includes(tvTool)) {
+          const barIdx = g.startIdx + Math.max(0, Math.min(g.count - 1, Math.floor(pos.x / g.stepX)));
+          const price = g.yp(Math.min(g.priceH, Math.max(0, pos.y)));
+          if (tvTool === 'hline') {
+            tvDrawings.push({ type: 'hline', i1: barIdx, p1: price });
+            saveTvDrawings();
+            renderTvProChart();
+          } else {
+            tvActiveDrag = { type: tvTool, i1: barIdx, p1: price, i2: barIdx, p2: price };
+            renderTvProChart();
+          }
+        }
+      };
+
+      const onMove = ev => {
+        const g = canvas._tvGeom;
+        if (!g) return;
+        const pos = getPos(ev);
+        if (tvTool === 'cross' && tvCrosshair) {
+          ev.preventDefault();
+          tvCrosshair = pos;
+          renderTvProChart();
+        } else if (tvTool === 'pan') {
+          ev.preventDefault();
+          const dxBars = Math.round((pos.x - panStartX) / Math.max(3, g.stepX));
+          const maxOff = Math.max(0, (tvCandles.length || 60) - tvVisibleBars);
+          tvScrollRightOffset = Math.max(0, Math.min(maxOff, panStartOffset + dxBars));
+          renderTvProChart();
+        } else if (tvActiveDrag) {
+          ev.preventDefault();
+          tvActiveDrag.i2 = g.startIdx + Math.max(0, Math.min(g.count - 1, Math.floor(pos.x / g.stepX)));
+          tvActiveDrag.p2 = g.yp(Math.min(g.priceH, Math.max(0, pos.y)));
+          renderTvProChart();
+        }
+      };
+
+      const onEnd = () => {
+        if (tvActiveDrag) {
+          tvDrawings.push(tvActiveDrag);
+          tvActiveDrag = null;
+          saveTvDrawings();
+          renderTvProChart();
+        }
+      };
+
+      canvas.addEventListener('touchstart', onStart, { passive: false });
+      canvas.addEventListener('touchmove', onMove, { passive: false });
+      canvas.addEventListener('touchend', onEnd);
+      canvas.addEventListener('mousedown', onStart);
+      canvas.addEventListener('mousemove', ev => { if (ev.buttons === 1) onMove(ev); });
+      canvas.addEventListener('mouseup', onEnd);
+    }
+
     let latestApkUrl = SERVER_URL + '/Crypto_Bot_v2_50.apk';
 
     function getCurrentLocalVersionCode() {
-      let localCode = 268;
+      let localCode = 269;
       if (hasNative && window.AndroidBridge.getAppVersionCode) {
         try { localCode = Math.max(localCode, Number(window.AndroidBridge.getAppVersionCode())); } catch(e) {}
       }
@@ -1839,10 +2797,18 @@
       }
     };
 
-    window.addEventListener('resize', () => { if (currentState) drawChart(currentState); });
+    window.addEventListener('resize', () => {
+      if (currentState) drawChart(currentState);
+      renderTvProChart();
+    });
+    setupTvCanvasInteractions();
     getCurrentLocalVersionCode();
     pollCycle();
     setInterval(pollCycle, 2000);
+    setInterval(() => {
+      const tabEl = document.getElementById('tab-chart');
+      if (tabEl && tabEl.classList.contains('active') && !tvEmbedActive) fetchTvCandles();
+    }, 12000);
     setTimeout(checkAppUpdateOnStartup, 1200);
     setInterval(checkAppUpdateOnStartup, 15000);
   </script>
