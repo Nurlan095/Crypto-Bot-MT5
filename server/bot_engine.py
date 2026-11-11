@@ -760,17 +760,46 @@ class CryptoBotEngine:
         avg_vol = sum(vols[-21:-1]) / 20.0 if len(vols) >= 21 else max(1.0, vols[-1])
         vol_confirm = (self.m15_candles[0]["volume"] >= avg_vol * 0.55) or (self.m15_candles[1]["volume"] >= avg_vol * 0.75)
 
-        # 4. Находим актуальный импульс для натяжки сетки Фибоначчи (100% -> 0%)
-        window = self.m15_candles[0:18]
+        # 4. Находим актуальный импульс для натяжки сетки Фибоначчи (100% -> 0%) + Фильтр тренда EMA21/EMA50
+        ema21_m15 = _ema_list(closes, 21)
+        ema50_m15 = _ema_list(closes, 50)
+        ema21_now = ema21_m15[-1]
+        ema50_now = ema50_m15[-1]
+
+        window = self.m15_candles[0:20]
         high_idx = max(range(len(window)), key=lambda idx: window[idx]["high"])
         low_idx = min(range(len(window)), key=lambda idx: window[idx]["low"])
         high_val = self.m15_candles[high_idx]["high"]
         low_val = self.m15_candles[low_idx]["low"]
-        impulse = max(high_val - low_val, atr * 1.5)
+        impulse = max(high_val - low_val, atr * 1.6)
 
         live_px = self.bid_price if self.bid_price > 0 else self.m15_candles[0]["close"]
-        mid_px = (high_val + low_val) * 0.5
-        bullish_bias = (macd_rev[0] >= macd_rev[1]) or (live_px >= mid_px and rsi_rev[0] >= 48.0)
+        c0 = self.m15_candles[0]
+        c1 = self.m15_candles[1]
+
+        # Определяем доминирующий тренд (H1 EMA50 + M15 EMA21/50), чтобы НЕ входить против тренда на мелких откатах
+        m15_bull = (live_px >= ema50_now) and (ema21_now >= ema50_now * 0.9992)
+        m15_bear = (live_px < ema50_now) and (ema21_now <= ema50_now * 1.0008)
+        htf_dir = self.htf_trend  # 1 = ВВЕРХ, -1 = ВНИЗ, 0 = НЕЙТРАЛЬНО
+
+        # Проверка настоящей классической дивергенции MACD на экстремумах
+        prev_lows = [i for i in range(max(low_idx + 2, 3), min(36, len(self.m15_candles))) if self.m15_candles[i]["low"] <= low_val * 1.0025]
+        strict_bull_div = any(macd_rev[low_idx] > macd_rev[p] for p in prev_lows) and (rsi_rev[low_idx] <= 34.0)
+
+        prev_highs = [i for i in range(max(high_idx + 2, 3), min(36, len(self.m15_candles))) if self.m15_candles[i]["high"] >= high_val * 0.9975]
+        strict_bear_div = any(macd_rev[high_idx] < macd_rev[p] for p in prev_highs) and (rsi_rev[high_idx] >= 68.0)
+
+        # Запрет переворота в SELL при растущем тренде (если нет жесткой медвежьей дивергенции с RSI >= 68)
+        if htf_dir == 1 or m15_bull:
+            bullish_bias = not strict_bear_div
+        elif htf_dir == -1 or m15_bear:
+            bullish_bias = bool(strict_bull_div)
+        else:
+            mid_px = (high_val + low_val) * 0.5
+            bullish_bias = (macd_rev[0] >= macd_rev[1]) and (live_px >= mid_px)
+
+        hist_0 = macd_rev[0] - sig_rev[0]
+        hist_1 = macd_rev[1] - sig_rev[1]
 
         if bullish_bias:
             price_0 = low_val
@@ -781,12 +810,24 @@ class CryptoBotEngine:
             lvl_618 = round(price_0 + impulse * 0.618, 2)
 
             macd_div = bool(
-                macd_rev[0] >= macd_rev[1]
-                or macd_rev[1] >= macd_rev[2]
-                or (macd_rev[0] - sig_rev[0]) >= (macd_rev[1] - sig_rev[1])
+                strict_bull_div
+                or (macd_rev[0] > macd_rev[1] and hist_0 >= hist_1)
             )
-            rsi_confirm = bool(42.0 <= rsi_rev[0] <= 76.0)
-            trigger_buy = bool((live_px >= lvl_236) and macd_div and rsi_confirm)
+            # Не покупаем в перекупленности (RSI > 66) и требуем растущий RSI
+            rsi_confirm = bool(38.0 <= rsi_rev[0] <= 66.0 and rsi_rev[0] >= rsi_rev[1] - 1.5)
+            candle_bull = (c0["close"] > c0["open"]) or (c1["close"] > c1["open"] and live_px >= c1["close"])
+            # Снайперский коридор входа: строго от 23.6% до 42% Фибо и минимум 0.65 ATR запаса хода до TP 61.8%
+            in_buy_corridor = (lvl_236 <= live_px <= (price_0 + impulse * 0.42)) and ((lvl_618 - live_px) >= atr * 0.65)
+            trend_allow_buy = (htf_dir >= 0) or strict_bull_div
+
+            trigger_buy = bool(
+                in_buy_corridor
+                and macd_div
+                and rsi_confirm
+                and vol_confirm
+                and candle_bull
+                and trend_allow_buy
+            )
 
             self.fibo_grid = {
                 "is_active": True,
@@ -812,12 +853,24 @@ class CryptoBotEngine:
             lvl_618 = round(price_0 - impulse * 0.618, 2)
 
             macd_div = bool(
-                macd_rev[0] <= macd_rev[1]
-                or macd_rev[1] <= macd_rev[2]
-                or (macd_rev[0] - sig_rev[0]) <= (macd_rev[1] - sig_rev[1])
+                strict_bear_div
+                or (macd_rev[0] < macd_rev[1] and hist_0 <= hist_1)
             )
-            rsi_confirm = bool(24.0 <= rsi_rev[0] <= 58.0)
-            trigger_sell = bool((live_px <= lvl_236) and macd_div and rsi_confirm)
+            # Не продаем на дне в перепроданности (RSI < 34) и требуем снижающийся RSI
+            rsi_confirm = bool(34.0 <= rsi_rev[0] <= 62.0 and rsi_rev[0] <= rsi_rev[1] + 1.5)
+            candle_bear = (c0["close"] < c0["open"]) or (c1["close"] < c1["open"] and live_px <= c1["close"])
+            # Снайперский коридор входа SELL: строго от 23.6% до 42% Фибо и минимум 0.65 ATR запаса хода вниз до TP 61.8%
+            in_sell_corridor = ((price_0 - impulse * 0.42) <= live_px <= lvl_236) and ((live_px - lvl_618) >= atr * 0.65)
+            trend_allow_sell = (htf_dir <= 0) or strict_bear_div
+
+            trigger_sell = bool(
+                in_sell_corridor
+                and macd_div
+                and rsi_confirm
+                and vol_confirm
+                and candle_bear
+                and trend_allow_sell
+            )
 
             self.fibo_grid = {
                 "is_active": True,
@@ -1178,20 +1231,50 @@ class CryptoBotEngine:
         # Защита от случайного открытия пачки скрытых сделок при многократном нажатии кнопки:
         # В соответствии с логикой советника и экрана (1 карточка активной сделки),
         # если сделка в ту же сторону уже открыта — возвращаем её, если в противоположную — закрываем старую.
+        now_order_ts = time.time()
+        if now_order_ts - getattr(self, "_last_order_sent_ts", 0.0) < 10.0:
+            existing_now = self.get_open_positions()
+            if existing_now:
+                return existing_now[0]
+
         existing = self.get_open_positions()
         if existing:
-            top_pos = existing[0]
-            if top_pos["pos_type"] == pos_type and top_pos["symbol"] == symbol:
-                return top_pos
-            for ep in existing:
-                self.close_position(ep["ticket"], reason="Разворот позиции")
+            same_side = [p for p in existing if p["pos_type"] == pos_type and p["symbol"] == symbol]
+            opp_side = [p for p in existing if p["pos_type"] != pos_type or p["symbol"] != symbol]
+            for ep in opp_side:
+                self.close_position(ep["ticket"], reason="Закрытие встречной сделки")
+            if same_side:
+                # Закрываем лишние дубликаты, оставляя только 1 сделку
+                for dup in same_side[1:]:
+                    self.close_position(dup["ticket"], reason="Удаление дубликата")
+                return same_side[0]
 
+        self._last_order_sent_ts = now_order_ts
         spec = SYMBOL_SPECS.get(symbol, SYMBOL_SPECS["BTCUSD"])
         atr = self.atr_value if self.atr_value > 0 else (self.bid_price * 0.002)
 
-        sl_dist = atr * float(self.settings["InpSL_ATR"])
-        tp_dist = atr * float(self.settings["InpTP_ATR"])
         entry_price = self.ask_price if pos_type == "BUY" else self.bid_price
+        fg = self.fibo_grid if isinstance(getattr(self, "fibo_grid", None), dict) else {}
+
+        # Точный расчет SL за уровень 0.0% Фибоначчи и TP на уровень 61.8%/100% Фибоначчи по Давиду Трульясу
+        sl_dist = atr * min(1.25, float(self.settings["InpSL_ATR"]))
+        tp_dist = atr * float(self.settings["InpTP_ATR"])
+        if fg.get("is_active"):
+            p0 = float(fg.get("price_0") or 0.0)
+            p618 = float(fg.get("lvl_618") or 0.0)
+            p100 = float(fg.get("price_100") or 0.0)
+            if pos_type == "BUY" and p0 > 0 and p0 < entry_price:
+                fibo_sl_dist = (entry_price - p0) + atr * 0.20
+                sl_dist = max(atr * 0.80, min(atr * 1.35, fibo_sl_dist))
+                target_tp = max(p618, p100)
+                if target_tp > entry_price + atr * 1.2:
+                    tp_dist = max(sl_dist * 1.8, target_tp - entry_price)
+            elif pos_type == "SELL" and p0 > entry_price:
+                fibo_sl_dist = (p0 - entry_price) + atr * 0.20
+                sl_dist = max(atr * 0.80, min(atr * 1.35, fibo_sl_dist))
+                target_tp = min(p618, p100) if (p618 > 0 and p100 > 0) else p618
+                if 0 < target_tp < entry_price - atr * 1.2:
+                    tp_dist = max(sl_dist * 1.8, entry_price - target_tp)
 
         if volume is None or volume <= 0:
             volume = self.calculate_crypto_lot_size(entry_price, sl_dist)
@@ -1444,9 +1527,19 @@ class CryptoBotEngine:
         min_lot = spec["min_lot"]
         step_lot = spec["step_lot"]
 
-        partial_dist = atr * float(self.settings["InpPartialTrigATR"])
-        be_trig_dist = atr * float(self.settings["InpBE_TriggerATR"])
+        partial_dist = atr * min(0.95, float(self.settings["InpPartialTrigATR"]))
+        be_trig_dist = atr * min(0.85, float(self.settings["InpBE_TriggerATR"]))
         pct = float(self.settings["InpPartialClosePct"]) / 100.0
+        fg = self.fibo_grid if isinstance(getattr(self, "fibo_grid", None), dict) else {}
+
+        # Авто-очистка встречных («замков») и дублирующихся ордеров в MT5:
+        # Оставляем только самую свежую сделку (positions[0]), а старые встречные или дубли сразу закрываем
+        sym_positions = [p for p in positions if p["symbol"] == symbol]
+        if len(sym_positions) > 1:
+            primary_pos = sym_positions[0]
+            for extra_pos in sym_positions[1:]:
+                self.close_position(extra_pos["ticket"], reason="Авто-закрытие дубля/встречной")
+            positions = [primary_pos]
 
         for pos in positions:
             if pos["symbol"] != symbol:
@@ -1477,19 +1570,35 @@ class CryptoBotEngine:
                         self.close_position(ticket, reason)
                         continue
                     if tp > 0 and bid >= tp:
-                        self.close_position(ticket, "Take Profit (3.0 ATR)")
+                        self.close_position(ticket, "Take Profit (Fibo 61.8%)")
                         continue
 
-                # Check Safe 50%
-                if can_partial and not is_be and bid >= (open_price + partial_dist):
+                # Умная защита «Анти-минус»: если сделка открыта против тренда H1 и цена пробила 0% Фибо или ушла ниже -0.85 ATR при медвежьем импульсе
+                p0 = float(fg.get("price_0") or 0.0)
+                if not is_be and self.htf_trend == -1 and fg.get("direction") == -1:
+                    if (p0 > 0 and bid < p0 - atr * 0.15) or (bid <= open_price - atr * 0.85):
+                        self.close_position(ticket, "Анти-минус: разворот тренда вниз")
+                        continue
+
+                # Достижение Фибо 38.2% или +0.90 ATR -> Сейф 50% и перевод в Безубыток
+                lvl382 = float(fg.get("lvl_382") or 0.0)
+                hit_fibo_382 = (fg.get("direction") == 1 and lvl382 > openPrice_or_min(open_price, atr) and bid >= lvl382) if False else (bid >= (open_price + partial_dist))
+                if can_partial and not is_be and (hit_fibo_382 or (fg.get("direction") == 1 and lvl382 > open_price + atr * 0.35 and bid >= lvl382)):
                     self.trigger_partial_safe(ticket, auto=True)
                     continue
 
-                # Check Breakeven (0.20 ATR if divisible, or +0.60 ATR at 2.0 ATR if minLot 0.01)
-                eff_trig = be_trig_dist if can_partial else (atr * 2.0)
-                eff_offset = float(self.settings["InpBE_OffsetATR"]) if can_partial else 0.60
+                # Ранний Безубыток (+0.20 ATR при проходе +0.85 ATR или уровня 38.2% Фибо)
+                eff_trig = be_trig_dist if can_partial else (atr * 1.1)
+                eff_offset = float(self.settings["InpBE_OffsetATR"]) if can_partial else 0.35
                 if self.settings["InpUseBreakeven"] and not is_be and bid >= (open_price + eff_trig):
                     self.trigger_breakeven(ticket, custom_offset_atr=eff_offset)
+                    continue
+
+                # Трейлинг-стоп в плюс на уровне 50% Фибо (+1.40 ATR -> стоп на +0.65 ATR)
+                if self.settings["InpUseBreakeven"] and bid >= (open_price + atr * 1.40):
+                    lock_sl = round(open_price + atr * 0.65, spec["digits"])
+                    if sl < lock_sl - spec["point"] * 10:
+                        self.trigger_breakeven(ticket, custom_offset_atr=0.65)
 
             elif pos_type == "SELL":
                 ask = pos["current_price"] if mt5_live else self.ask_price
@@ -1499,17 +1608,32 @@ class CryptoBotEngine:
                         self.close_position(ticket, reason)
                         continue
                     if tp > 0 and ask <= tp:
-                        self.close_position(ticket, "Take Profit (3.0 ATR)")
+                        self.close_position(ticket, "Take Profit (Fibo 61.8%)")
                         continue
 
-                if can_partial and not is_be and ask <= (open_price - partial_dist):
+                # Умная защита «Анти-минус»: если SELL открыт против растущего тренда H1 и цена пробивает 0% Фибо или уходит выше +0.85 ATR
+                p0 = float(fg.get("price_0") or 0.0)
+                if not is_be and self.htf_trend == 1 and fg.get("direction") == 1:
+                    if (p0 > 0 and ask > p0 + atr * 0.15) or (ask >= open_price + atr * 0.85):
+                        self.close_position(ticket, "Анти-минус: разворот тренда вверх")
+                        continue
+
+                lvl382 = float(fg.get("lvl_382") or 0.0)
+                if can_partial and not is_be and (ask <= (open_price - partial_dist) or (fg.get("direction") == -1 and 0 < lvl382 < open_price - atr * 0.35 and ask <= lvl382)):
                     self.trigger_partial_safe(ticket, auto=True)
                     continue
 
-                eff_trig = be_trig_dist if can_partial else (atr * 2.0)
-                eff_offset = float(self.settings["InpBE_OffsetATR"]) if can_partial else 0.60
+                eff_trig = be_trig_dist if can_partial else (atr * 1.1)
+                eff_offset = float(self.settings["InpBE_OffsetATR"]) if can_partial else 0.35
                 if self.settings["InpUseBreakeven"] and not is_be and ask <= (open_price - eff_trig):
                     self.trigger_breakeven(ticket, custom_offset_atr=eff_offset)
+                    continue
+
+                # Трейлинг-стоп в плюс на уровне 50% Фибо (+1.40 ATR -> стоп на -0.65 ATR)
+                if self.settings["InpUseBreakeven"] and ask <= (open_price - atr * 1.40):
+                    lock_sl = round(open_price - atr * 0.65, spec["digits"])
+                    if sl == 0 or sl > lock_sl + spec["point"] * 10:
+                        self.trigger_breakeven(ticket, custom_offset_atr=0.65)
 
     # -------------------------------------------------------------------------
     # Main OnTick Cycle (Exact Port of OnTick in Crypto_Bot_v2_50.mq5)

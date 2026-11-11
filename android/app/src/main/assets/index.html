@@ -1573,30 +1573,31 @@
           </div>`;
       }
 
-      // Что делает робот (только Метод Давида Трульяса - Фибоначчи)
+      // Что делает робот (только Метод Давида Трульяса - Фибоначчи + Защита Анти-минус)
       const fg = (st.market && st.market.fibo_grid) ? st.market.fibo_grid : {};
+      const trendTxt = (st.market && st.market.htf_trend === 1) ? 'ВВЕРХ (Ищем BUY)' : ((st.market && st.market.htf_trend === -1) ? 'ВНИЗ (Ищем SELL)' : 'Контроль EMA 21/50');
       if (!st.is_running) {
         document.getElementById('humanStatusBox').innerHTML = `
           <div><span style="color:#f59e0b;">●</span> Робот поставлен на паузу</div>
           <div><span style="color:#8b9bb4;">●</span> Нажмите «Пуск» вверху для старта</div>`;
       } else if (posList.length > 0) {
         document.getElementById('humanStatusBox').innerHTML = `
-          <div><span style="color:#10b981;">●</span> Сделка ОТКРЫТА в MetaTrader 5!</div>
-          <div><span style="color:#10b981;">●</span> Авто-фиксация: 38.2% БУ/Сейф → 61.8% Тейк</div>`;
+          <div><span style="color:#10b981;">●</span> Сделка ОТКРЫТА в MT5 (Защита «Анти-минус» и «Анти-дубль» активна)</div>
+          <div><span style="color:#10b981;">●</span> Авто-фиксация: 38.2% БУ/Сейф → 50% Трейл → 61.8% Тейк</div>`;
       } else {
         const fibLvl = fg.lvl_236 ? fmtNum(fg.lvl_236) : fmtNum(st.market.bid);
         document.getElementById('humanStatusBox').innerHTML = `
-          <div><span style="color:#10b981;">●</span> Робот сам откроет сделку при сигнале Фибо 23.6% (${fibLvl})</div>
-          <div><span style="color:#10b981;">●</span> Фильтры: Сетка Фибоначчи + MACD + RSI (АВТО 24/7)</div>`;
+          <div><span style="color:#10b981;">●</span> Снайпер Фибо 23.6% (${fibLvl}) · Тренд: <b>${trendTxt}</b></div>
+          <div><span style="color:#10b981;">●</span> Защита «Анти-минус»: вход только по тренду + MACD + RSI</div>`;
       }
 
       const items = [
         ['Сетка Фибоначчи', Boolean(fg.is_active)],
-        ['Дивергенция MACD', Boolean(fg.macd_div)],
+        ['Тренд + MACD', Boolean(fg.macd_div)],
         ['Фильтр RSI (14)', Boolean(fg.rsi_confirm)],
         ['Объем Volume', Boolean(fg.vol_confirm)],
-        ['Пробой 23.6%', Boolean(fg.trigger_buy || fg.trigger_sell)],
-        ['Новости USD', !st.news.is_paused]
+        ['Снайпер 23.6%', Boolean(fg.trigger_buy || fg.trigger_sell)],
+        ['Анти-минус / USD', !st.news.is_paused]
       ];
       document.getElementById('checkGrid').innerHTML = items.map(it => `
         <div class="chk-pill">

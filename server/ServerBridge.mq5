@@ -37,12 +37,48 @@ void OnDeinit(const int reason)
    EventKillTimer();
 }
 
+void EnforceSinglePositionPerSymbol(string sym)
+{
+   int total = PositionsTotal();
+   if(total <= 1) return;
+
+   ulong newestTicket = 0;
+   long  newestTime   = -1;
+
+   for(int i = 0; i < total; i++)
+   {
+      ulong pt = PositionGetTicket(i);
+      if(pt == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != sym) continue;
+      long ptime = PositionGetInteger(POSITION_TIME_MSC);
+      if(ptime > newestTime || (ptime == newestTime && pt > newestTicket))
+      {
+         newestTime   = ptime;
+         newestTicket = pt;
+      }
+   }
+
+   if(newestTicket == 0) return;
+
+   for(int i = total - 1; i >= 0; i--)
+   {
+      ulong pt = PositionGetTicket(i);
+      if(pt == 0 || pt == newestTicket) continue;
+      if(PositionGetString(POSITION_SYMBOL) != sym) continue;
+      SetSymbolFilling(sym);
+      trade.PositionClose(pt);
+   }
+}
+
 void ProcessCommands()
 {
    if(!FileIsExist("mt5_cmd.txt"))
       return;
 
-   int h = FileOpen("mt5_cmd.txt", FILE_READ|FILE_TXT|FILE_ANSI);
+   if(!FileMove("mt5_cmd.txt", 0, "mt5_cmd_proc.txt", FILE_REWRITE))
+      return;
+
+   int h = FileOpen("mt5_cmd_proc.txt", FILE_READ|FILE_TXT|FILE_ANSI);
    if(h == INVALID_HANDLE)
       return;
 
@@ -61,7 +97,7 @@ void ProcessCommands()
       }
    }
    FileClose(h);
-   FileDelete("mt5_cmd.txt");
+   FileDelete("mt5_cmd_proc.txt");
 
    for(int i = 0; i < count; i++)
    {
@@ -81,6 +117,28 @@ void ProcessCommands()
 
          SymbolSelect(sym, true);
          SetSymbolFilling(sym);
+
+         // Закрываем встречные сделки и блокируем дубликаты в том же направлении
+         bool alreadySameSide = false;
+         for(int p = PositionsTotal() - 1; p >= 0; p--)
+         {
+            ulong pticket = PositionGetTicket(p);
+            if(pticket == 0) continue;
+            if(PositionGetString(POSITION_SYMBOL) != sym) continue;
+            long existingType = PositionGetInteger(POSITION_TYPE);
+            bool existingIsBuy = (existingType == POSITION_TYPE_BUY);
+            bool wantBuy = (ptype == "BUY");
+            if(existingIsBuy != wantBuy)
+            {
+               trade.PositionClose(pticket);
+            }
+            else
+            {
+               alreadySameSide = true;
+            }
+         }
+         if(alreadySameSide) continue;
+
          int digits = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
          sl = NormalizeDouble(sl, digits);
          tp = NormalizeDouble(tp, digits);
@@ -260,6 +318,7 @@ void WriteStateJson()
 void OnTimer()
 {
    ProcessCommands();
+   EnforceSinglePositionPerSymbol("BTCUSD");
    WriteStateJson();
 }
 
