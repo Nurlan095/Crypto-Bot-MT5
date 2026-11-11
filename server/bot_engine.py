@@ -26,6 +26,7 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "InpStrategyMode": 4,           # 4 = Метод Давида Трульяса (Фибоначчи) (Единственная стратегия)
     # Money Management
     "InpUseAutoLot": True,
+    "InpUseDepositCalc15": True,    # Авто-калькуляция депозита 1/5 по видео + Excel (Депозитті 5-ке бөлу)
     "InpRiskPercent": 3.0,
     "InpMaxMarginUsage": 80.0,
     "InpFixedLot": 0.02,
@@ -804,20 +805,32 @@ class CryptoBotEngine:
         if bullish_bias:
             price_0 = low_val
             price_100 = high_val
+            lvl_011 = round(price_0 + impulse * 0.110, 2)
             lvl_236 = round(price_0 + impulse * 0.236, 2)
+            lvl_3618 = round(price_0 + impulse * 0.3618, 2)
             lvl_382 = round(price_0 + impulse * 0.382, 2)
             lvl_500 = round(price_0 + impulse * 0.500, 2)
             lvl_618 = round(price_0 + impulse * 0.618, 2)
+            lvl_750 = round(price_0 + impulse * 0.750, 2)
+            lvl_786 = round(price_0 + impulse * 0.786, 2)
+            lvl_860 = round(price_0 + impulse * 0.860, 2)
+            lvl_900 = round(price_0 + impulse * 0.900, 2)
+            lvl_1272 = round(price_0 + impulse * 1.272, 2)
+            lvl_1618 = round(price_0 + impulse * 1.618, 2)
 
             macd_div = bool(
                 strict_bull_div
                 or (macd_rev[0] > macd_rev[1] and hist_0 >= hist_1)
             )
             # Не покупаем в перекупленности (RSI > 66) и требуем растущий RSI
-            rsi_confirm = bool(38.0 <= rsi_rev[0] <= 66.0 and rsi_rev[0] >= rsi_rev[1] - 1.5)
+            rsi_confirm = bool(36.0 <= rsi_rev[0] <= 66.0 and rsi_rev[0] >= rsi_rev[1] - 1.5)
             candle_bull = (c0["close"] > c0["open"]) or (c1["close"] > c1["open"] and live_px >= c1["close"])
-            # Снайперский коридор входа: строго от 23.6% до 42% Фибо и минимум 0.65 ATR запаса хода до TP 61.8%
-            in_buy_corridor = (lvl_236 <= live_px <= (price_0 + impulse * 0.42)) and ((lvl_618 - live_px) >= atr * 0.65)
+            # Снайперский коридор входа:
+            # 1) 0.236 - 0.3618/0.42 (импульс до 0.618 / 1.272)
+            # 2) 0.75 - 0.786 (глубокая золотая зона отката по видео наставника с целями 1.272 / 1.618)
+            in_zone_236 = (lvl_236 <= live_px <= (price_0 + impulse * 0.42)) and ((lvl_618 - live_px) >= atr * 0.65)
+            in_zone_750 = (lvl_011 <= live_px <= (price_0 + impulse * 0.28)) and strict_bull_div
+            in_buy_corridor = bool(in_zone_236 or in_zone_750)
             trend_allow_buy = (htf_dir >= 0) or strict_bull_div
 
             trigger_buy = bool(
@@ -834,10 +847,18 @@ class CryptoBotEngine:
                 "direction": 1,
                 "price_0": round(price_0, 2),
                 "price_100": round(price_100, 2),
+                "lvl_011": lvl_011,
                 "lvl_236": lvl_236,
+                "lvl_3618": lvl_3618,
                 "lvl_382": lvl_382,
                 "lvl_500": lvl_500,
                 "lvl_618": lvl_618,
+                "lvl_750": lvl_750,
+                "lvl_786": lvl_786,
+                "lvl_860": lvl_860,
+                "lvl_900": lvl_900,
+                "lvl_1272": lvl_1272,
+                "lvl_1618": lvl_1618,
                 "macd_div": bool(macd_div),
                 "rsi_confirm": bool(rsi_confirm),
                 "vol_confirm": bool(vol_confirm),
@@ -847,20 +868,30 @@ class CryptoBotEngine:
         else:
             price_0 = high_val
             price_100 = low_val
+            lvl_011 = round(price_0 - impulse * 0.110, 2)
             lvl_236 = round(price_0 - impulse * 0.236, 2)
+            lvl_3618 = round(price_0 - impulse * 0.3618, 2)
             lvl_382 = round(price_0 - impulse * 0.382, 2)
             lvl_500 = round(price_0 - impulse * 0.500, 2)
             lvl_618 = round(price_0 - impulse * 0.618, 2)
+            lvl_750 = round(price_0 - impulse * 0.750, 2)
+            lvl_786 = round(price_0 - impulse * 0.786, 2)
+            lvl_860 = round(price_0 - impulse * 0.860, 2)
+            lvl_900 = round(price_0 - impulse * 0.900, 2)
+            lvl_1272 = round(price_0 - impulse * 1.272, 2)
+            lvl_1618 = round(price_0 - impulse * 1.618, 2)
 
             macd_div = bool(
                 strict_bear_div
                 or (macd_rev[0] < macd_rev[1] and hist_0 <= hist_1)
             )
             # Не продаем на дне в перепроданности (RSI < 34) и требуем снижающийся RSI
-            rsi_confirm = bool(34.0 <= rsi_rev[0] <= 62.0 and rsi_rev[0] <= rsi_rev[1] + 1.5)
+            rsi_confirm = bool(34.0 <= rsi_rev[0] <= 64.0 and rsi_rev[0] <= rsi_rev[1] + 1.5)
             candle_bear = (c0["close"] < c0["open"]) or (c1["close"] < c1["open"] and live_px <= c1["close"])
-            # Снайперский коридор входа SELL: строго от 23.6% до 42% Фибо и минимум 0.65 ATR запаса хода вниз до TP 61.8%
-            in_sell_corridor = ((price_0 - impulse * 0.42) <= live_px <= lvl_236) and ((live_px - lvl_618) >= atr * 0.65)
+            # Снайперский коридор входа SELL: 23.6%-42% Фибо или глубокая зона отката к вершине с дивергенцией
+            in_zone_236_s = ((price_0 - impulse * 0.42) <= live_px <= lvl_236) and ((live_px - lvl_618) >= atr * 0.65)
+            in_zone_750_s = ((price_0 - impulse * 0.28) <= live_px <= lvl_011) and strict_bear_div
+            in_sell_corridor = bool(in_zone_236_s or in_zone_750_s)
             trend_allow_sell = (htf_dir <= 0) or strict_bear_div
 
             trigger_sell = bool(
@@ -877,10 +908,18 @@ class CryptoBotEngine:
                 "direction": -1,
                 "price_0": round(price_0, 2),
                 "price_100": round(price_100, 2),
+                "lvl_011": lvl_011,
                 "lvl_236": lvl_236,
+                "lvl_3618": lvl_3618,
                 "lvl_382": lvl_382,
                 "lvl_500": lvl_500,
                 "lvl_618": lvl_618,
+                "lvl_750": lvl_750,
+                "lvl_786": lvl_786,
+                "lvl_860": lvl_860,
+                "lvl_900": lvl_900,
+                "lvl_1272": lvl_1272,
+                "lvl_1618": lvl_1618,
                 "macd_div": bool(macd_div),
                 "rsi_confirm": bool(rsi_confirm),
                 "vol_confirm": bool(vol_confirm),
@@ -1116,8 +1155,52 @@ class CryptoBotEngine:
         return boxes[:8]
 
     # -------------------------------------------------------------------------
-    # Money Management & Position Sizing (Exact Port of CalculateCryptoLotSize)
+    # Money Management & Position Sizing (Авто-калькуляция депозита 1/5 по видео + Excel)
     # -------------------------------------------------------------------------
+    def get_deposit_calc_state(self, sl_distance_price: float) -> Dict[str, Any]:
+        balance = max(10.0, float(self.account["balance"]))
+        working_part = round(balance / 5.0, 2)
+        reserve_4_5 = round(balance - working_part, 2)
+        sl_punkti = round(max(20.0, sl_distance_price if sl_distance_price > 0 else 154.0), 1)
+        risk_pct = float(self.settings.get("InpRiskPercent", 3.0))
+        scale = max(0.3, risk_pct / 3.0)
+
+        # Точная формула из Excel (КАЛКУЛЯЦИЯ.MOV): LOTT = (Balance / 5) / SL_punkti / 100
+        excel_raw_lot = (working_part * scale) / (sl_punkti * 100.0)
+        excel_lot = max(0.01, min(100.0, round(excel_raw_lot, 2)))
+
+        # Прогноз сложного процента (после TP 1:1, TP 1:1.3 и при SL)
+        win_1_1_bal = round(balance + working_part, 2)
+        win_1_1_part = round(win_1_1_bal / 5.0, 2)
+        win_1_3_bal = round(balance + working_part * 1.3, 2)
+        win_1_3_part = round(win_1_3_bal / 5.0, 2)
+        loss_bal = round(max(10.0, balance - working_part), 2)
+        loss_part = round(loss_bal / 5.0, 2)
+
+        steps_1_1: List[Dict[str, float]] = []
+        sim_b = balance
+        for step_idx in range(1, 6):
+            p = round(sim_b / 5.0, 2)
+            sim_b = round(sim_b + p, 2)
+            steps_1_1.append({"step": step_idx, "part": p, "next_balance": sim_b})
+
+        return {
+            "enabled": bool(self.settings.get("InpUseDepositCalc15", True)),
+            "total_balance": round(balance, 2),
+            "working_part": working_part,
+            "reserve_4_5": reserve_4_5,
+            "parts": [working_part] * 5,
+            "sl_punkti": sl_punkti,
+            "excel_lot": excel_lot,
+            "win_1_1_balance": win_1_1_bal,
+            "win_1_1_next_part": win_1_1_part,
+            "win_1_3_balance": win_1_3_bal,
+            "win_1_3_next_part": win_1_3_part,
+            "loss_balance": loss_bal,
+            "loss_next_part": loss_part,
+            "compound_steps": steps_1_1,
+        }
+
     def calculate_crypto_lot_size(self, entry_price: float, sl_distance_price: float) -> float:
         fixed_lot = float(self.settings["InpFixedLot"])
         if not self.settings["InpUseAutoLot"] or sl_distance_price <= 0 or entry_price <= 0:
@@ -1127,12 +1210,19 @@ class CryptoBotEngine:
         spec = SYMBOL_SPECS.get(symbol, SYMBOL_SPECS["BTCUSD"])
         balance = float(self.account["balance"])
         risk_pct = float(self.settings["InpRiskPercent"])
-        risk_money = balance * (risk_pct / 100.0)
 
-        tick_value = spec["tick_value"]
-        tick_size = spec["tick_size"]
-        sl_ticks = max(1.0, sl_distance_price / tick_size)
-        raw_lot = risk_money / (sl_ticks * tick_value)
+        # Авто-калькуляция депозита 1/5 по видео (Депозитті 5-ке бөлу + SL пункті)
+        if self.settings.get("InpUseDepositCalc15", True):
+            working_part = balance / 5.0
+            sl_punkti = max(20.0, sl_distance_price)
+            scale = max(0.33, risk_pct / 3.0)
+            raw_lot = (working_part * scale) / (sl_punkti * 100.0)
+        else:
+            risk_money = balance * (risk_pct / 100.0)
+            tick_value = spec["tick_value"]
+            tick_size = spec["tick_size"]
+            sl_ticks = max(1.0, sl_distance_price / tick_size)
+            raw_lot = risk_money / (sl_ticks * tick_value)
 
         # Margin check
         margin_for_one_lot = (entry_price * spec["contract_size"]) / spec["leverage"]
@@ -1147,7 +1237,7 @@ class CryptoBotEngine:
         min_lot = spec["min_lot"]
         max_lot = spec["max_lot"]
 
-        lot = math.floor(raw_lot / step_lot) * step_lot
+        lot = round(raw_lot / step_lot) * step_lot
         lot = max(min_lot, min(max_lot, lot))
         return round(lot, 2)
 
@@ -1825,7 +1915,7 @@ class CryptoBotEngine:
         )
 
         return {
-            "version": "2.69",
+            "version": "2.70",
             "timestamp": int(time.time()),
             "last_update_ts": int(self.last_update_ts),
             "data_source": source_label,
@@ -1863,6 +1953,7 @@ class CryptoBotEngine:
                 "risk_percent": self.settings["InpRiskPercent"],
                 "risk_usd": risk_usd,
                 "preview_lot": preview_lot,
+                "deposit_calc": self.get_deposit_calc_state(sl_dist),
             },
             "checklist": self.checklist,
             "positions": self.get_open_positions(),

@@ -788,6 +788,121 @@
       white-space: nowrap;
     }
 
+    /* Авто-калькуляция 1/5 (По видео + Excel) */
+    .dep5-bar {
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 24, 38, 0.95) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.38);
+      border-radius: 10px;
+      padding: 5px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .dep5-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #e2e8f0;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .dep5-pills {
+      display: grid;
+      grid-template-columns: 1.45fr repeat(4, 1fr);
+      gap: 4px;
+    }
+    .dep5-pill {
+      border-radius: 6px;
+      padding: 2px 4px;
+      font-size: 9px;
+      font-weight: 800;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: #0c131f;
+      border: 1px solid #1e2c42;
+      color: #64748b;
+    }
+    .dep5-pill.active-part {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: #10b981;
+      color: #34d399;
+    }
+
+    /* Сетка избранных инструментов TradingView (Фото 1) */
+    .fav-tools-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-top: 8px;
+    }
+    .fav-tool-card {
+      position: relative;
+      background: #1b2230;
+      border: 1px solid #2a354b;
+      border-radius: 11px;
+      padding: 10px 6px 8px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      color: #e2e8f0;
+      font-size: 10px;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      min-height: 64px;
+    }
+    .fav-tool-card.active {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.16);
+      color: #fff;
+    }
+    .fav-star {
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      color: #f59e0b;
+      font-size: 11px;
+    }
+    .fav-ico {
+      font-size: 17px;
+      line-height: 1;
+      color: #fff;
+    }
+    /* Сетка уровней Фибоначчи (Фото 2) */
+    .fibo-cfg-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px 10px;
+      max-height: 310px;
+      overflow-y: auto;
+      padding: 4px 2px;
+    }
+    .fibo-cfg-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0c131f;
+      border: 1px solid #1e2c42;
+      border-radius: 7px;
+      padding: 4px 7px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .fibo-color-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+
     /* Модальное окно автообновления */
     #updateModal {
       display: none;
@@ -836,7 +951,7 @@
         <img class="app-logo" src="data:image/webp;base64,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" alt="Logo" />
         <div>
           <div class="brand-title-row">
-            <span class="brand-name">Crypto Bot <span id="appVerLabel" style="font-size:10px;color:#34d399;font-weight:700;">v2.69</span></span>
+            <span class="brand-name">Crypto Bot <span id="appVerLabel" style="font-size:10px;color:#34d399;font-weight:700;">v2.70</span></span>
             <span id="statusBadge" class="badge-active">● АКТИВЕН</span>
           </div>
           <div class="brand-sub" id="sourceSub">
@@ -852,7 +967,7 @@
     <div class="asset-row" style="grid-template-columns:1fr;">
       <button class="asset-btn active" id="btnBTC" style="cursor:default;">
         <span style="color:#f59e0b;font-weight:900;font-size:14px;">₿</span>
-        <span>Биткоин (BTCUSD) · Метод Фибоначчи</span>
+        <span>Биткоин (BTCUSD) · Фибо + Калькуляция 1/5</span>
       </button>
     </div>
 
@@ -870,8 +985,23 @@
       </div>
       <div class="m-card">
         <div class="m-label">Рабочий лот</div>
-        <div class="m-val" id="valLot">0.02 лот</div>
-        <div class="m-sub" id="valRisk">Риск 3%</div>
+        <div class="m-val" id="valLot">0.12 лот</div>
+        <div class="m-sub" id="valRisk">1/5 Депозита</div>
+      </div>
+    </div>
+
+    <!-- Авто-Калькуляция Депозита 1/5 (По видео + Excel 100$ depozit1.xlsx) -->
+    <div class="dep5-bar" id="depositCalcBar">
+      <div class="dep5-top">
+        <span>🧮 <b>Авто-калькуляция 1/5:</b> <span id="dep5PartTxt" style="color:#34d399;font-weight:800;">$1 953.14</span> <span style="color:#94a3b8;">(Резерв 4/5: <span id="dep5ResTxt">$7 812.54</span>)</span></span>
+        <span id="dep5FormulaTxt" style="color:#fbbf24;font-weight:800;">SL: 154п → 0.13 лот</span>
+      </div>
+      <div class="dep5-pills" id="dep5PillsRow">
+        <div class="dep5-pill active-part">🟢 1/5 В работе</div>
+        <div class="dep5-pill">🔒 2/5 Сейф</div>
+        <div class="dep5-pill">🔒 3/5 Сейф</div>
+        <div class="dep5-pill">🔒 4/5 Сейф</div>
+        <div class="dep5-pill">🔒 5/5 Сейф</div>
       </div>
     </div>
 
@@ -995,7 +1125,18 @@
 
       <div class="strat-row">
         <div>
-          <div class="strat-title">Сейф 50% (Фибо 38.2%)</div>
+          <div class="strat-title">Авто-калькуляция депозита 1/5 (По видео)</div>
+          <div class="strat-sub">Депозит ÷ 5 частей · LOTT = (1/5) / SL_пункт / 100</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="s_InpUseDepositCalc15" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="strat-row">
+        <div>
+          <div class="strat-title">Сейф 50% (Фибо 38.2% / 1.272)</div>
           <div class="strat-sub">Забирать половину прибыли + перевод в БУ</div>
         </div>
         <label class="switch">
@@ -1028,8 +1169,8 @@
 
       <div class="strat-row">
         <div>
-          <div class="strat-title">Авто-сетка Фибоначчи + MACD/RSI</div>
-          <div class="strat-sub">Вход 23.6%, Сейф 38.2%, Трейл 50%, Тейк 61.8%</div>
+          <div class="strat-title">Кастомная Фибоначчи (0.236 / 0.75-0.786 → 1.272 / 1.618)</div>
+          <div class="strat-sub">Уровни наставника + метод Давида Трульяса</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="s_InpUseMandarin" checked />
@@ -1038,7 +1179,117 @@
       </div>
     </div>
 
+    <!-- Интерактивный Excel-Калькулятор Депозита 1/5 (100$ depozit1.xlsx) -->
+    <div class="glass-card" style="padding:8px 11px;gap:5px;">
+      <div class="gc-head" style="padding-bottom:4px;">
+        <span class="gc-title" style="font-size:12.5px;">🧮 Excel-Калькулятор 1/5 (По видео)</span>
+        <span class="badge-gold" id="excelCalcLotBadge">LOTT: 0.13</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div class="inline-field" style="height:31px;padding:0 8px;">
+          <span style="width:62px;font-size:10.5px;">Депозит $</span>
+          <input type="number" id="calcExcelBal" value="1000" oninput="recalcExcelWidget()" style="font-size:12px;" />
+        </div>
+        <div class="inline-field" style="height:31px;padding:0 8px;">
+          <span style="width:62px;font-size:10.5px;">SL пункт</span>
+          <input type="number" id="calcExcelSl" value="154" oninput="recalcExcelWidget()" style="font-size:12px;" />
+        </div>
+      </div>
+      <div id="excelCalcSummary" style="font-size:10.5px;color:#cbd5e1;line-height:1.4;background:#0c131f;border:1px solid #1e2c42;border-radius:7px;padding:5px 8px;">
+        1/5 в работе: <b style="color:#34d399;">$200.00</b> · Резерв 4/5: <b>$800.00</b> · Лот: <b style="color:#fbbf24;">0.01 лот</b>
+      </div>
+    </div>
+
     <button class="btn-save-main" onclick="saveBotSettings()">💾 Сохранить настройки</button>
+  </div>
+
+  <!-- Модальное окно: ⭐ Избранные инструменты TradingView (Точь-в-точь как на Фото 1) -->
+  <div id="favToolsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:9995;align-items:center;justify-content:center;padding:14px;">
+    <div style="background:#141a26;border:1px solid #2b3954;border-radius:16px;padding:13px;max-width:370px;width:100%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:14px;font-weight:800;color:#fff;">⭐ Избранные инструменты TradingView</span>
+        <button onclick="closeFavToolsModal()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button>
+      </div>
+      <div style="font-size:10.5px;color:#94a3b8;margin-bottom:6px;">Выберите инструмент и проведите пальцем по графику:</div>
+      <div class="fav-tools-grid">
+        <div class="fav-tool-card" id="favCard_hline" onclick="selectFavTool('hline')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico">━●━</span>
+          <span>Горизонтальная линия</span>
+        </div>
+        <div class="fav-tool-card" id="favCard_rect" onclick="selectFavTool('rect')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico">▭</span>
+          <span>Прямоугольник</span>
+        </div>
+        <div class="fav-tool-card" id="favCard_trend" onclick="selectFavTool('trend')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico">╱</span>
+          <span>Линия тренда</span>
+        </div>
+        <div class="fav-tool-card" id="favCard_long_pos" onclick="selectFavTool('long_pos')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico" style="color:#34d399;">🟢⇅</span>
+          <span>Длинная позиция (Авто-Лот 1/5)</span>
+        </div>
+        <div class="fav-tool-card" id="favCard_short_pos" onclick="selectFavTool('short_pos')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico" style="color:#f87171;">🔴⇅</span>
+          <span>Короткая позиция (Авто-Лот 1/5)</span>
+        </div>
+        <div class="fav-tool-card" id="favCard_hray" onclick="selectFavTool('hray')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico">●━━</span>
+          <span>Горизонтальный луч</span>
+        </div>
+        <div class="fav-tool-card" id="favCard_path" onclick="selectFavTool('path')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico">〰️↗</span>
+          <span>Траектория</span>
+        </div>
+        <div class="fav-tool-card" id="favCard_fibo" onclick="selectFavTool('fibo')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico" style="color:#fbbf24;">☰</span>
+          <span>Коррекция по Фибоначчи</span>
+        </div>
+        <div class="fav-tool-card" id="favCard_ruler" onclick="selectFavTool('ruler')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico">↕️</span>
+          <span>Диапазон цен (SL пункт)</span>
+        </div>
+        <div class="fav-tool-card" id="favCard_channel" onclick="selectFavTool('channel')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico">⋕</span>
+          <span>Параллельный канал</span>
+        </div>
+        <div class="fav-tool-card" id="favCard_brush" onclick="selectFavTool('brush')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico">🖌</span>
+          <span>Кисть</span>
+        </div>
+        <div class="fav-tool-card" id="favCard_arrow" onclick="selectFavTool('arrow')">
+          <span class="fav-star">★</span>
+          <span class="fav-ico">↗</span>
+          <span>Стрелка</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: 📐 Настройка уровней Коррекции Фибоначчи (Точь-в-точь как на Фото 2) -->
+  <div id="fiboCfgModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:9995;align-items:center;justify-content:center;padding:14px;">
+    <div style="background:#141a26;border:1px solid #2b3954;border-radius:16px;padding:13px;max-width:370px;width:100%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:14px;font-weight:800;color:#fff;">📐 Коррекция Фибоначчи (Стиль)</span>
+        <button onclick="closeFiboCfgModal()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button>
+      </div>
+      <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;">Настроенные уровни наставника (0.75-0.786 Вход, 0 Стоп, 1.272/1.618 Тейк):</div>
+      <div class="fibo-cfg-grid" id="fiboCfgGridBox"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn-stop" style="flex:1;justify-content:center;" onclick="resetDefaultMentorFibo()">Сбросить по фото</button>
+        <button class="btn-buy" style="flex:1;height:32px;" onclick="closeFiboCfgModal()">Ок</button>
+      </div>
+    </div>
   </div>
 
   <!-- ==================================================================== -->
@@ -1055,10 +1306,13 @@
             <span id="tvHeaderTfBadge" style="font-size:9.5px;background:#162236;color:#38bdf8;padding:1px 5px;border-radius:4px;font-weight:800;">M15</span>
             <span id="tvHeaderPrice" class="tv-price-big">74 287.00</span>
           </div>
-          <div id="tvHeaderSub" style="font-size:9.5px;color:var(--muted);">MT5 AMarkets #8112287 · Метод Трульяса (Фибо)</div>
+          <div id="tvHeaderSub" style="font-size:9.5px;color:var(--muted);">MT5 #8112287 · Калькуляция 1/5 + Фибо</div>
         </div>
       </div>
-      <button class="tv-mode-btn" id="btnTvModeSwitch" onclick="toggleTvEmbedMode()">🌐 TV Виджет</button>
+      <div style="display:flex;gap:4px;">
+        <button class="tv-mode-btn" style="background:rgba(245,158,11,0.16);border-color:rgba(245,158,11,0.45);color:#fbbf24;" onclick="openFavToolsModal()">⭐ Инструменты</button>
+        <button class="tv-mode-btn" id="btnTvModeSwitch" onclick="toggleTvEmbedMode()">🌐 TV</button>
+      </div>
     </div>
 
     <!-- Панель 1: Таймфреймы + Тип графика -->
@@ -1076,23 +1330,32 @@
       <button class="tv-chip" id="tvStyle_line" onclick="setTvStyle('line')">📈 Линия</button>
     </div>
 
-    <!-- Панель 2: Индикаторы -->
+    <!-- Панель 2: Индикаторы + Настройка уровней Фибо из Фото 2 -->
     <div class="tv-toolbar-row" id="tvBarInd">
       <button class="tv-chip active" id="tvInd_fibo" onclick="toggleTvInd('fibo')">📐 Авто-Фибо</button>
+      <button class="tv-chip" style="border-color:#f59e0b;color:#fbbf24;" onclick="openFiboCfgModal()">⚙️ Уровни Фибо</button>
       <button class="tv-chip active" id="tvInd_ema" onclick="toggleTvInd('ema')">〰️ EMA 21/50</button>
       <button class="tv-chip" id="tvInd_bb" onclick="toggleTvInd('bb')">🟣 Боллинджер</button>
       <button class="tv-chip active" id="tvInd_osc" onclick="toggleTvInd('osc')">📊 MACD + RSI</button>
       <button class="tv-chip active" id="tvInd_orders" onclick="toggleTvInd('orders')">🎯 Сделки MT5</button>
     </div>
 
-    <!-- Панель 3: Инструменты рисования (как в TradingView) -->
+    <!-- Панель 3: Все 12 Избранных Инструментов Рисования (из Фото 1) -->
     <div class="tv-toolbar-row" id="tvBarDraw">
       <button class="tv-chip draw-active" id="tvTool_cross" onclick="setTvTool('cross')">✚ Прицел</button>
       <button class="tv-chip" id="tvTool_pan" onclick="setTvTool('pan')">✋ Двигать</button>
-      <button class="tv-chip" id="tvTool_trend" onclick="setTvTool('trend')">╱ Тренд</button>
-      <button class="tv-chip" id="tvTool_hline" onclick="setTvTool('hline')">━ Уровень</button>
-      <button class="tv-chip" id="tvTool_fibo" onclick="setTvTool('fibo')">📐 Своя Фибо</button>
-      <button class="tv-chip" id="tvTool_ruler" onclick="setTvTool('ruler')">📏 Линейка</button>
+      <button class="tv-chip" id="tvTool_long_pos" onclick="setTvTool('long_pos')">🟢 Длинная поз.</button>
+      <button class="tv-chip" id="tvTool_short_pos" onclick="setTvTool('short_pos')">🔴 Короткая поз.</button>
+      <button class="tv-chip" id="tvTool_fibo" onclick="setTvTool('fibo')">📐 Коррекция Фибо</button>
+      <button class="tv-chip" id="tvTool_hline" onclick="setTvTool('hline')">━ Горизонт. линия</button>
+      <button class="tv-chip" id="tvTool_rect" onclick="setTvTool('rect')">▭ Прямоугольник</button>
+      <button class="tv-chip" id="tvTool_trend" onclick="setTvTool('trend')">╱ Линия тренда</button>
+      <button class="tv-chip" id="tvTool_hray" onclick="setTvTool('hray')">⇢ Горизонт. луч</button>
+      <button class="tv-chip" id="tvTool_path" onclick="setTvTool('path')">〰️ Траектория</button>
+      <button class="tv-chip" id="tvTool_ruler" onclick="setTvTool('ruler')">📏 Диапазон цен</button>
+      <button class="tv-chip" id="tvTool_channel" onclick="setTvTool('channel')">⋕ Паралл. канал</button>
+      <button class="tv-chip" id="tvTool_brush" onclick="setTvTool('brush')">🖌 Кисть</button>
+      <button class="tv-chip" id="tvTool_arrow" onclick="setTvTool('arrow')">↗ Стрелка</button>
       <div class="tv-sep"></div>
       <button class="tv-chip" onclick="tvZoom(1.25)">➕</button>
       <button class="tv-chip" onclick="tvZoom(0.8)">➖</button>
@@ -1273,8 +1536,9 @@
         mt5_login: document.getElementById('s_mt5_login').value.trim(),
         mt5_password: document.getElementById('s_mt5_password').value.trim(),
         mt5_server: document.getElementById('s_mt5_server').value.trim(),
-        InpStrategyMode: parseInt(document.getElementById('s_InpStrategyMode').value || '2', 10),
+        InpStrategyMode: parseInt(document.getElementById('s_InpStrategyMode').value || '4', 10),
         InpRiskPercent: parseFloat(document.getElementById('s_InpRiskPercent').value || '3.0'),
+        InpUseDepositCalc15: document.getElementById('s_InpUseDepositCalc15') ? document.getElementById('s_InpUseDepositCalc15').checked : true,
         InpUsePartialClose: document.getElementById('s_InpUsePartialClose').checked,
         InpUseNewsFilter: document.getElementById('s_InpUseNewsFilter').checked,
         InpUseHTFFilter: document.getElementById('s_InpUseHTFFilter').checked,
@@ -1282,7 +1546,30 @@
       };
       await httpPostJson(SERVER_URL + '/api/settings', payload);
       await pollCycle();
-      showToast('Настройки сохранены', 'Параметры стратегии и счет MT5 обновлены на сервере 24/7');
+      showToast('Настройки сохранены', 'Авто-калькуляция 1/5, Фибо и счет MT5 обновлены на сервере 24/7');
+    }
+
+    function recalcExcelWidget() {
+      const balEl = document.getElementById('calcExcelBal');
+      const slEl = document.getElementById('calcExcelSl');
+      const sumEl = document.getElementById('excelCalcSummary');
+      const bdgEl = document.getElementById('excelCalcLotBadge');
+      if (!balEl || !slEl || !sumEl) return;
+      const B = Math.max(10, parseFloat(balEl.value || '1000'));
+      const slP = Math.max(5, parseFloat(slEl.value || '154'));
+      const part15 = B / 5.0;
+      const res45 = B - part15;
+      const rawLot = part15 / (slP * 100.0);
+      const lot = Math.max(0.01, Math.min(100, Math.round(rawLot * 100) / 100));
+      const winBal = B + part15;
+      const winNextPart = winBal / 5.0;
+      const lossBal = Math.max(10, B - part15);
+      const lossNextPart = lossBal / 5.0;
+      if (bdgEl) bdgEl.textContent = `LOTT: ${lot.toFixed(2)}`;
+      sumEl.innerHTML = `
+        <div>🟢 <b>1/5 в работе:</b> <span style="color:#34d399;font-weight:800;">$${part15.toFixed(2)}</span> · 🔒 <b>Резерв 4/5:</b> $${res45.toFixed(2)} · 🎯 <b>Лот:</b> <span style="color:#fbbf24;font-weight:800;">${lot.toFixed(2)} лот</span></div>
+        <div style="margin-top:2px;color:#94a3b8;">📈 После TP (+1:1): Деп <b>$${winBal.toFixed(0)}</b> (1/5 = <b style="color:#34d399;">$${winNextPart.toFixed(1)}</b>) · 🛡 При SL: Деп <b>$${lossBal.toFixed(0)}</b> (1/5 = <b>$${lossNextPart.toFixed(1)}</b>)</div>
+      `;
     }
 
     function updateCandleCountdown() {
@@ -1715,7 +2002,32 @@
       document.getElementById('valPrice').textContent = fmtNum(st.market.bid);
       document.getElementById('valSpread').textContent = `Шаг ATR: ${st.market.atr.toFixed(1)}`;
       document.getElementById('valLot').textContent = `${st.account.preview_lot.toFixed(2)} лот`;
-      document.getElementById('valRisk').textContent = `Риск ${st.account.risk_percent}%`;
+
+      // Авто-калькуляция 1/5 депозита по видео + Excel
+      const dc = (st.account && st.account.deposit_calc) ? st.account.deposit_calc : null;
+      const part15Val = dc ? dc.working_part : (bal / 5.0);
+      const res45Val = dc ? dc.reserve_4_5 : (bal * 0.8);
+      const slPunktiVal = dc ? dc.sl_punkti : Math.max(20, Math.round(st.market.sl_distance || 154));
+      const isDep15 = dc ? Boolean(dc.enabled) : true;
+      document.getElementById('valRisk').textContent = isDep15 ? `1/5 ($${Math.round(part15Val)})` : `Риск ${st.account.risk_percent}%`;
+
+      const depPartEl = document.getElementById('dep5PartTxt');
+      const depResEl = document.getElementById('dep5ResTxt');
+      const depFormEl = document.getElementById('dep5FormulaTxt');
+      const depPillsEl = document.getElementById('dep5PillsRow');
+      if (depPartEl) depPartEl.textContent = '$' + fmtNum(part15Val);
+      if (depResEl) depResEl.textContent = '$' + fmtNum(res45Val);
+      if (depFormEl) depFormEl.textContent = `SL: ${Math.round(slPunktiVal)}п → ${st.account.preview_lot.toFixed(2)} лот`;
+      if (depPillsEl) {
+        const pShort = '$' + Math.round(part15Val).toLocaleString('ru-RU');
+        depPillsEl.innerHTML = `
+          <div class="dep5-pill active-part">🟢 1/5: ${pShort}</div>
+          <div class="dep5-pill">🔒 ${pShort}</div>
+          <div class="dep5-pill">🔒 ${pShort}</div>
+          <div class="dep5-pill">🔒 ${pShort}</div>
+          <div class="dep5-pill">🔒 ${pShort}</div>
+        `;
+      }
 
       const sumBadge = document.getElementById('dealsSummaryBadge');
       if (sumBadge) {
@@ -1949,10 +2261,17 @@
         const stratEl = document.getElementById('s_InpStrategyMode');
         if (stratEl) stratEl.value = "4";
         document.getElementById('s_InpRiskPercent').value = Number(st.settings.InpRiskPercent || 3.0).toFixed(1);
+        const dep15El = document.getElementById('s_InpUseDepositCalc15');
+        if (dep15El) dep15El.checked = st.settings.InpUseDepositCalc15 !== false;
         document.getElementById('s_InpUsePartialClose').checked = Boolean(st.settings.InpUsePartialClose);
         document.getElementById('s_InpUseNewsFilter').checked = Boolean(st.settings.InpUseNewsFilter);
         document.getElementById('s_InpUseHTFFilter').checked = Boolean(st.settings.InpUseHTFFilter);
         document.getElementById('s_InpUseMandarin').checked = Boolean(st.settings.InpUseMandarin);
+        const cBalEl = document.getElementById('calcExcelBal');
+        const cSlEl = document.getElementById('calcExcelSl');
+        if (cBalEl && st.account && st.account.balance > 0) cBalEl.value = Math.round(st.account.balance);
+        if (cSlEl && st.market && st.market.sl_distance > 0) cSlEl.value = Math.round(st.market.sl_distance);
+        recalcExcelWidget();
       }
 
       updateSoundButtonUI();
@@ -2001,17 +2320,17 @@
     }
 
     // =====================================================================
-    // ЭКРАН 4: TRADINGVIEW PRO ГРАФИК + ИНСТРУМЕНТЫ РИСОВАНИЯ + ИНДИКАТОРЫ
+    // ЭКРАН 4: TRADINGVIEW PRO ГРАФИК + 12 ИЗБРАННЫХ ИНСТРУМЕНТОВ + ФИБО ФОТО 2
     // =====================================================================
     let tvTf = '15m';
     let tvTfLabel = 'M15';
     let tvStyle = 'candles'; // candles | heikin | bars | line
     let tvInd = { fibo: true, ema: true, bb: false, osc: true, orders: true };
-    let tvTool = 'cross';    // cross | pan | trend | hline | fibo | ruler
+    let tvTool = 'cross';    // cross | pan | long_pos | short_pos | fibo | hline | rect | trend | hray | path | ruler | channel | brush | arrow
     let tvCandles = [];
     let tvVisibleBars = 48;
-    let tvScrollRightOffset = 0; // сколько баров от правого края прокручено назад
-    let tvCrosshair = null;      // { x, y }
+    let tvScrollRightOffset = 0;
+    let tvCrosshair = null;
     let tvDrawings = [];
     try {
       const savedDrw = localStorage.getItem('cb_tv_drawings');
@@ -2019,6 +2338,106 @@
     } catch(e) {}
     let tvActiveDrag = null;
     let tvEmbedActive = false;
+
+    // Точные уровни и цвета Коррекции Фибоначчи из Фото 2 (ФИБОНАЧИ.jpg + КАЛКУЛЯЦИЯ.MOV)
+    const DEFAULT_MENTOR_FIBO_LEVELS = [
+      { r: 0,      lbl: '0 (Стоп)',       col: '#64748b', on: true },
+      { r: 0.236,  lbl: '0.236 (Вход)',   col: '#ef4444', on: true },
+      { r: 0.382,  lbl: '0.382',          col: '#f59e0b', on: false },
+      { r: 0.5,    lbl: '0.5',            col: '#22c55e', on: true },
+      { r: 0.618,  lbl: '0.618',          col: '#0d9488', on: true },
+      { r: 0.786,  lbl: '0.786 (Снайпер)',col: '#06b6d4', on: true },
+      { r: 1,      lbl: '1',              col: '#6b7280', on: true },
+      { r: 1.618,  lbl: '1.618 (TP2)',    col: '#3b82f6', on: true },
+      { r: 2.618,  lbl: '2.618',          col: '#ef4444', on: true },
+      { r: 3.618,  lbl: '3.618',          col: '#9333ea', on: true },
+      { r: 4.236,  lbl: '4.236',          col: '#db2777', on: true },
+      { r: 1.272,  lbl: '1.272 (TP1)',    col: '#f59e0b', on: true },
+      { r: 4.273,  lbl: '4.273',          col: '#ef4444', on: true },
+      { r: 2.272,  lbl: '2.272',          col: '#f59e0b', on: true },
+      { r: 0.86,   lbl: '0.86',           col: '#22c55e', on: true },
+      { r: 2,      lbl: '2',              col: '#0d9488', on: true },
+      { r: 3.272,  lbl: '3.272',          col: '#6b7280', on: true },
+      { r: 0.3618, lbl: '0.3618',         col: '#2563eb', on: true },
+      { r: 1.88,   lbl: '1.88',           col: '#ef4444', on: true },
+      { r: 0.11,   lbl: '0.11',           col: '#9333ea', on: true },
+      { r: 0.9,    lbl: '0.9',            col: '#db2777', on: true },
+      { r: 4.618,  lbl: '4.618',          col: '#f59e0b', on: true },
+      { r: 0.75,   lbl: '0.75 (Вход)',    col: '#0d9488', on: true }
+    ];
+    let mentorFiboLevels = JSON.parse(JSON.stringify(DEFAULT_MENTOR_FIBO_LEVELS));
+    try {
+      const savedFib = localStorage.getItem('cb_mentor_fibo_levels');
+      if (savedFib) mentorFiboLevels = JSON.parse(savedFib) || mentorFiboLevels;
+    } catch(e) {}
+
+    function saveMentorFiboLevels() {
+      try { localStorage.setItem('cb_mentor_fibo_levels', JSON.stringify(mentorFiboLevels)); } catch(e) {}
+    }
+
+    function openFavToolsModal() {
+      document.querySelectorAll('.fav-tool-card').forEach(el => el.classList.remove('active'));
+      const curCard = document.getElementById('favCard_' + tvTool);
+      if (curCard) curCard.classList.add('active');
+      document.getElementById('favToolsModal').style.display = 'flex';
+    }
+    function closeFavToolsModal() {
+      document.getElementById('favToolsModal').style.display = 'none';
+    }
+    function selectFavTool(tool) {
+      setTvTool(tool);
+      closeFavToolsModal();
+      const names = {
+        hline: 'Горизонтальная линия: коснитесь графика',
+        rect: 'Прямоугольник: потяните зону на графике',
+        trend: 'Линия тренда: проведите от точки А к точке Б',
+        long_pos: 'Длинная позиция (BUY): потяните от входа к Стопу/Тейку (Авто-расчет лота 1/5!)',
+        short_pos: 'Короткая позиция (SELL): потяните от входа к Стопу/Тейку (Авто-расчет лота 1/5!)',
+        hray: 'Горизонтальный луч: коснитесь точки старта луча',
+        path: 'Траектория: проведите импульс на графике',
+        fibo: 'Коррекция по Фибоначчи (Уровни наставника): протяните от 1 до 0',
+        ruler: 'Диапазон цен: измерьте SL пункт и Авто-Лот 1/5',
+        channel: 'Параллельный канал: протяните канал на графике',
+        brush: 'Кисть: рисуйте свободно пальцем по графику',
+        arrow: 'Стрелка: укажите направление на графике'
+      };
+      if (names[tool]) showToast('Инструмент выбран', names[tool]);
+    }
+
+    function renderFiboCfgList() {
+      const box = document.getElementById('fiboCfgGridBox');
+      if (!box) return;
+      box.innerHTML = mentorFiboLevels.map((lv, idx) => `
+        <label class="fibo-cfg-item">
+          <span style="display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" ${lv.on ? 'checked' : ''} onchange="toggleMentorFiboLvl(${idx}, this.checked)" style="accent-color:#10b981;width:14px;height:14px;" />
+            <span>${lv.r}</span>
+          </span>
+          <span class="fibo-color-dot" style="background:${lv.col};"></span>
+        </label>
+      `).join('');
+    }
+    function toggleMentorFiboLvl(idx, checked) {
+      if (mentorFiboLevels[idx]) {
+        mentorFiboLevels[idx].on = Boolean(checked);
+        saveMentorFiboLevels();
+        renderTvProChart();
+      }
+    }
+    function resetDefaultMentorFibo() {
+      mentorFiboLevels = JSON.parse(JSON.stringify(DEFAULT_MENTOR_FIBO_LEVELS));
+      saveMentorFiboLevels();
+      renderFiboCfgList();
+      renderTvProChart();
+    }
+    function openFiboCfgModal() {
+      renderFiboCfgList();
+      document.getElementById('fiboCfgModal').style.display = 'flex';
+    }
+    function closeFiboCfgModal() {
+      document.getElementById('fiboCfgModal').style.display = 'none';
+      renderTvProChart();
+    }
 
     function saveTvDrawings() {
       try { localStorage.setItem('cb_tv_drawings', JSON.stringify(tvDrawings.slice(-30))); } catch(e) {}
@@ -2033,7 +2452,7 @@
       const barInd = document.getElementById('tvBarInd');
       const barDraw = document.getElementById('tvBarDraw');
       if (tvEmbedActive) {
-        btn.textContent = '⚡ Pro График';
+        btn.textContent = '⚡ Pro';
         cvs.style.display = 'none';
         leg.style.display = 'none';
         barInd.style.display = 'none';
@@ -2043,7 +2462,7 @@
         const tvInt = tfMap[tvTf] || '15';
         wrap.innerHTML = `<iframe src="https://s.tradingview.com/widgetembed/?symbol=BINANCE%3ABTCUSDT&interval=${tvInt}&theme=dark&style=1&locale=ru&toolbarbg=0d1524&hide_side_toolbar=0&allow_symbol_change=0&save_image=0" style="width:100%;height:100%;border:none;" allowfullscreen></iframe>`;
       } else {
-        btn.textContent = '🌐 TV Виджет';
+        btn.textContent = '🌐 TV';
         wrap.style.display = 'none';
         wrap.innerHTML = '';
         cvs.style.display = 'block';
@@ -2113,9 +2532,10 @@
       renderTvProChart();
     }
 
+    const ALL_TV_TOOLS = ['cross', 'pan', 'long_pos', 'short_pos', 'fibo', 'hline', 'rect', 'trend', 'hray', 'path', 'ruler', 'channel', 'brush', 'arrow'];
     function setTvTool(tool) {
       tvTool = tool;
-      ['cross', 'pan', 'trend', 'hline', 'fibo', 'ruler'].forEach(k => {
+      ALL_TV_TOOLS.forEach(k => {
         const el = document.getElementById('tvTool_' + k);
         if (el) el.classList.toggle('draw-active', k === tool);
       });
@@ -2143,7 +2563,7 @@
       tvCrosshair = null;
       saveTvDrawings();
       renderTvProChart();
-      showToast('График очищен', 'Все нарисованные линии удалены, масштаб сброшен');
+      showToast('График очищен', 'Все нарисованные инструменты удалены, масштаб сброшен');
     }
 
     function calcEmaArray(vals, period) {
@@ -2179,6 +2599,15 @@
       return out;
     }
 
+    function calcLotByVideoFormula(slPunkti) {
+      const bal = (currentState && currentState.account && currentState.account.balance > 0) ? currentState.account.balance : 10000;
+      const part15 = bal / 5.0;
+      const slP = Math.max(10, Math.abs(slPunkti || 154));
+      const rawLot = part15 / (slP * 100.0);
+      const lot = Math.max(0.01, Math.min(100, Math.round(rawLot * 100) / 100));
+      return { lot, part15, slP: Math.round(slP) };
+    }
+
     function updateTvQuickBar() {
       const priceEl = document.getElementById('tvHeaderPrice');
       const bidNow = liveDisplayBid > 0 ? liveDisplayBid : (currentState && currentState.market ? currentState.market.bid : 0);
@@ -2201,13 +2630,47 @@
           <button class="tv-q-btn" style="background:#ef4444;" onclick="closePos(${p.ticket})">✕ Закрыть</button>
         `;
       } else {
-        const lot = (currentState.account && currentState.account.preview_lot) ? currentState.account.preview_lot.toFixed(2) : '0.02';
-        infoEl.innerHTML = `Сделок нет · Авто-лот: <b style="color:#fff;">${lot}</b>`;
+        const lot = (currentState.account && currentState.account.preview_lot) ? currentState.account.preview_lot.toFixed(2) : '0.12';
+        const part15 = (currentState.account && currentState.account.balance) ? Math.round(currentState.account.balance / 5) : 2000;
+        infoEl.innerHTML = `1/5 Деп: <b style="color:#34d399;">$${part15}</b> · Авто-лот: <b style="color:#fbbf24;">${lot}</b>`;
         btnsEl.innerHTML = `
           <button class="tv-q-btn" style="background:#10b981;" onclick="manualOrder('BUY')">↑ BUY</button>
           <button class="tv-q-btn" style="background:#ef4444;" onclick="manualOrder('SELL')">↓ SELL</button>
         `;
       }
+    }
+
+    function drawCustomFiboSet(ctx, xLeft, xRight, p0, p100, py, priceH) {
+      const diff = p100 - p0;
+      const activeLvls = mentorFiboLevels.filter(l => l.on);
+      // Подсветка золотой зоны входа наставника 0.75 - 0.786 и импульсной зоны 0.236 - 0.3618
+      const y75 = py(p0 + diff * 0.75), y786 = py(p0 + diff * 0.786);
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.14)';
+      ctx.fillRect(xLeft, Math.min(y75, y786), xRight - xLeft, Math.max(2, Math.abs(y786 - y75)));
+
+      const y236 = py(p0 + diff * 0.236), y618 = py(p0 + diff * 0.618);
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.04)';
+      ctx.fillRect(xLeft, Math.min(y236, y618), xRight - xLeft, Math.abs(y618 - y236));
+
+      activeLvls.forEach(fl => {
+        const fp = p0 + diff * fl.r;
+        const fy = py(fp);
+        if (fy >= 3 && fy <= priceH - 3) {
+          ctx.save();
+          ctx.setLineDash([4, 3]);
+          ctx.strokeStyle = fl.col;
+          ctx.lineWidth = (fl.r === 0 || fl.r === 0.236 || fl.r === 0.75 || fl.r === 0.786 || fl.r === 1.272 || fl.r === 1.618) ? 1.35 : 0.95;
+          ctx.beginPath();
+          ctx.moveTo(xLeft, fy);
+          ctx.lineTo(xRight, fy);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = fl.col;
+          ctx.font = 'bold 8.5px sans-serif';
+          ctx.fillText(`${fl.lbl} (${fmtNum(fp)})`, xLeft + 5, fy - 2.5);
+          ctx.restore();
+        }
+      });
     }
 
     function renderTvProChart() {
@@ -2283,7 +2746,7 @@
         if (p0.sl > 0) { maxP = Math.max(maxP, p0.sl); minP = Math.min(minP, p0.sl); }
         if (p0.tp > 0) { maxP = Math.max(maxP, p0.tp); minP = Math.min(minP, p0.tp); }
       }
-      const padP = Math.max((maxP - minP) * 0.10, 15);
+      const padP = Math.max((maxP - minP) * 0.14, 15);
       maxP += padP;
       minP -= padP;
 
@@ -2328,7 +2791,7 @@
         }
       }
 
-      // 2. Авто-сетка Фибоначчи Давида Трульяса
+      // 2. Авто-сетка Фибоначчи с кастомными уровнями из Фото 2
       if (tvInd.fibo) {
         let hi = -Infinity, lo = Infinity, hiIdx = 0, loIdx = 0;
         vis.forEach((c, idx) => {
@@ -2336,41 +2799,9 @@
           if (c.low < lo) { lo = c.low; loIdx = idx; }
         });
         const isUp = loIdx <= hiIdx;
-        const p0 = isUp ? hi : lo;
-        const p100 = isUp ? lo : hi;
-        const diff = p100 - p0;
-        const fibLevels = [
-          { r: 0.0,   lbl: '0.0%',          col: '#64748b' },
-          { r: 0.236, lbl: '23.6% (Вход)',  col: '#a855f7' },
-          { r: 0.382, lbl: '38.2% (Сейф)',  col: '#f59e0b' },
-          { r: 0.500, lbl: '50.0% (Трейл)', col: '#38bdf8' },
-          { r: 0.618, lbl: '61.8% (TP)',    col: '#10b981' },
-          { r: 1.0,   lbl: '100%',          col: '#64748b' }
-        ];
-        // Подсветка золотой зоны 23.6% - 61.8%
-        const y236 = py(p0 + diff * 0.236);
-        const y618 = py(p0 + diff * 0.618);
-        ctx.fillStyle = 'rgba(16, 185, 129, 0.045)';
-        ctx.fillRect(0, Math.min(y236, y618), chartW, Math.abs(y618 - y236));
-
-        fibLevels.forEach(fl => {
-          const fp = p0 + diff * fl.r;
-          const fy = py(fp);
-          if (fy >= 4 && fy <= priceH - 4) {
-            ctx.save();
-            ctx.setLineDash([4, 3]);
-            ctx.strokeStyle = fl.col;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(0, fy);
-            ctx.lineTo(chartW, fy);
-            ctx.stroke();
-            ctx.fillStyle = fl.col;
-            ctx.font = 'bold 9px sans-serif';
-            ctx.fillText(`Фибо ${fl.lbl} · ${fmtNum(fp)}`, 6, fy - 3);
-            ctx.restore();
-          }
-        });
+        const p0 = isUp ? lo : hi;
+        const p100 = isUp ? hi : lo;
+        drawCustomFiboSet(ctx, 0, chartW, p0, p100, py, priceH);
       }
 
       // 3. Полосы Боллинджера (20, 2)
@@ -2499,7 +2930,7 @@
         drawOrderLine(p0.tp, `TP ${fmtNum(p0.tp)}`, '#34d399');
       }
 
-      // 7. Пользовательские рисунки (Трендовые, Горизонтальные уровни, Своя Фибо, Линейка)
+      // 7. Отрисовка всех 12 Избранных Инструментов (из Фото 1 + Фото 2 + Авто-Лот 1/5)
       const allDrw = tvActiveDrag ? [...tvDrawings, tvActiveDrag] : tvDrawings;
       allDrw.forEach(d => {
         const x1 = ix(d.i1 - startIdx);
@@ -2518,6 +2949,25 @@
           ctx.fillStyle = '#fbbf24';
           ctx.font = 'bold 9.5px sans-serif';
           ctx.fillText(`━ ${fmtNum(d.p1)}`, 8, y1 - 4);
+        } else if (d.type === 'hray') {
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(chartW, y1);
+          ctx.stroke();
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath(); ctx.arc(x1, y1, 3.5, 0, Math.PI * 2); ctx.fill();
+          ctx.font = 'bold 9px sans-serif';
+          ctx.fillText(`⇢ ${fmtNum(d.p1)}`, Math.min(chartW - 65, x1 + 6), y1 - 4);
+        } else if (d.type === 'rect') {
+          const rx = Math.min(x1, x2), ry = Math.min(y1, y2);
+          const rw = Math.max(8, Math.abs(x2 - x1)), rh = Math.max(4, Math.abs(y2 - y1));
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.14)';
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 1.3;
+          ctx.fillRect(rx, ry, rw, rh);
+          ctx.strokeRect(rx, ry, rw, rh);
         } else if (d.type === 'trend') {
           ctx.strokeStyle = '#38bdf8';
           ctx.lineWidth = 2;
@@ -2528,37 +2978,115 @@
           ctx.fillStyle = '#38bdf8';
           ctx.beginPath(); ctx.arc(x1, y1, 3.5, 0, Math.PI * 2); ctx.fill();
           ctx.beginPath(); ctx.arc(x2, y2, 3.5, 0, Math.PI * 2); ctx.fill();
-        } else if (d.type === 'fibo') {
-          const ratios = [0, 0.236, 0.382, 0.5, 0.618, 1];
-          const leftX = Math.min(x1, x2), rightX = Math.max(x1, x2);
-          ratios.forEach(r => {
-            const fp = d.p1 + (d.p2 - d.p1) * r;
-            const fy = py(fp);
-            ctx.strokeStyle = r === 0.236 ? '#a855f7' : (r === 0.618 ? '#10b981' : '#fbbf24');
-            ctx.lineWidth = 1.1;
-            ctx.beginPath();
-            ctx.moveTo(leftX, fy);
-            ctx.lineTo(rightX, fy);
-            ctx.stroke();
-            ctx.fillStyle = ctx.strokeStyle;
-            ctx.font = '8.5px sans-serif';
-            ctx.fillText(`${(r * 100).toFixed(1)}% (${fmtNum(fp)})`, leftX + 3, fy - 2);
+        } else if (d.type === 'arrow') {
+          ctx.strokeStyle = '#f59e0b';
+          ctx.fillStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+          const ang = Math.atan2(y2 - y1, x2 - x1);
+          const headLen = 9;
+          ctx.beginPath();
+          ctx.moveTo(x2, y2);
+          ctx.lineTo(x2 - headLen * Math.cos(ang - Math.PI / 6), y2 - headLen * Math.sin(ang - Math.PI / 6));
+          ctx.lineTo(x2 - headLen * Math.cos(ang + Math.PI / 6), y2 - headLen * Math.sin(ang + Math.PI / 6));
+          ctx.closePath();
+          ctx.fill();
+        } else if (d.type === 'channel') {
+          const dy = 24;
+          ctx.strokeStyle = '#a855f7';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+          ctx.moveTo(x1, y1 - dy); ctx.lineTo(x2, y2 - dy);
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(168, 85, 247, 0.10)';
+          ctx.beginPath();
+          ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+          ctx.lineTo(x2, y2 - dy); ctx.lineTo(x1, y1 - dy);
+          ctx.closePath();
+          ctx.fill();
+        } else if (d.type === 'path') {
+          const midX = (x1 + x2) * 0.5;
+          const midY = y1 + (y2 - y1) * 0.35 + (y2 < y1 ? 18 : -18);
+          ctx.strokeStyle = '#22c55e';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(midX, midY);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+          [ [x1,y1], [midX,midY], [x2,y2] ].forEach(pt => {
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath(); ctx.arc(pt[0], pt[1], 3.2, 0, Math.PI * 2); ctx.fill();
           });
+        } else if (d.type === 'brush' && Array.isArray(d.pts) && d.pts.length > 1) {
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 2.2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          d.pts.forEach((pt, idx) => {
+            const bx = ix(pt.i - startIdx);
+            const by = py(pt.p);
+            if (idx === 0) ctx.moveTo(bx, by); else ctx.lineTo(bx, by);
+          });
+          ctx.stroke();
+        } else if (d.type === 'long_pos' || d.type === 'short_pos') {
+          // Длинная / Короткая позиция с Авто-Калькуляцией Лота 1/5 по видео!
+          const isLong = d.type === 'long_pos';
+          const entryP = d.p1;
+          const slDist = Math.max(15, Math.abs(d.p2 - d.p1));
+          const tpDist = slDist * 1.618; // Золотое соотношение Фибо 1:1.618
+          const slP = isLong ? (entryP - slDist) : (entryP + slDist);
+          const tpP = isLong ? (entryP + tpDist) : (entryP - tpDist);
+          const yEntry = py(entryP), ySl = py(slP), yTp = py(tpP);
+          const leftX = Math.min(x1, x2), rightX = Math.max(x1 + stepX * 6, x2);
+          const boxW = Math.max(70, rightX - leftX);
+
+          // Зона Тейка (зеленая)
+          ctx.fillStyle = 'rgba(16, 185, 129, 0.22)';
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 1.2;
+          ctx.fillRect(leftX, Math.min(yEntry, yTp), boxW, Math.abs(yTp - yEntry));
+          ctx.strokeRect(leftX, Math.min(yEntry, yTp), boxW, Math.abs(yTp - yEntry));
+
+          // Зона Стопа (красная)
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.22)';
+          ctx.strokeStyle = '#ef4444';
+          ctx.fillRect(leftX, Math.min(yEntry, ySl), boxW, Math.abs(ySl - yEntry));
+          ctx.strokeRect(leftX, Math.min(yEntry, ySl), boxW, Math.abs(ySl - yEntry));
+
+          // Расчет Лота по формуле 1/5 из видео (КАЛКУЛЯЦИЯ.MOV)
+          const calc = calcLotByVideoFormula(slDist);
+          const badgeTxt = `${isLong ? 'LONG' : 'SHORT'} · SL: ${calc.slP}п · LOTT 1/5: ${calc.lot.toFixed(2)} лот`;
+          ctx.fillStyle = '#0f172a';
+          const tw = ctx.measureText(badgeTxt).width + 12;
+          ctx.fillRect(leftX, yEntry - 8, Math.max(boxW, tw), 16);
+          ctx.strokeStyle = isLong ? '#10b981' : '#ef4444';
+          ctx.strokeRect(leftX, yEntry - 8, Math.max(boxW, tw), 16);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 9px sans-serif';
+          ctx.fillText(badgeTxt, leftX + 5, yEntry + 3);
+        } else if (d.type === 'fibo') {
+          const leftX = Math.min(x1, x2), rightX = Math.max(x1 + stepX * 5, x2);
+          drawCustomFiboSet(ctx, leftX, rightX, d.p1, d.p2, py, priceH);
         } else if (d.type === 'ruler') {
           const rx = Math.min(x1, x2), ry = Math.min(y1, y2);
-          const rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1);
+          const rw = Math.max(50, Math.abs(x2 - x1)), rh = Math.abs(y2 - y1);
           const diffP = d.p2 - d.p1;
-          const pct = (diffP / Math.max(1, d.p1)) * 100;
+          const slPunkti = Math.abs(diffP);
+          const calc = calcLotByVideoFormula(slPunkti);
           const isPos = diffP >= 0;
-          ctx.fillStyle = isPos ? 'rgba(16, 185, 129, 0.16)' : 'rgba(239, 68, 68, 0.16)';
+          ctx.fillStyle = isPos ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.18)';
           ctx.strokeStyle = isPos ? '#10b981' : '#ef4444';
           ctx.lineWidth = 1.3;
           ctx.fillRect(rx, ry, rw, rh);
           ctx.strokeRect(rx, ry, rw, rh);
           ctx.fillStyle = '#fff';
-          ctx.font = 'bold 9.5px sans-serif';
-          const sign = isPos ? '+' : '';
-          ctx.fillText(`${sign}${diffP.toFixed(2)}$ (${sign}${pct.toFixed(2)}%)`, rx + 4, ry + 12);
+          ctx.font = 'bold 9px sans-serif';
+          ctx.fillText(`SL: ${Math.round(slPunkti)}п → Лот 1/5: ${calc.lot.toFixed(2)}`, rx + 4, ry + 12);
         }
         ctx.restore();
       });
@@ -2687,12 +3215,15 @@
         } else if (tvTool === 'pan') {
           panStartX = pos.x;
           panStartOffset = tvScrollRightOffset;
-        } else if (['trend', 'hline', 'fibo', 'ruler'].includes(tvTool)) {
+        } else {
           const barIdx = g.startIdx + Math.max(0, Math.min(g.count - 1, Math.floor(pos.x / g.stepX)));
           const price = g.yp(Math.min(g.priceH, Math.max(0, pos.y)));
-          if (tvTool === 'hline') {
-            tvDrawings.push({ type: 'hline', i1: barIdx, p1: price });
+          if (tvTool === 'hline' || tvTool === 'hray') {
+            tvDrawings.push({ type: tvTool, i1: barIdx, p1: price });
             saveTvDrawings();
+            renderTvProChart();
+          } else if (tvTool === 'brush') {
+            tvActiveDrag = { type: 'brush', i1: barIdx, p1: price, pts: [{ i: barIdx, p: price }] };
             renderTvProChart();
           } else {
             tvActiveDrag = { type: tvTool, i1: barIdx, p1: price, i2: barIdx, p2: price };
@@ -2717,8 +3248,13 @@
           renderTvProChart();
         } else if (tvActiveDrag) {
           ev.preventDefault();
-          tvActiveDrag.i2 = g.startIdx + Math.max(0, Math.min(g.count - 1, Math.floor(pos.x / g.stepX)));
-          tvActiveDrag.p2 = g.yp(Math.min(g.priceH, Math.max(0, pos.y)));
+          const curBar = g.startIdx + Math.max(0, Math.min(g.count - 1, Math.floor(pos.x / g.stepX)));
+          const curPrice = g.yp(Math.min(g.priceH, Math.max(0, pos.y)));
+          tvActiveDrag.i2 = curBar;
+          tvActiveDrag.p2 = curPrice;
+          if (tvActiveDrag.type === 'brush' && Array.isArray(tvActiveDrag.pts)) {
+            tvActiveDrag.pts.push({ i: curBar, p: curPrice });
+          }
           renderTvProChart();
         }
       };
@@ -2743,7 +3279,7 @@
     let latestApkUrl = SERVER_URL + '/Crypto_Bot_v2_50.apk';
 
     function getCurrentLocalVersionCode() {
-      let localCode = 269;
+      let localCode = 270;
       if (hasNative && window.AndroidBridge.getAppVersionCode) {
         try { localCode = Math.max(localCode, Number(window.AndroidBridge.getAppVersionCode())); } catch(e) {}
       }

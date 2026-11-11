@@ -1,6 +1,6 @@
 {
-    "changelog":  "v2.69: Добавлена вкладка График (TradingView Pro + инструменты рисования, таймфреймы и индикаторы)",
-    "version_code":  269,
+    "changelog":  "v2.70: Авто-калькуляция депозита 1/5 (по видео + Excel), 12 избранных инструментов TradingView и кастомная Фибоначчи",
+    "version_code":  270,
     "apk_url":  "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk",
-    "version_name":  "2.69"
+    "version_name":  "2.70"
 }

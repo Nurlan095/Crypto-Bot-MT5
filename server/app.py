@@ -54,7 +54,7 @@ def sync_server_artifacts_on_startup() -> None:
         except Exception:
             pass
 
-    target_code = max(int(cur_info.get("version_code", 267)), int(repo_info.get("version_code", 269)), 269)
+    target_code = max(int(cur_info.get("version_code", 267)), int(repo_info.get("version_code", 270)), 270)
     target_name = f"{target_code / 100.0:.2f}"
     target_changelog = repo_info.get("changelog") or cur_info.get("changelog") or f"Обновление v{target_name}"
 
