@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Outer glowing circle ring -->
+    <path
+        android:pathData="M54,20 A34,34 0 1,1 53.99,20 Z"
+        android:strokeWidth="2.4"
+        android:strokeColor="#F59E0B"
+        android:fillColor="#111A2B" />
+
+    <!-- Mandarin Box consolidation highlight -->
+    <path
+        android:pathData="M27,54 L53,54 L53,70 L27,70 Z"
+        android:fillColor="#26F59E0B"
+        android:strokeWidth="1.2"
+        android:strokeColor="#F59E0B" />
+
+    <!-- Candle 1 (Red inside box) -->
+    <path
+        android:pathData="M33,51 L33,72"
+        android:strokeWidth="1.8"
+        android:strokeColor="#EF4444" />
+    <path
+        android:pathData="M30.5,56 L35.5,56 L35.5,67 L30.5,67 Z"
+        android:fillColor="#EF4444" />
+
+    <!-- Candle 2 (Green inside box) -->
+    <path
+        android:pathData="M41,53 L41,71"
+        android:strokeWidth="1.8"
+        android:strokeColor="#10B981" />
+    <path
+        android:pathData="M38.5,58 L43.5,58 L43.5,66 L38.5,66 Z"
+        android:fillColor="#10B981" />
+
+    <!-- Candle 3 (Doji/Squeeze inside box) -->
+    <path
+        android:pathData="M49,55 L49,69"
+        android:strokeWidth="1.8"
+        android:strokeColor="#F59E0B" />
+    <path
+        android:pathData="M46.5,60 L51.5,60 L51.5,65 L46.5,65 Z"
+        android:fillColor="#F59E0B" />
+
+    <!-- BOS Horizontal Green Breakout Level -->
+    <path
+        android:pathData="M25,49 L83,49"
+        android:strokeWidth="1.5"
+        android:strokeColor="#34D399" />
+
+    <!-- Candle 4 (BOS Breakout Marubozu Green Candle) -->
+    <path
+        android:pathData="M60,35 L60,65"
+        android:strokeWidth="2.2"
+        android:strokeColor="#10B981" />
+    <path
+        android:pathData="M56.5,38 L63.5,38 L63.5,62 L56.5,62 Z"
+        android:fillColor="#10B981" />
+
+    <!-- Candle 5 (Strong Impulse Continuation Green Candle) -->
+    <path
+        android:pathData="M71,27 L71,54"
+        android:strokeWidth="2.2"
+        android:strokeColor="#34D399" />
+    <path
+        android:pathData="M67.5,30 L74.5,30 L74.5,48 L67.5,48 Z"
+        android:fillColor="#34D399" />
+
+    <!-- Golden Bitcoin / Gold Badge at Top-Left -->
+    <path
+        android:pathData="M38,26 A10,10 0 1,1 37.99,26 Z"
+        android:fillColor="#F59E0B"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FEF3C7" />
+    <!-- B symbol inside badge -->
+    <path
+        android:pathData="M36,30 L36,42 M38.5,30 L38.5,42 M34.5,32 L39.5,32 C41,32 41.8,33 41.8,34 C41.8,35 41,35.8 39.5,35.8 L35.5,35.8 M35.5,35.8 L40,35.8 C41.6,35.8 42.4,36.7 42.4,38 C42.4,39.3 41.5,40.2 39.8,40.2 L34.5,40.2"
+        android:strokeWidth="1.6"
+        android:strokeColor="#080D18"
+        android:strokeLineCap="round" />
+</vector>

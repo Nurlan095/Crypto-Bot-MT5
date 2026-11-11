@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Crypto Bot 24/7</title>
+  <style>
+    :root {
+      --bg: #080d16;
+      --card: #101826;
+      --card-inner: #0c131f;
+      --border: #1e2c42;
+      --border-light: #283a56;
+      --text: #f1f5f9;
+      --muted: #8b9bb4;
+      --green: #10b981;
+      --green-bright: #16c784;
+      --red: #ef4444;
+      --gold: #f59e0b;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    html, body {
+      width: 100%;
+      height: 100dvh;
+      max-height: 100dvh;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* Вкладки на весь экран без прокрутки */
+    .tab-pane {
+      display: none;
+      width: 100%;
+      height: calc(100dvh - 54px);
+      padding: 8px 10px 6px 10px;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+      overflow-y: auto;
+    }
+    .tab-pane.active {
+      display: flex;
+    }
+
+    /* Шапка Экран 1 */
+    .top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .brand-left {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+    .app-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      flex-shrink: 0;
+    }
+    .brand-title-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+    .brand-name {
+      font-size: 17px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+    .badge-active {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      white-space: nowrap;
+    }
+    .badge-Active-pause {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+    }
+    .brand-sub {
+      font-size: 11px;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      margin-top: 1px;
+    }
+    .dot-online {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+      display: inline-block;
+    }
+    .btn-stop {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 9px;
+      background: #131d2e;
+      border: 1px solid #2a3b56;
+      color: #f1f5f9;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    /* Переключатель Биткоин / Золото */
+    .asset-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+    .asset-btn {
+      height: 32px;
+      border-radius: 9px;
+      background: #101826;
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .asset-btn.active {
+      background: rgba(16, 185, 129, 0.14);
+      border: 1.5px solid #10b981;
+      color: #fff;
+      box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.15);
+    }
+
+    /* 3 карточки показателей */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: 1.12fr 1.05fr 0.88fr;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .m-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 6px 8px;
+      min-width: 0;
+    }
+    .m-label {
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .m-val {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      margin: 1px 0;
+      white-space: nowrap;
+    }
+    .m-sub {
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* Заголовки секций */
+    .sec-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #f1f5f9;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Кнопки Купить / Продать */
+    .buy-sell-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 5px;
+      flex-shrink: 0;
+    }
+    .btn-buy {
+      height: 32px;
+      border-radius: 9px;
+      border: 1px solid #34d399;
+      background: linear-gradient(180deg, #16c784 0%, #0d9f68 100%);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      white-space: nowrap;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(16, 185, 129, 0.25);
+    }
+    .btn-sell {
+      height: 32px;
+      border-radius: 9px;
+      border: 1px solid #f87171;
+      background: linear-gradient(180deg, #f05252 0%, #c81e1e 100%);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      white-space: nowrap;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(239, 68, 68, 0.25);
+    }
+
+    /* Карточка сделки как на макете */
+    .trade-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 7px 9px;
+      flex-shrink: 0;
+    }
+    .trade-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      white-space: nowrap;
+    }
+    .trade-sym {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .tag-buy {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      color: #34d399;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 5px;
+    }
+    .tag-sell {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #f87171;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 5px;
+    }
+    .trade-table {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid #1c293e;
+      border-radius: 8px;
+      background: var(--card-inner);
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+    .trade-cell {
+      padding: 3px 8px;
+      border-bottom: 1px solid #1c293e;
+      border-right: 1px solid #1c293e;
+    }
+    .trade-cell:nth-child(2n) { border-right: none; }
+    .trade-cell:nth-child(n+3) { border-bottom: none; }
+    .tc-lbl { font-size: 9.5px; color: var(--muted); }
+    .tc-val { font-size: 12px; font-weight: 800; color: #fff; }
+    .safe-status-line {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .trade-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .t-act-btn {
+      height: 27px;
+      border-radius: 7px;
+      background: #162032;
+      border: 1px solid #283a56;
+      color: #e2e8f0;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    /* Живой график M15 (занимает гибкое место) */
+    .chart-section {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 115px;
+    }
+    .chart-box {
+      flex: 1;
+      width: 100%;
+      background: #0a101b;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      position: relative;
+      overflow: hidden;
+    }
+    canvas#chart {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Что делает робот */
+    .robot-section {
+      flex-shrink: 0;
+    }
+    .robot-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 6px 8px;
+    }
+    .robot-bullets {
+      font-size: 10.5px;
+      color: #e2e8f0;
+      line-height: 1.35;
+      margin-bottom: 5px;
+    }
+    .check-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 6px;
+    }
+    .chk-pill {
+      background: var(--card-inner);
+      border: 1px solid #1c293e;
+      border-radius: 7px;
+      padding: 3px 7px;
+      font-size: 10.5px;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    /* ЭКРАН 2 и ЭКРАН 3: Общие карточки */
+    .page-h1 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      padding: 2px 2px 0 2px;
+      flex-shrink: 0;
+    }
+    .glass-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .gc-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #192538;
+    }
+    .gc-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+    .badge-gold {
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      color: #fbbf24;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 7px;
+      white-space: nowrap;
+    }
+
+    /* ЭКРАН 2: Списки */
+    .news-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      background: var(--card-inner);
+      border: 1px solid #192538;
+    }
+    .news-row.highlight {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+    .deal-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #172234;
+      font-size: 12.5px;
+    }
+    .deal-row:last-child { border-bottom: none; }
+    .coin-ico {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+    .coin-btc { background: #f59e0b; color: #080d16; }
+    .coin-xau { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
+
+    /* Вертикальный таймлайн событий */
+    .timeline {
+      position: relative;
+      padding-left: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 5px;
+      top: 6px;
+      bottom: 6px;
+      width: 2px;
+      background: #10b981;
+    }
+    .tl-item {
+      position: relative;
+      font-size: 12px;
+      color: #e2e8f0;
+      display: flex;
+      gap: 10px;
+    }
+    .tl-item::before {
+      content: "";
+      position: absolute;
+      left: -17px;
+      top: 3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+    }
+    .tl-time {
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    /* ЭКРАН 3: Инлайн-поля и iOS-тумблеры */
+    .inline-field {
+      display: flex;
+      align-items: center;
+      background: var(--card-inner);
+      border: 1px solid #223049;
+      border-radius: 9px;
+      height: 36px;
+      padding: 0 10px;
+    }
+    .inline-field span {
+      width: 72px;
+      font-size: 12px;
+      color: var(--muted);
+      border-right: 1px solid #1e2c42;
+      flex-shrink: 0;
+    }
+    .inline-field input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding-left: 10px;
+    }
+    .strat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #172234;
+    }
+    .strat-row:last-child { border-bottom: none; }
+    .strat-title { font-size: 12.5px; font-weight: 700; color: #f1f5f9; }
+    .strat-sub { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+
+    /* Тумблер (Switch) */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      transition: 0.2s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 2px;
+      background-color: #fff;
+      transition: 0.2s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #10b981;
+      border-color: #34d399;
+    }
+    input:checked + .slider:before {
+      transform: translateX(19px);
+    }
+
+    .risk-select {
+      background: var(--card-inner);
+      border: 1px solid #283a56;
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .btn-save-main {
+      width: 100%;
+      height: 42px;
+      border-radius: 11px;
+      border: 1px solid #34d399;
+      background: linear-gradient(180deg, #16c784 0%, #0d9f68 100%);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+      flex-shrink: 0;
+    }
+
+    /* Нижнее меню */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 54px;
+      background: #0a101b;
+      border-top: 1px solid #1c293e;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      z-index: 100;
+    }
+    .nav-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .nav-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+    .nav-btn.active {
+      color: #10b981;
+    }
+
+    /* Модальное окно автообновления */
+    #updateModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .modal-box {
+      background: #101826;
+      border: 1px solid #10b981;
+      border-radius: 16px;
+      padding: 18px;
+      max-width: 350px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Принудительное окно автообновления при запуске -->
+  <div id="updateModal">
+    <div class="modal-box" style="text-align:center;">
+      <div style="font-size:17px;font-weight:800;margin-bottom:6px;color:#34d399;">🚀 Доступно обновление!</div>
+      <div id="updateModalVer" style="font-size:13px;color:var(--muted);margin-bottom:14px;">Установите новую версию для продолжения работы</div>
+      <div id="updateProgressBox" style="display:none;margin-bottom:14px;">
+        <div style="font-size:12px;color:#10b981;margin-bottom:5px;" id="updateProgressText">Скачивание: 0%</div>
+        <div style="width:100%;height:8px;background:#0a0f1a;border-radius:6px;overflow:hidden;">
+          <div id="updateProgressBar" style="width:0%;height:100%;background:#10b981;transition:width 0.2s;"></div>
+        </div>
+      </div>
+      <button class="btn-buy" style="width:100%;height:42px;font-size:14px;" onclick="startApkUpdate()">⬇️ Обновить сейчас</button>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- ЭКРАН 1: ТЕРМИНАЛ (Всё на одном экране без прокрутки)                -->
+  <!-- ==================================================================== -->
+  <div id="tab-main" class="tab-pane active">
+    <!-- Шапка -->
+    <div class="top-header">
+      <div class="brand-left">
+        <img class="app-logo" src="data:image/webp;base64,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" alt="Logo" />
+        <div>
+          <div class="brand-title-row">
+            <span class="brand-name">Crypto Bot</span>
+            <span id="statusBadge" class="badge-active">● АКТИВЕН</span>
+          </div>
+          <div class="brand-sub" id="sourceSub">
+            <span class="dot-online"></span>
+            <span>Счет MT5 #8112287 онлайн</span>
+          </div>
+        </div>
+      </div>
+      <button class="btn-stop" id="btnToggleRun" onclick="toggleBot()">⏸ Стоп</button>
+    </div>
+
+    <!-- Переключатель Биткоин / Золото -->
+    <div class="asset-row">
+      <button class="asset-btn active" id="btnBTC" onclick="setSymbol('BTCUSD')">
+        <span style="color:#f59e0b;font-weight:900;font-size:14px;">₿</span>
+        <span>Биткоин (BTCUSD)</span>
+      </button>
+      <button class="asset-btn" id="btnXAU" onclick="setSymbol('XAUUSD')">
+        <span style="color:#fbbf24;font-size:13px;">🥇</span>
+        <span>Золото (XAUUSD)</span>
+      </button>
+    </div>
+
+    <!-- 3 карточки показателей -->
+    <div class="metrics-row">
+      <div class="m-card">
+        <div class="m-label">Баланс MT5</div>
+        <div class="m-val" id="valBalance">$10 003,57</div>
+        <div class="m-sub" id="valEquity">Прибыль: <b style="color:#34d399">+$2.86</b></div>
+      </div>
+      <div class="m-card">
+        <div class="m-label">Цена сейчас</div>
+        <div class="m-val" id="valPrice">74 940.00</div>
+        <div class="m-sub" id="valSpread">Шаг ATR: 262.7</div>
+      </div>
+      <div class="m-card">
+        <div class="m-label">Рабочий лот</div>
+        <div class="m-val" id="valLot">0.02 лот</div>
+        <div class="m-sub" id="valRisk">Риск 3%</div>
+      </div>
+    </div>
+
+    <!-- Мои открытые сделки -->
+    <div style="flex-shrink:0;">
+      <div class="sec-title">
+        <span>Мои открытые сделки</span>
+      </div>
+      <div class="buy-sell-row">
+        <button class="btn-buy" onclick="manualOrder('BUY')">↑ Купить (BUY)</button>
+        <button class="btn-sell" onclick="manualOrder('SELL')">↓ Продать (SELL)</button>
+      </div>
+      <div id="positionsList"></div>
+    </div>
+
+    <!-- Живой график M15 -->
+    <div class="chart-section">
+      <div class="sec-title">
+        <span>Живой график M15</span>
+        <span id="candleTimer" style="font-size:10.5px;color:var(--muted);font-weight:600;"></span>
+      </div>
+      <div class="chart-box">
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Что делает робот -->
+    <div class="robot-section">
+      <div class="sec-title">
+        <span>Что делает робот</span>
+      </div>
+      <div class="robot-box">
+        <div class="robot-bullets" id="humanStatusBox">
+          <div><span style="color:#10b981;">●</span> Открыта сделка в MetaTrader 5!</div>
+          <div><span style="color:#10b981;">●</span> Робот следит за ценой...</div>
+        </div>
+        <div class="check-grid" id="checkGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- ЭКРАН 2: ИСТОРИЯ И НОВОСТИ                                           -->
+  <!-- ==================================================================== -->
+  <div id="tab-history" class="tab-pane">
+    <div class="page-h1">История и новости</div>
+
+    <div class="glass-card">
+      <div class="gc-head">
+        <span class="gc-title">📅 Календарь новостей USD</span>
+        <span class="badge-gold">🛡 Защита включена</span>
+      </div>
+      <div id="newsEventsList" style="display:flex;flex-direction:column;gap:5px;"></div>
+    </div>
+
+    <div class="glass-card" style="flex:1;min-height:0;overflow-y:auto;">
+      <div class="gc-head">
+        <span class="gc-title">📊 История закрытых сделок MT5</span>
+      </div>
+      <div id="historyList" style="display:flex;flex-direction:column;"></div>
+    </div>
+
+    <div class="glass-card">
+      <div class="gc-head">
+        <span class="gc-title">🔔 Журнал событий робота</span>
+        <button class="btn-stop" style="height:28px;font-size:11px;padding:0 10px;" onclick="testPushNotification()">🔔 Тест звука</button>
+      </div>
+      <div class="timeline" id="notifList"></div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- ЭКРАН 3: ПРОСТЫЕ НАСТРОЙКИ                                           -->
+  <!-- ==================================================================== -->
+  <div id="tab-settings" class="tab-pane">
+    <div class="page-h1">Простые настройки</div>
+
+    <div class="glass-card">
+      <div class="gc-head">
+        <span class="gc-title">🪪 Счет MetaTrader 5 (AMarkets)</span>
+        <span id="mt5ConnBadge" class="badge-active">ПОДКЛЮЧЕН</span>
+      </div>
+      <div class="inline-field">
+        <span>Логин</span>
+        <input type="text" id="s_mt5_login" placeholder="8112287" />
+      </div>
+      <div class="inline-field">
+        <span>Пароль</span>
+        <input type="password" id="s_mt5_password" placeholder="•••••••" />
+        <button type="button" onclick="togglePwd()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;">👁</button>
+      </div>
+      <div class="inline-field">
+        <span>Сервер</span>
+        <input type="text" id="s_mt5_server" placeholder="AMarkets-Demo" />
+      </div>
+    </div>
+
+    <div class="glass-card" style="flex:1;justify-content:space-around;">
+      <div class="gc-head">
+        <span class="gc-title">⚙️ Настройки стратегии</span>
+      </div>
+
+      <div class="strat-row">
+        <div class="strat-title">Стратегия робота</div>
+        <select class="risk-select" id="s_InpStrategyMode">
+          <option value="2" selected>⚡ Импульс M15 (Активная)</option>
+          <option value="1">🎯 Пробой «Мандарин»</option>
+          <option value="3">🔄 Отскок от уровней</option>
+        </select>
+      </div>
+
+      <div class="strat-row">
+        <div class="strat-title">Риск на одну сделку</div>
+        <select class="risk-select" id="s_InpRiskPercent">
+          <option value="1.0">1.0%</option>
+          <option value="2.0">2.0%</option>
+          <option value="3.0" selected>3.0%</option>
+          <option value="5.0">5.0%</option>
+        </select>
+      </div>
+
+      <div class="strat-row">
+        <div>
+          <div class="strat-title">Сейф 50%</div>
+          <div class="strat-sub">Забирать половину прибыли</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="s_InpUsePartialClose" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="strat-row">
+        <div>
+          <div class="strat-title">Защита от новостей USD</div>
+          <div class="strat-sub">Пауза перед важными новостями</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="s_InpUseNewsFilter" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="strat-row">
+        <div>
+          <div class="strat-title">Только по тренду H1</div>
+          <div class="strat-sub">Сверяться с часовым графиком</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="s_InpUseHTFFilter" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="strat-row">
+        <div>
+          <div class="strat-title">Ждать коробку «Мандарин»</div>
+          <div class="strat-sub">Дождаться узкого диапазона цен</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="s_InpUseMandarin" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <button class="btn-save-main" onclick="saveBotSettings()">💾 Сохранить настройки</button>
+  </div>
+
+  <!-- Нижняя панель навигации -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="switchTab('main', this)">
+      <svg viewBox="0 0 24 24"><path d="M6 4v16M6 8h3v8H6zM15 4v16M15 7h3v10h-3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Терминал</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('history', this)">
+      <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+      <span>История</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('settings', this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.77 1.05 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Настройки</span>
+    </button>
+  </div>
+
+  <script>
+    const SERVER_URL = 'https://webrelax.pro/cryptobot';
+    const hasNative = typeof window.AndroidBridge !== 'undefined';
+    let currentState = null;
+    let settingsInitialized = false;
+    let lastServerNotifId = 0;
+    let audioCtx = null;
+
+    function togglePwd() {
+      const inp = document.getElementById('s_mt5_password');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    function playWebChime() {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        if (!audioCtx) audioCtx = new AC();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        [880, 1174.66].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.13);
+          gain.gain.setValueAtTime(0.3, now + idx * 0.13);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.13 + 0.24);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.13);
+          osc.stop(now + idx * 0.13 + 0.25);
+        });
+      } catch(e) {}
+    }
+
+    function showToast(title, msg) {
+      let box = document.getElementById('toastAlert');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'toastAlert';
+        box.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;background:#101b2d;border:1.5px solid #10b981;border-radius:12px;padding:10px 14px;z-index:9998;box-shadow:0 8px 24px rgba(0,0,0,0.7);transition:opacity 0.25s;';
+        document.body.appendChild(box);
+      }
+      box.innerHTML = `<div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:2px;">🔔 ${title}</div><div style="font-size:12px;color:#f1f5f9;">${msg}</div>`;
+      box.style.display = 'block';
+      box.style.opacity = '1';
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        box.style.opacity = '0';
+        setTimeout(() => { box.style.display = 'none'; }, 250);
+      }, 3000);
+    }
+
+    function sendPush(title, msg) {
+      playWebChime();
+      showToast(title, msg);
+      if (hasNative) {
+        try { window.AndroidBridge.sendNotification(title, msg); } catch(e) {}
+      }
+    }
+    function testPushNotification() {
+      sendPush('Crypto Bot 24/7', 'Звук, вибрация и уведомления работают отлично!');
+    }
+
+    async function httpGetJson(url) {
+      if (hasNative) {
+        try {
+          const raw = window.AndroidBridge.httpGet(url);
+          if (raw && raw.length > 2) return JSON.parse(raw);
+        } catch(e) {}
+      }
+      const res = await fetch(url);
+      return await res.json();
+    }
+
+    async function httpPostJson(url, bodyObj) {
+      const jsonStr = JSON.stringify(bodyObj);
+      if (hasNative) {
+        try {
+          const raw = window.AndroidBridge.httpPost(url, jsonStr);
+          if (raw && raw.length > 2) return JSON.parse(raw);
+        } catch(e) {}
+      }
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: jsonStr
+      });
+      return await res.json();
+    }
+
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      if (btn) btn.classList.add('active');
+      if (name === 'main' && currentState) setTimeout(() => drawChart(currentState), 20);
+    }
+
+    async function setSymbol(sym) {
+      await httpPostJson(SERVER_URL + '/api/settings', {symbol: sym});
+      await pollCycle();
+    }
+    async function toggleBot() {
+      if (!currentState) return;
+      await httpPostJson(SERVER_URL + '/api/settings', {is_running: !currentState.is_running});
+      await pollCycle();
+    }
+    async function manualOrder(type) {
+      await httpPostJson(SERVER_URL + '/api/control', {action: 'open', pos_type: type});
+      await pollCycle();
+    }
+    async function closePos(ticket) {
+      await httpPostJson(SERVER_URL + '/api/control', {action: 'close', ticket: ticket});
+      await pollCycle();
+    }
+    async function safePos(ticket) {
+      await httpPostJson(SERVER_URL + '/api/control', {action: 'safe', ticket: ticket});
+      await pollCycle();
+    }
+    async function bePos(ticket) {
+      await httpPostJson(SERVER_URL + '/api/control', {action: 'breakeven', ticket: ticket});
+      await pollCycle();
+    }
+
+    async function saveBotSettings() {
+      const payload = {
+        mt5_login: document.getElementById('s_mt5_login').value.trim(),
+        mt5_password: document.getElementById('s_mt5_password').value.trim(),
+        mt5_server: document.getElementById('s_mt5_server').value.trim(),
+        InpStrategyMode: parseInt(document.getElementById('s_InpStrategyMode').value || '2', 10),
+        InpRiskPercent: parseFloat(document.getElementById('s_InpRiskPercent').value || '3.0'),
+        InpUsePartialClose: document.getElementById('s_InpUsePartialClose').checked,
+        InpUseNewsFilter: document.getElementById('s_InpUseNewsFilter').checked,
+        InpUseHTFFilter: document.getElementById('s_InpUseHTFFilter').checked,
+        InpUseMandarin: document.getElementById('s_InpUseMandarin').checked
+      };
+      await httpPostJson(SERVER_URL + '/api/settings', payload);
+      await pollCycle();
+      showToast('Настройки сохранены', 'Параметры стратегии и счет MT5 обновлены на сервере 24/7');
+    }
+
+    function updateCandleCountdown() {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const rem = 900 - (nowSec % 900);
+      const mm = String(Math.floor(rem / 60)).padStart(2, '0');
+      const ss = String(rem % 60).padStart(2, '0');
+      const el = document.getElementById('candleTimer');
+      if (el) el.textContent = `⏱ ${mm}:${ss}`;
+    }
+    setInterval(updateCandleCountdown, 1000);
+
+    function fmtNum(n) {
+      const parts = Number(n || 0).toFixed(2).split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      return parts.join('.');
+    }
+
+    let liveWs = null;
+    let liveWsSymbol = '';
+    let liveTargetBid = 0;
+    let liveDisplayBid = 0;
+    let lastPriceTickDir = 1; // 1 = up (green), -1 = down (red)
+    let lastDomPriceUpdate = 0;
+
+    // Живой буфер свечей, который непрерывно движется влево
+    const LIVE_CANDLE_COUNT = 26;
+    const LIVE_BAR_MS = 2200; // Новая живая свеча каждые 2.2 сек -> график плавно идет влево
+    let liveRollingCandles = [];
+    let liveRollingSymbol = '';
+    let lastBarSpawnTime = 0;
+    let slideAnimOffset = 0; // Плавный сдвиг влево (в долях stepX)
+    let boxStartIdx = 9;
+    let boxEndIdx = 17;
+    let boxHighPrice = 0;
+    let boxLowPrice = 0;
+
+    function initLiveRollingCandles(state) {
+      const sym = state.symbol || 'BTCUSD';
+      const isGold = sym === 'XAUUSD';
+      const baseBid = (state.market && state.market.bid > 0) ? state.market.bid : (isGold ? 2650 : 74800);
+      const stepVol = isGold ? 0.42 : 4.2;
+      liveRollingSymbol = sym;
+      liveRollingCandles = [];
+
+      // Генерируем живую цепочку свечей, привязанную к текущей цене, чтобы новые свечи справа были такого же масштаба
+      let curP = baseBid - stepVol * 2.5;
+      const nowSec = Math.floor(Date.now() / 1000);
+      const pattern = [0.6, -0.4, 0.8, 0.5, -0.7, 0.9, -0.3, 0.4, -0.5, 0.3, -0.2, 0.25, -0.3, 0.2, -0.15, 0.2, -0.25, 0.7, 0.9, -0.4, 0.8, 0.6, -0.5, 0.7, -0.3, 0.4];
+      for (let i = 0; i < LIVE_CANDLE_COUNT; i++) {
+        const delta = pattern[i % pattern.length] * stepVol;
+        const open = curP;
+        const close = (i === LIVE_CANDLE_COUNT - 1) ? baseBid : (open + delta);
+        const high = Math.max(open, close) + stepVol * (0.35 + (i % 3) * 0.18);
+        const low = Math.min(open, close) - stepVol * (0.35 + ((i + 1) % 3) * 0.18);
+        liveRollingCandles.push({
+          time: nowSec - (LIVE_CANDLE_COUNT - 1 - i) * 3,
+          open,
+          high,
+          low,
+          close
+        });
+        curP = close;
+      }
+      boxStartIdx = 8;
+      boxEndIdx = 16;
+      recalcMandarinBoxBounds();
+      lastBarSpawnTime = performance.now();
+      slideAnimOffset = 0;
+    }
+
+    function recalcMandarinBoxBounds() {
+      let hi = -Infinity, lo = Infinity;
+      for (let i = Math.max(0, boxStartIdx); i <= Math.min(liveRollingCandles.length - 1, boxEndIdx); i++) {
+        const c = liveRollingCandles[i];
+        if (c) {
+          if (c.high > hi) hi = c.high;
+          if (c.low < lo) lo = c.low;
+        }
+      }
+      if (hi > lo) {
+        boxHighPrice = hi;
+        boxLowPrice = lo;
+      }
+    }
+
+    function connectLiveStream(symbol) {
+      const sym = symbol || 'BTCUSD';
+      if (liveWs && liveWsSymbol === sym && liveWs.readyState <= 1) return;
+      if (liveWs) {
+        try { liveWs.close(); } catch(e) {}
+        liveWs = null;
+      }
+      liveWsSymbol = sym;
+      const streamName = sym === 'XAUUSD' ? 'paxgusdt@aggTrade' : 'btcusdt@aggTrade';
+      try {
+        const ws = new WebSocket('wss://data-stream.binance.vision/ws/' + streamName);
+        liveWs = ws;
+        ws.onmessage = function(ev) {
+          try {
+            const d = JSON.parse(ev.data);
+            const p = parseFloat(d.p);
+            if (p > 0 && currentState && currentState.symbol === sym) {
+              if (liveTargetBid > 0 && p !== liveTargetBid) {
+                lastPriceTickDir = p > liveTargetBid ? 1 : -1;
+              }
+              liveTargetBid = p;
+              currentState.market.bid = p;
+            }
+          } catch(e) {}
+        };
+        ws.onerror = function() {};
+        ws.onclose = function() {
+          if (liveWs === ws) liveWs = null;
+        };
+      } catch(e) {}
+    }
+
+    function updateLiveDomPrice(bidNow) {
+      const now = performance.now();
+      if (now - lastDomPriceUpdate < 180) return;
+      lastDomPriceUpdate = now;
+      const el = document.getElementById('valPrice');
+      if (el && bidNow > 0) {
+        const prevTxt = el.textContent;
+        const nextTxt = fmtNum(bidNow);
+        if (prevTxt !== nextTxt) {
+          el.textContent = nextTxt;
+          el.style.transition = 'color 0.15s ease';
+          el.style.color = lastPriceTickDir >= 0 ? '#34d399' : '#f87171';
+          clearTimeout(el._priceColorTimer);
+          el._priceColorTimer = setTimeout(() => { el.style.color = '#ffffff'; }, 380);
+        }
+      }
+    }
+
+    function animateLiveChartFrame() {
+      if (currentState && currentState.market && currentState.market.bid > 0) {
+        const sym = currentState.symbol || 'BTCUSD';
+        if (liveRollingCandles.length === 0 || liveRollingSymbol !== sym) {
+          initLiveRollingCandles(currentState);
+        }
+
+        if (liveTargetBid <= 0) liveTargetBid = currentState.market.bid;
+        if (liveDisplayBid <= 0 || Math.abs(liveTargetBid - liveDisplayBid) > liveTargetBid * 0.05) {
+          liveDisplayBid = liveTargetBid;
+        } else {
+          liveDisplayBid += (liveTargetBid - liveDisplayBid) * 0.22;
+        }
+
+        const t = performance.now();
+        const isGold = sym === 'XAUUSD';
+        const stepVol = isGold ? 0.42 : 4.2;
+        // Живое колебание цены внутри свечи
+        const microOsc = (Math.sin(t / 290) * 0.65 + Math.cos(t / 155) * 0.45 + Math.sin(t / 680) * 0.5) * (stepVol * 0.72);
+        const prevAnimated = currentState._animatedBid || liveDisplayBid;
+        const animatedBid = liveDisplayBid + microOsc;
+        if (Math.abs(animatedBid - prevAnimated) > (isGold ? 0.02 : 0.15)) {
+          lastPriceTickDir = animatedBid >= prevAnimated ? 1 : -1;
+        }
+        currentState._animatedBid = animatedBid;
+
+        // Обновляем текущую правую свечу
+        const lastC = liveRollingCandles[liveRollingCandles.length - 1];
+        if (lastC) {
+          lastC.close = animatedBid;
+          if (animatedBid > lastC.high) lastC.high = animatedBid;
+          if (animatedBid < lastC.low) lastC.low = animatedBid;
+        }
+
+        // Каждые 2.2 секунды рождается новая свеча справа, а весь график плавно сдвигается влево!
+        if (t - lastBarSpawnTime >= LIVE_BAR_MS) {
+          lastBarSpawnTime = t;
+          const prevClose = lastC ? lastC.close : animatedBid;
+          liveRollingCandles.shift();
+          liveRollingCandles.push({
+            time: Math.floor(Date.now() / 1000),
+            open: prevClose,
+            high: prevClose + stepVol * 0.12,
+            low: prevClose - stepVol * 0.12,
+            close: animatedBid
+          });
+          // Сдвигаем Коробку Мандарин влево вместе со свечами
+          boxStartIdx--;
+          boxEndIdx--;
+          if (boxEndIdx < 5) {
+            boxStartIdx = 12;
+            boxEndIdx = 20;
+            recalcMandarinBoxBounds();
+          }
+          slideAnimOffset = 1.0; // Запускаем плавный сдвиг на 1 шаг влево
+        }
+
+        if (slideAnimOffset > 0.005) {
+          slideAnimOffset *= 0.84;
+        } else {
+          slideAnimOffset = 0;
+        }
+
+        updateLiveDomPrice(animatedBid);
+        drawChart(currentState);
+      }
+      requestAnimationFrame(animateLiveChartFrame);
+    }
+    requestAnimationFrame(animateLiveChartFrame);
+
+    function drawChart(state) {
+      const canvas = document.getElementById('chart');
+      if (!canvas) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      if (rect.width < 20 || rect.height < 20) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      const W = rect.width;
+      const H = rect.height;
+      if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+        canvas.width = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, W, H);
+
+      if (liveRollingCandles.length < 5) {
+        initLiveRollingCandles(state);
+      }
+      const candles = liveRollingCandles;
+      const bid = state._animatedBid || state.market.bid;
+
+      let minP = Infinity, maxP = -Infinity;
+      candles.forEach(c => {
+        if (c.low < minP) minP = c.low;
+        if (c.high > maxP) maxP = c.high;
+      });
+
+      const sh = state.market.swing_high;
+      const sl = state.market.swing_low;
+
+      const pad = (maxP - minP) * 0.24 || 10;
+      minP -= pad;
+      maxP += pad;
+
+      const rightAxisW = 58;
+      const bottomAxisH = 16;
+      const chartW = W - rightAxisW;
+      const chartH = H - bottomAxisH;
+      const yOf = p => chartH - ((p - minP) / (maxP - minP)) * (chartH - 12) - 6;
+      const yClamp = p => Math.max(8, Math.min(chartH - 8, yOf(p)));
+
+      // Горизонтальная сетка и правая шкала цен
+      ctx.strokeStyle = '#152033';
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#8b9bb4';
+      ctx.font = '9.5px sans-serif';
+      for (let i = 1; i <= 4; i++) {
+        const y = (chartH / 5) * i;
+        const p = maxP - (i / 5) * (maxP - minP);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(chartW, y);
+        ctx.stroke();
+        ctx.fillText(fmtNum(p), chartW + 4, y + 3);
+      }
+
+      const stepX = chartW / candles.length;
+      // Плавное скольжение графика влево
+      const shiftPx = slideAnimOffset * stepX;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, chartW, H);
+      ctx.clip();
+
+      // Нижняя шкала времени (плывет влево вместе со свечами)
+      ctx.fillStyle = '#64748b';
+      ctx.font = '9px sans-serif';
+      for (let i = 0; i < candles.length; i++) {
+        if (candles[i].time % 18 === 0) {
+          const dt = new Date(candles[i].time * 1000);
+          const hh = String(dt.getHours()).padStart(2, '0');
+          const mm = String(dt.getMinutes()).padStart(2, '0');
+          const ss = String(dt.getSeconds()).padStart(2, '0');
+          const x = i * stepX + shiftPx;
+          if (x > 14 && x < chartW - 22) {
+            ctx.fillText(`${hh}:${mm}:${ss}`, x - 16, H - 4);
+          }
+        }
+      }
+
+      // Коробка Мандарин (движется влево вместе со свечами)
+      if (boxEndIdx >= 0 && boxStartIdx < candles.length) {
+        const x1 = Math.max(2, boxStartIdx * stepX + shiftPx);
+        const x2 = Math.min(chartW - 4, (boxEndIdx + 1) * stepX + shiftPx);
+        if (x2 - x1 > 12) {
+          const y1 = yClamp(boxHighPrice);
+          const y2 = yClamp(boxLowPrice);
+          const bwBox = Math.max(16, x2 - x1);
+          const bhBox = Math.max(10, y2 - y1);
+          ctx.fillStyle = 'rgba(245, 158, 11, 0.14)';
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 1.2;
+          ctx.fillRect(x1, y1, bwBox, bhBox);
+          ctx.strokeRect(x1, y1, bwBox, bhBox);
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 9.5px sans-serif';
+          const lblX = Math.max(6, Math.min(x1 + 2, chartW - 96));
+          ctx.fillText('Коробка Мандарин', lblX, Math.max(20, y1 - 4));
+        }
+      }
+
+      // Верхний уровень BUY
+      if (sh > 0) {
+        const y = 11;
+        ctx.strokeStyle = '#10b981';
+        ctx.setLineDash([4, 3]);
+        ctx.lineWidth = 1.1;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(chartW, y); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#10b981';
+        ctx.font = 'bold 9.5px sans-serif';
+        ctx.fillText(`BUY ${fmtNum(sh)}`, 6, y - 2);
+      }
+
+      // Нижний уровень SELL
+      if (sl > 0) {
+        const y = chartH - 8;
+        ctx.strokeStyle = '#ef4444';
+        ctx.setLineDash([4, 3]);
+        ctx.lineWidth = 1.1;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(chartW, y); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 9.5px sans-serif';
+        ctx.fillText(`SELL ${fmtNum(sl)}`, 6, y - 3);
+      }
+
+      // Японские свечи (движутся влево при каждом новом баре)
+      candles.forEach((c, i) => {
+        const isLast = i === candles.length - 1;
+        const x = i * stepX + stepX * 0.5 + (isLast ? 0 : shiftPx);
+        const isBull = c.close >= c.open;
+        const color = isBull ? '#10b981' : '#ef4444';
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = isLast ? 1.5 : 1.1;
+
+        ctx.beginPath();
+        ctx.moveTo(x, yClamp(c.high));
+        ctx.lineTo(x, yClamp(c.low));
+        ctx.stroke();
+
+        const yOpen = yClamp(c.open);
+        const yClose = yClamp(c.close);
+        const top = Math.min(yOpen, yClose);
+        const bh = Math.max(2.5, Math.abs(yClose - yOpen));
+        const bw = Math.max(3.5, stepX * 0.62);
+        ctx.fillRect(x - bw / 2, top, bw, bh);
+      });
+
+      ctx.restore();
+
+      // Текущая цена с живым пульсирующим маячком и плашкой справа
+      if (bid > 0) {
+        const yBid = yClamp(bid);
+        const liveColor = lastPriceTickDir >= 0 ? '#10b981' : '#ef4444';
+        ctx.strokeStyle = liveColor;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.moveTo(0, yBid);
+        ctx.lineTo(chartW, yBid);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Пульсирующая точка на кончике живой свечи
+        const lastX = (candles.length - 1) * stepX + stepX * 0.5;
+        const pulseR = 3.5 + (Math.sin(performance.now() / 180) + 1) * 2.5;
+        ctx.fillStyle = lastPriceTickDir >= 0 ? 'rgba(16, 185, 129, 0.28)' : 'rgba(239, 68, 68, 0.28)';
+        ctx.beginPath();
+        ctx.arc(lastX, yBid, pulseR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(lastX, yBid, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        const txt = fmtNum(bid);
+        const pillH = 16;
+        const pillTop = Math.max(2, Math.min(yBid - pillH / 2, chartH - pillH - 2));
+        ctx.fillStyle = liveColor;
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(chartW + 2, pillTop, rightAxisW - 4, pillH, 4) : ctx.rect(chartW + 2, pillTop, rightAxisW - 4, pillH);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9.5px sans-serif';
+        ctx.fillText(txt, chartW + 5, pillTop + 11.5);
+      }
+
+      ctx.restore();
+    }
+
+    function renderState() {
+      const st = currentState;
+      if (!st) return;
+
+      const badge = document.getElementById('statusBadge');
+      badge.textContent = st.is_running ? '● АКТИВЕН' : '⏸ ПАУЗА';
+      badge.className = 'badge-active ' + (st.is_running ? '' : 'badge-Active-pause');
+
+      document.getElementById('btnToggleRun').textContent = st.is_running ? '⏸ Стоп' : '▶ Пуск';
+      document.getElementById('btnBTC').className = 'asset-btn ' + (st.symbol === 'BTCUSD' ? 'active' : '');
+      document.getElementById('btnXAU').className = 'asset-btn ' + (st.symbol === 'XAUUSD' ? 'active' : '');
+
+      const mt5Login = (st.settings && st.settings.mt5_login) ? st.settings.mt5_login : '8112287';
+      document.getElementById('sourceSub').innerHTML = `<span class="dot-online"></span><span>Счет MT5 #${mt5Login} онлайн</span>`;
+
+      const mt5Badge = document.getElementById('mt5ConnBadge');
+      if (mt5Badge) {
+        mt5Badge.textContent = st.mt5_connected ? 'ПОДКЛЮЧЕН' : 'ОНЛАЙН';
+      }
+
+      const pnl = st.account.floating_pnl || 0;
+      const pnlStr = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2);
+      document.getElementById('valBalance').textContent = '$' + st.account.balance.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('valEquity').innerHTML = `Прибыль: <b style="color:${pnl>=0?'#34d399':'#f87171'}">${pnlStr}</b>`;
+      document.getElementById('valPrice').textContent = fmtNum(st.market.bid);
+      document.getElementById('valSpread').textContent = `Шаг ATR: ${st.market.atr.toFixed(1)}`;
+      document.getElementById('valLot').textContent = `${st.account.preview_lot.toFixed(2)} лот`;
+      document.getElementById('valRisk').textContent = `Риск ${st.account.risk_percent}%`;
+
+      // Открытая сделка как на макете
+      const posList = st.positions || [];
+      const posEl = document.getElementById('positionsList');
+      if (posList.length === 0) {
+        posEl.innerHTML = `
+          <div class="trade-card" style="text-align:center;padding:10px;color:var(--muted);font-size:11.5px;">
+            Сейчас открытых сделок нет — робот ждет сигнала пробоя M15
+          </div>`;
+      } else {
+        const p = posList[0];
+        const isBuy = p.pos_type === 'BUY';
+        posEl.innerHTML = `
+          <div class="trade-card">
+            <div class="trade-head">
+              <div class="trade-sym">
+                <span>${p.symbol}</span>
+                <span class="${isBuy ? 'tag-buy' : 'tag-sell'}">${p.pos_type}</span>
+                <span style="color:var(--muted);font-weight:600;font-size:11.5px;">${p.volume.toFixed(2)} лот</span>
+              </div>
+              <span style="color:${p.pnl>=0?'#34d399':'#f87171'};font-weight:800;font-size:14px;">${p.pnl>=0?'+':''}$${p.pnl.toFixed(2)}</span>
+            </div>
+            <div class="trade-table">
+              <div class="trade-cell">
+                <div class="tc-lbl">Вход</div>
+                <div class="tc-val">${fmtNum(p.open_price)}</div>
+              </div>
+              <div class="trade-cell">
+                <div class="tc-lbl">Сейчас</div>
+                <div class="tc-val">${fmtNum(p.current_price)}</div>
+              </div>
+              <div class="trade-cell">
+                <div class="tc-lbl">${p.is_breakeven ? 'Стоп в безубытке' : 'Стоп-лосс (SL)'}</div>
+                <div class="tc-val">${p.is_breakeven ? '🛡 ' : ''}${fmtNum(p.sl)}</div>
+              </div>
+              <div class="trade-cell">
+                <div class="tc-lbl">Тейк</div>
+                <div class="tc-val">${fmtNum(p.tp)}</div>
+              </div>
+            </div>
+            <div class="safe-status-line">
+              <span>Сейф 50%: <b style="color:${p.is_partial_done?'#34d399':'#fbbf24'}">${p.is_partial_done ? '✓ Забрали' : 'Ждет +1.5 ATR'}</b></span>
+            </div>
+            <div class="trade-actions">
+              <button class="t-act-btn" onclick="safePos(${p.ticket})">💰 Сейф 50%</button>
+              <button class="t-act-btn" onclick="bePos(${p.ticket})">🛡 В БУ</button>
+              <button class="t-act-btn" onclick="closePos(${p.ticket})">✕ Закрыть</button>
+            </div>
+          </div>`;
+      }
+
+      // Что делает робот
+      const ch = st.checklist || {};
+      if (!st.is_running) {
+        document.getElementById('humanStatusBox').innerHTML = `
+          <div><span style="color:#f59e0b;">●</span> Робот поставлен на паузу</div>
+          <div><span style="color:#8b9bb4;">●</span> Нажмите «Пуск» вверху для старта</div>`;
+      } else if (posList.length > 0) {
+        document.getElementById('humanStatusBox').innerHTML = `
+          <div><span style="color:#10b981;">●</span> Открыта сделка в MetaTrader 5!</div>
+          <div><span style="color:#10b981;">●</span> Робот следит за ценой и защищает прибыль...</div>`;
+      } else {
+        document.getElementById('humanStatusBox').innerHTML = `
+          <div><span style="color:#10b981;">●</span> Робот сканирует график ${st.symbol} (M15)</div>
+          <div><span style="color:#10b981;">●</span> Ждет пробоя уровня ${fmtNum(st.market.swing_high)} или ${fmtNum(st.market.swing_low)}</div>`;
+      }
+
+      const items = [
+        ['Коробка Мандарин', ch.box_valid],
+        ['Спокойный рынок', ch.is_squeeze],
+        ['Сильная свеча', ch.is_marubozu],
+        ['Пробой уровня', ch.bos_buy || ch.bos_sell],
+        ['Торговый час', ch.is_active_session],
+        ['Новости USD', !st.news.is_paused]
+      ];
+      document.getElementById('checkGrid').innerHTML = items.map(it => `
+        <div class="chk-pill">
+          <span style="color:${it[1] ? '#10b981' : '#64748b'};font-weight:900;">✓</span>
+          <span>${it[0]}</span>
+        </div>
+      `).join('');
+
+      // Экран 2: Новости
+      const newsRuMap = {
+        'Core CPI m/m': 'Базовая инфляция США (Core CPI)',
+        'CPI m/m': 'Инфляция в США (CPI м/м)',
+        'CPI y/y': 'Годовая инфляция в США (CPI)',
+        'Core PPI m/m': 'Индекс цен производителей (Core PPI)',
+        'PPI m/m': 'Индекс цен производителей (PPI)',
+        'Unemployment Claims': 'Заявки по безработице в США',
+        'Non-Farm Employment Change': 'Занятость в США (Non-Farm Payrolls)',
+        'Unemployment Rate': 'Уровень безработицы в США',
+        'Average Hourly Earnings m/m': 'Средняя почасовая зарплата в США',
+        'Federal Funds Rate': 'Решение ФРС по процентной ставке',
+        'FOMC Statement': 'Заявление комитета ФРС США',
+        'FOMC Press Conference': 'Пресс-конференция главы ФРС',
+        'Retail Sales m/m': 'Розничные продажи в США',
+        'Core Retail Sales m/m': 'Базовые розничные продажи в США'
+      };
+      function fmtNewsDelta(diffMin) {
+        const d = Number(diffMin);
+        if (isNaN(d)) return 'Сегодня';
+        const absM = Math.abs(Math.round(d));
+        const h = Math.floor(absM / 60);
+        const m = absM % 60;
+        const tStr = h > 0 ? `${h} ч ${m} мин` : `${m} мин`;
+        return d < 0 ? `через ${tStr}` : `${tStr} назад`;
+      }
+      const evs = st.news.events || [];
+      document.getElementById('newsEventsList').innerHTML = evs.length === 0
+        ? `<div class="news-row highlight"><span><b>Спокойный рынок</b> — важных новостей USD рядом нет</span><span class="badge-gold">🕒 В норме</span></div>`
+        : evs.slice(0, 3).map((e, idx) => {
+            const dt = e.time ? new Date(e.time * 1000) : null;
+            const tm = dt ? `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}` : '';
+            const ruTitle = newsRuMap[e.title] || e.title;
+            return `
+              <div class="news-row ${idx === 0 ? 'highlight' : ''}">
+                <span style="display:flex;align-items:center;gap:8px;min-width:0;">
+                  ${tm ? `<b style="color:#fff;">${tm}</b>` : ''}
+                  <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ruTitle}</span>
+                </span>
+                <span class="badge-gold">🕒 ${fmtNewsDelta(e.diff_min)}</span>
+              </div>`;
+          }).join('');
+
+      // Экран 2: История сделок
+      const hist = (st.history || []).slice(0, 5);
+      document.getElementById('historyList').innerHTML = hist.length === 0
+        ? '<div style="font-size:12px;color:var(--muted);padding:6px 0;">Закрытых сделок пока нет</div>'
+        : hist.map(h => {
+            const isBtc = h.symbol.includes('BTC');
+            const isBuy = h.pos_type === 'BUY';
+            const dt = new Date((h.close_time || 0) * 1000);
+            const tm = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+            return `
+              <div class="deal-row">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="coin-ico ${isBtc ? 'coin-btc' : 'coin-xau'}">${isBtc ? '₿' : '🥇'}</span>
+                  <b>${h.symbol}</b>
+                  <span class="${isBuy ? 'tag-buy' : 'tag-sell'}">${h.pos_type}</span>
+                </div>
+                <span style="color:var(--muted);font-size:11.5px;">${tm}</span>
+                <span style="color:${h.pnl>=0?'#34d399':'#f87171'};font-weight:800;">${h.pnl>=0?'+':''}$${h.pnl.toFixed(2)}</span>
+              </div>`;
+          }).join('');
+
+      // Экран 2: Журнал событий (таймлайн)
+      const notifs = (st.notifications || []).slice(0, 4);
+      document.getElementById('notifList').innerHTML = notifs.map(n => {
+        const dt = new Date((n.created_at || 0) * 1000);
+        const tm = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+        return `
+          <div class="tl-item">
+            <span class="tl-time">${tm}</span>
+            <span>${n.title}</span>
+          </div>`;
+      }).join('');
+
+      // Экран 3: Настройки
+      if (!settingsInitialized && st.settings) {
+        settingsInitialized = true;
+        document.getElementById('s_mt5_login').value = st.settings.mt5_login || '8112287';
+        document.getElementById('s_mt5_password').value = st.settings.mt5_password || '';
+        document.getElementById('s_mt5_server').value = st.settings.mt5_server || 'AMarkets-Demo';
+        const stratEl = document.getElementById('s_InpStrategyMode');
+        if (stratEl) stratEl.value = String(st.settings.InpStrategyMode || 2);
+        document.getElementById('s_InpRiskPercent').value = Number(st.settings.InpRiskPercent || 3.0).toFixed(1);
+        document.getElementById('s_InpUsePartialClose').checked = Boolean(st.settings.InpUsePartialClose);
+        document.getElementById('s_InpUseNewsFilter').checked = Boolean(st.settings.InpUseNewsFilter);
+        document.getElementById('s_InpUseHTFFilter').checked = Boolean(st.settings.InpUseHTFFilter);
+        document.getElementById('s_InpUseMandarin').checked = Boolean(st.settings.InpUseMandarin);
+      }
+
+      drawChart(st);
+      updateCandleCountdown();
+    }
+
+    async function pollCycle() {
+      try {
+        const st = await httpGetJson(SERVER_URL + '/api/status');
+        if (st && st.market) {
+          const prevSymbol = currentState ? currentState.symbol : '';
+          currentState = st;
+          if (st.symbol !== prevSymbol) {
+            liveTargetBid = st.market.bid;
+            liveDisplayBid = st.market.bid;
+          } else if (st.market.bid > 0 && liveTargetBid <= 0) {
+            liveTargetBid = st.market.bid;
+            liveDisplayBid = st.market.bid;
+          } else if (st.market.bid > 0 && (!liveWs || liveWs.readyState !== 1)) {
+            if (st.market.bid !== liveTargetBid) {
+              lastPriceTickDir = st.market.bid >= liveTargetBid ? 1 : -1;
+            }
+            liveTargetBid = st.market.bid;
+          }
+          connectLiveStream(st.symbol);
+          if (st.notifications && st.notifications.length > 0) {
+            const newest = st.notifications[0];
+            if (lastServerNotifId > 0 && newest.id > lastServerNotifId) {
+              sendPush(newest.title, newest.message);
+            }
+            lastServerNotifId = newest.id;
+          }
+          renderState();
+        }
+      } catch(e) {}
+    }
+
+    let latestApkUrl = SERVER_URL + '/Crypto_Bot_v2_50.apk';
+
+    async function checkAppUpdateOnStartup() {
+      let localCode = 262;
+      if (hasNative && window.AndroidBridge.getAppVersionCode) {
+        try { localCode = Number(window.AndroidBridge.getAppVersionCode()); } catch(e) {}
+      }
+      try {
+        const remote = await httpGetJson(SERVER_URL + '/api/app-version?t=' + Date.now());
+        if (remote && remote.version_code) {
+          latestApkUrl = remote.apk_url || (SERVER_URL + '/Crypto_Bot_v2_50.apk');
+          if (Number(remote.version_code) > localCode) {
+            document.getElementById('updateModalVer').textContent = `Доступна новая версия v${remote.version_name}`;
+            document.getElementById('updateModal').style.display = 'flex';
+          }
+        }
+      } catch(e) {}
+    }
+
+    function startApkUpdate() {
+      const urlWithBust = latestApkUrl + (latestApkUrl.includes('?') ? '&' : '?') + 'raw=1&t=' + Date.now();
+      document.getElementById('updateProgressBox').style.display = 'block';
+      document.getElementById('updateProgressText').textContent = 'Скачивание обновления... 0%';
+      if (hasNative && window.AndroidBridge.downloadAndInstallUpdate) {
+        window.AndroidBridge.downloadAndInstallUpdate(urlWithBust);
+      } else if (hasNative && window.AndroidBridge.downloadAndInstallApk) {
+        window.AndroidBridge.downloadAndInstallApk(urlWithBust);
+      } else {
+        window.location.href = urlWithBust;
+      }
+    }
+
+    window.onApkUpdateStatus = function(msg) {
+      const box = document.getElementById('updateProgressBox');
+      if (box) box.style.display = 'block';
+      const txt = document.getElementById('updateProgressText');
+      if (txt && msg) txt.textContent = msg;
+    };
+
+    window.onApkDownloadProgress = function(pct) {
+      const box = document.getElementById('updateProgressBox');
+      if (box) box.style.display = 'block';
+      if (pct >= 0) {
+        document.getElementById('updateProgressBar').style.width = pct + '%';
+        document.getElementById('updateProgressText').textContent = pct >= 100
+          ? 'Готово! Подтвердите установку на экране...'
+          : ('Скачивание: ' + pct + '%');
+      }
+    };
+
+    window.addEventListener('resize', () => { if (currentState) drawChart(currentState); });
+    pollCycle();
+    setInterval(pollCycle, 2000);
+    setTimeout(checkAppUpdateOnStartup, 1200);
+  </script>
+</body>
+</html>

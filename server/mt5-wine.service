@@ -1,0 +1,14 @@
+[Unit]
+Description=MetaTrader 5 Headless Bridge (Wine + Xvfb)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/mt5
+ExecStart=/bin/bash /opt/mt5/run_mt5.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

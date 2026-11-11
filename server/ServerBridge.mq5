@@ -1,0 +1,271 @@
+//+------------------------------------------------------------------+
+//|                                                 ServerBridge.mq5 |
+//|                     24/7 Headless MT5 Bridge for Crypto Bot v2.6 |
+//+------------------------------------------------------------------+
+#property copyright "Nurik Crypto Bot"
+#property version   "2.62"
+#property strict
+
+#include <Trade\Trade.mqh>
+
+CTrade trade;
+
+void SetSymbolFilling(string sym)
+{
+   uint filling = (uint)SymbolInfoInteger(sym, SYMBOL_FILLING_MODE);
+   if((filling & SYMBOL_FILLING_FOK) != 0)
+      trade.SetTypeFilling(ORDER_FILLING_FOK);
+   else if((filling & SYMBOL_FILLING_IOC) != 0)
+      trade.SetTypeFilling(ORDER_FILLING_IOC);
+   else
+      trade.SetTypeFilling(ORDER_FILLING_RETURN);
+}
+
+int OnInit()
+{
+   trade.SetExpertMagicNumber(202605);
+   trade.SetDeviationInPoints(50);
+   SymbolSelect("BTCUSD", true);
+   SymbolSelect("XAUUSD", true);
+   EventSetMillisecondTimer(500);
+   OnTimer();
+   return(INIT_SUCCEEDED);
+}
+
+void OnDeinit(const int reason)
+{
+   EventKillTimer();
+}
+
+void ProcessCommands()
+{
+   if(!FileIsExist("mt5_cmd.txt"))
+      return;
+
+   int h = FileOpen("mt5_cmd.txt", FILE_READ|FILE_TXT|FILE_ANSI);
+   if(h == INVALID_HANDLE)
+      return;
+
+   string lines[];
+   int count = 0;
+   while(!FileIsEnding(h))
+   {
+      string line = FileReadString(h);
+      StringTrimLeft(line);
+      StringTrimRight(line);
+      if(StringLen(line) > 0)
+      {
+         ArrayResize(lines, count + 1);
+         lines[count] = line;
+         count++;
+      }
+   }
+   FileClose(h);
+   FileDelete("mt5_cmd.txt");
+
+   for(int i = 0; i < count; i++)
+   {
+      string parts[];
+      int n = StringSplit(lines[i], '|', parts);
+      if(n < 2) continue;
+      string act = parts[0];
+
+      if(act == "OPEN" && n >= 6)
+      {
+         string sym = parts[1];
+         string ptype = parts[2];
+         double vol = StringToDouble(parts[3]);
+         double sl = StringToDouble(parts[4]);
+         double tp = StringToDouble(parts[5]);
+         string comment = (n >= 7) ? parts[6] : "CryptoBot";
+
+         SymbolSelect(sym, true);
+         SetSymbolFilling(sym);
+         int digits = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
+         sl = NormalizeDouble(sl, digits);
+         tp = NormalizeDouble(tp, digits);
+
+         if(ptype == "BUY")
+            trade.Buy(vol, sym, 0.0, sl, tp, comment);
+         else
+            trade.Sell(vol, sym, 0.0, sl, tp, comment);
+      }
+      else if(act == "CLOSE" && n >= 2)
+      {
+         ulong ticket = (ulong)StringToInteger(parts[1]);
+         if(PositionSelectByTicket(ticket))
+         {
+            SetSymbolFilling(PositionGetString(POSITION_SYMBOL));
+            trade.PositionClose(ticket);
+         }
+      }
+      else if(act == "SAFE" && n >= 5)
+      {
+         ulong ticket = (ulong)StringToInteger(parts[1]);
+         double closeVol = StringToDouble(parts[2]);
+         double newSl = StringToDouble(parts[3]);
+         double tp = StringToDouble(parts[4]);
+         if(PositionSelectByTicket(ticket))
+         {
+            string sym = PositionGetString(POSITION_SYMBOL);
+            SetSymbolFilling(sym);
+            int digits = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
+            trade.PositionClosePartial(ticket, closeVol);
+            if(PositionSelectByTicket(ticket))
+               trade.PositionModify(ticket, NormalizeDouble(newSl, digits), NormalizeDouble(tp, digits));
+         }
+      }
+      else if(act == "BE" && n >= 4)
+      {
+         ulong ticket = (ulong)StringToInteger(parts[1]);
+         double newSl = StringToDouble(parts[2]);
+         double tp = StringToDouble(parts[3]);
+         if(PositionSelectByTicket(ticket))
+         {
+            string sym = PositionGetString(POSITION_SYMBOL);
+            int digits = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
+            trade.PositionModify(ticket, NormalizeDouble(newSl, digits), NormalizeDouble(tp, digits));
+         }
+      }
+   }
+}
+
+void WriteStateJson()
+{
+   long login = AccountInfoInteger(ACCOUNT_LOGIN);
+   bool connected = (login > 0 && TerminalInfoInteger(TERMINAL_CONNECTED) != 0);
+   string server = AccountInfoString(ACCOUNT_SERVER);
+   double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+   double equity = AccountInfoDouble(ACCOUNT_EQUITY);
+   double profit = AccountInfoDouble(ACCOUNT_PROFIT);
+   double margin = AccountInfoDouble(ACCOUNT_MARGIN);
+   double free_margin = AccountInfoDouble(ACCOUNT_MARGIN_FREE);
+
+   double btcBid = SymbolInfoDouble("BTCUSD", SYMBOL_BID);
+   double btcAsk = SymbolInfoDouble("BTCUSD", SYMBOL_ASK);
+   long btcSpread = SymbolInfoInteger("BTCUSD", SYMBOL_SPREAD);
+
+   double xauBid = SymbolInfoDouble("XAUUSD", SYMBOL_BID);
+   double xauAsk = SymbolInfoDouble("XAUUSD", SYMBOL_ASK);
+   long xauSpread = SymbolInfoInteger("XAUUSD", SYMBOL_SPREAD);
+
+   string json = "{";
+   json += "\"connected\":" + (connected ? "true" : "false") + ",";
+   json += "\"login\":" + IntegerToString(login) + ",";
+   json += "\"server\":\"" + server + "\",";
+   json += "\"account\":{";
+   json += "\"balance\":" + DoubleToString(balance, 2) + ",";
+   json += "\"equity\":" + DoubleToString(equity, 2) + ",";
+   json += "\"floating_pnl\":" + DoubleToString(profit, 2) + ",";
+   json += "\"used_margin\":" + DoubleToString(margin, 2) + ",";
+   json += "\"free_margin\":" + DoubleToString(free_margin, 2);
+   json += "},";
+
+   json += "\"ticks\":{";
+   json += "\"BTCUSD\":{\"bid\":" + DoubleToString(btcBid, 2) + ",\"ask\":" + DoubleToString(btcAsk, 2) + ",\"spread\":" + IntegerToString(btcSpread) + "},";
+   json += "\"XAUUSD\":{\"bid\":" + DoubleToString(xauBid, 2) + ",\"ask\":" + DoubleToString(xauAsk, 2) + ",\"spread\":" + IntegerToString(xauSpread) + "}";
+   json += "},";
+
+   // Open positions
+   json += "\"positions\":[";
+   int totalPos = PositionsTotal();
+   bool firstPos = true;
+   for(int i = 0; i < totalPos; i++)
+   {
+      ulong pticket = PositionGetTicket(i);
+      if(pticket == 0) continue;
+      string psym = PositionGetString(POSITION_SYMBOL);
+      long ptype = PositionGetInteger(POSITION_TYPE);
+      double pvol = PositionGetDouble(POSITION_VOLUME);
+      double popen = PositionGetDouble(POSITION_PRICE_OPEN);
+      double pcur = PositionGetDouble(POSITION_PRICE_CURRENT);
+      double psl = PositionGetDouble(POSITION_SL);
+      double ptp = PositionGetDouble(POSITION_TP);
+      double ppnl = PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
+      long ptime = PositionGetInteger(POSITION_TIME);
+
+      bool isBuy = (ptype == POSITION_TYPE_BUY);
+      bool isBe = isBuy ? (psl >= popen && psl > 0) : (psl <= popen && psl > 0);
+
+      if(!firstPos) json += ",";
+      firstPos = false;
+      json += "{";
+      json += "\"ticket\":" + IntegerToString((long)pticket) + ",";
+      json += "\"symbol\":\"" + psym + "\",";
+      json += "\"pos_type\":\"" + (isBuy ? "BUY" : "SELL") + "\",";
+      json += "\"volume\":" + DoubleToString(pvol, 2) + ",";
+      json += "\"initial_volume\":" + DoubleToString(pvol, 2) + ",";
+      json += "\"open_price\":" + DoubleToString(popen, 2) + ",";
+      json += "\"current_price\":" + DoubleToString(pcur, 2) + ",";
+      json += "\"sl\":" + DoubleToString(psl, 2) + ",";
+      json += "\"tp\":" + DoubleToString(ptp, 2) + ",";
+      json += "\"pnl\":" + DoubleToString(ppnl, 2) + ",";
+      json += "\"open_time\":" + IntegerToString(ptime) + ",";
+      json += "\"is_partial_done\":false,";
+      json += "\"is_breakeven\":" + (isBe ? "true" : "false");
+      json += "}";
+   }
+   json += "],";
+
+   // Closed deal history (last 14 days)
+   json += "\"history\":[";
+   if(HistorySelect(TimeCurrent() - 86400 * 14, TimeCurrent() + 3600))
+   {
+      int totalDeals = HistoryDealsTotal();
+      int added = 0;
+      for(int i = totalDeals - 1; i >= 0 && added < 15; i--)
+      {
+         ulong dticket = HistoryDealGetTicket(i);
+         if(dticket == 0) continue;
+         long dentry = HistoryDealGetInteger(dticket, DEAL_ENTRY);
+         if(dentry != DEAL_ENTRY_OUT && dentry != DEAL_ENTRY_INOUT) continue;
+         long dtype = HistoryDealGetInteger(dticket, DEAL_TYPE);
+         if(dtype != DEAL_TYPE_BUY && dtype != DEAL_TYPE_SELL) continue;
+
+         string dsym = HistoryDealGetString(dticket, DEAL_SYMBOL);
+         double dvol = HistoryDealGetDouble(dticket, DEAL_VOLUME);
+         double dprice = HistoryDealGetDouble(dticket, DEAL_PRICE);
+         double dpnl = HistoryDealGetDouble(dticket, DEAL_PROFIT) + HistoryDealGetDouble(dticket, DEAL_SWAP) + HistoryDealGetDouble(dticket, DEAL_COMMISSION);
+         long dtime = HistoryDealGetInteger(dticket, DEAL_TIME);
+         // Closing a BUY position uses a SELL deal, so original position was opposite
+         string origType = (dtype == DEAL_TYPE_SELL) ? "BUY" : "SELL";
+
+         if(added > 0) json += ",";
+         added++;
+         json += "{";
+         json += "\"ticket\":" + IntegerToString((long)dticket) + ",";
+         json += "\"symbol\":\"" + dsym + "\",";
+         json += "\"pos_type\":\"" + origType + "\",";
+         json += "\"volume\":" + DoubleToString(dvol, 2) + ",";
+         json += "\"open_price\":" + DoubleToString(dprice, 2) + ",";
+         json += "\"close_price\":" + DoubleToString(dprice, 2) + ",";
+         json += "\"pnl\":" + DoubleToString(dpnl, 2) + ",";
+         json += "\"close_time\":" + IntegerToString(dtime) + ",";
+         json += "\"reason\":\"MT5 Deal\"";
+         json += "}";
+      }
+   }
+   json += "]";
+   json += "}";
+
+   int h = FileOpen("mt5_state_tmp.json", FILE_WRITE|FILE_TXT|FILE_ANSI);
+   if(h != INVALID_HANDLE)
+   {
+      FileWriteString(h, json);
+      FileClose(h);
+      FileMove("mt5_state_tmp.json", 0, "mt5_state.json", FILE_REWRITE);
+   }
+}
+
+void OnTimer()
+{
+   ProcessCommands();
+   WriteStateJson();
+}
+
+void OnTick()
+{
+   ProcessCommands();
+   WriteStateJson();
+}
+//+------------------------------------------------------------------+

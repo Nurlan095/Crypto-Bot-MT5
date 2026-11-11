@@ -4,3 +4,15 @@
 # Временные файлы ОС
 Thumbs.db
 .DS_Store
+
+# Python & SQLite
+__pycache__/
+*.pyc
+*.db
+
+# Android Gradle кэш сборки
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+temp/
