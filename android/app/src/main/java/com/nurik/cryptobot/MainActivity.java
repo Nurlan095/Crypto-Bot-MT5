@@ -17,18 +17,23 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.media.ToneGenerator;
 import android.net.Uri;
+import android.graphics.Insets;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -42,12 +47,17 @@ import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends Activity {
 
-    private static final String CHANNEL_ID = "crypto_bot_v250_channel";
+    private static final String CHANNEL_ID = "crypto_bot_silent_v266";
     private static final String PREFS_NAME = "CryptoBotPrefs";
     private static final int REQ_INSTALL_PERMISSION = 202;
     private WebView webView;
     private int notifCounter = 1001;
     private boolean pendingApkInstall = false;
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,10 +66,17 @@ public class MainActivity extends Activity {
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.setStatusBarColor(Color.parseColor("#0B0F17"));
-        window.setNavigationBarColor(Color.parseColor("#131A26"));
+        window.setNavigationBarColor(Color.parseColor("#0B0F17"));
 
         createNotificationChannel();
         requestNotificationPermissionIfNeeded();
+
+        final int minTopPx = dpToPx(28);
+        final int minBottomPx = dpToPx(48);
+
+        FrameLayout rootLayout = new FrameLayout(this);
+        rootLayout.setBackgroundColor(Color.parseColor("#0B0F17"));
+        rootLayout.setPadding(0, minTopPx, 0, minBottomPx);
 
         webView = new WebView(this);
         webView.setBackgroundColor(Color.parseColor("#0B0F17"));
@@ -80,7 +97,37 @@ public class MainActivity extends Activity {
         webView.setWebChromeClient(new WebChromeClient());
         webView.addJavascriptInterface(new AndroidBridge(this), "AndroidBridge");
 
-        setContentView(webView);
+        rootLayout.addView(webView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            rootLayout.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
+                @Override
+                public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                        v.setPadding(
+                                bars.left,
+                                Math.max(bars.top, minTopPx),
+                                bars.right,
+                                Math.max(bars.bottom, minBottomPx)
+                        );
+                    } else {
+                        v.setPadding(
+                                insets.getSystemWindowInsetLeft(),
+                                Math.max(insets.getSystemWindowInsetTop(), minTopPx),
+                                insets.getSystemWindowInsetRight(),
+                                Math.max(insets.getSystemWindowInsetBottom(), minBottomPx)
+                        );
+                    }
+                    return insets;
+                }
+            });
+        }
+
+        setContentView(rootLayout);
         webView.loadUrl("file:///android_asset/index.html");
     }
 
@@ -88,11 +135,12 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
-                    "Crypto Bot v2.50 Уведомления",
-                    NotificationManager.IMPORTANCE_HIGH
+                    "Crypto Bot Тихие Уведомления",
+                    NotificationManager.IMPORTANCE_LOW
             );
-            channel.setDescription("Уведомления о сделках BOS, Сейфе 50% и новостях USD");
-            channel.enableVibration(true);
+            channel.setDescription("Тихие уведомления о сделках без резкого звука");
+            channel.setSound(null, null);
+            channel.enableVibration(false);
             NotificationManager manager = getSystemService(NotificationManager.class);
             if (manager != null) {
                 manager.createNotificationChannel(channel);
@@ -268,26 +316,13 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void playAlertSound() {
-            try {
-                ToneGenerator toneGen = new ToneGenerator(AudioManager.STREAM_MUSIC, 95);
-                toneGen.startTone(ToneGenerator.TONE_PROP_ACK, 260);
-            } catch (Exception ignored) {
+            if ("1".equals(prefs.getString("sound_muted", "1"))) {
+                return;
             }
             try {
                 Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
                 Ringtone r = RingtoneManager.getRingtone(context, soundUri);
                 if (r != null) r.play();
-            } catch (Exception ignored) {
-            }
-            try {
-                Vibrator vib = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-                if (vib != null && vib.hasVibrator()) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        vib.vibrate(VibrationEffect.createOneShot(220, VibrationEffect.DEFAULT_AMPLITUDE));
-                    } else {
-                        vib.vibrate(220);
-                    }
-                }
             } catch (Exception ignored) {
             }
         }
@@ -312,7 +347,7 @@ public class MainActivity extends Activity {
                     builder = new Notification.Builder(context, CHANNEL_ID);
                 } else {
                     builder = new Notification.Builder(context);
-                    builder.setPriority(Notification.PRIORITY_HIGH);
+                    builder.setPriority(Notification.PRIORITY_LOW);
                 }
 
                 builder.setContentTitle(title)

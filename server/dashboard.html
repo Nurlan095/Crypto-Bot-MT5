@@ -28,18 +28,21 @@
     }
     html, body {
       width: 100%;
-      height: 100dvh;
-      max-height: 100dvh;
+      height: 100%;
+      max-height: 100%;
       background: var(--bg);
       color: var(--text);
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     /* Вкладки на весь экран без прокрутки */
     .tab-pane {
       display: none;
       width: 100%;
-      height: calc(100dvh - 54px);
+      flex: 1;
+      min-height: 0;
       padding: 8px 10px 6px 10px;
       flex-direction: column;
       justify-content: space-between;
@@ -620,15 +623,16 @@
       flex-shrink: 0;
     }
 
-    /* Нижнее меню */
+    /* Нижнее меню — поднято над системными кнопками телефона */
     .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      position: relative;
+      flex-shrink: 0;
       height: 54px;
-      background: #0a101b;
-      border-top: 1px solid #1c293e;
+      margin: 2px 10px 6px 10px;
+      border-radius: 14px;
+      background: #0d1524;
+      border: 1px solid #1e2c42;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       z-index: 100;
@@ -747,8 +751,8 @@
     <!-- Мои открытые сделки -->
     <div style="flex-shrink:0;">
       <div class="sec-title">
-        <span>Мои сделки (Авто-робот MT5)</span>
-        <span id="dealsSummaryBadge" style="font-size:10.5px;color:#34d399;font-weight:700;"></span>
+        <span>Мои сделки</span>
+        <span id="dealsSummaryBadge" style="font-size:10.5px;color:#34d399;font-weight:700;white-space:nowrap;"></span>
       </div>
       <div class="buy-sell-row">
         <button class="btn-buy" onclick="manualOrder('BUY')">↑ Купить (BUY)</button>
@@ -792,15 +796,15 @@
     <div class="glass-card">
       <div class="gc-head">
         <span class="gc-title">📅 Календарь новостей USD</span>
-        <span class="badge-gold">🛡 Защита включена</span>
+        <span class="badge-gold" style="white-space:nowrap;flex-shrink:0;">🛡 Защита</span>
       </div>
       <div id="newsEventsList" style="display:flex;flex-direction:column;gap:5px;"></div>
     </div>
 
     <div class="glass-card" style="flex:1;min-height:0;overflow-y:auto;">
       <div class="gc-head">
-        <span class="gc-title">📊 Сделки MT5 (Открытые и Закрытые)</span>
-        <span id="historyTotalBadge" class="badge-gold" style="color:#34d399;border-color:rgba(16,185,129,0.35);background:rgba(16,185,129,0.12);">Итого: +$0.00 (0%)</span>
+        <span class="gc-title">📊 Сделки MT5</span>
+        <span id="historyTotalBadge" class="badge-gold" style="color:#34d399;border-color:rgba(16,185,129,0.35);background:rgba(16,185,129,0.12);white-space:nowrap;flex-shrink:0;">Итого: +$0.00 (0%)</span>
       </div>
       <div id="historyList" style="display:flex;flex-direction:column;"></div>
     </div>
@@ -808,7 +812,7 @@
     <div class="glass-card">
       <div class="gc-head">
         <span class="gc-title">🔔 Журнал событий робота</span>
-        <button class="btn-stop" style="height:28px;font-size:11px;padding:0 10px;" onclick="testPushNotification()">🔔 Тест звука</button>
+        <button id="btnSoundToggle" class="btn-stop" style="height:28px;font-size:11px;padding:0 10px;white-space:nowrap;flex-shrink:0;" onclick="toggleSoundMute()">🔕 Без звука</button>
       </div>
       <div class="timeline" id="notifList"></div>
     </div>
@@ -933,32 +937,31 @@
     let settingsInitialized = false;
     let lastServerNotifId = 0;
     let audioCtx = null;
+    let isSoundMuted = localStorage.getItem('cb_sound_muted') !== '0';
+
+    function updateSoundButtonUI() {
+      const btn = document.getElementById('btnSoundToggle');
+      if (btn) {
+        btn.textContent = isSoundMuted ? '🔕 Без звука' : '🔔 Со звуком';
+      }
+      if (hasNative && window.AndroidBridge.savePref) {
+        try { window.AndroidBridge.savePref('sound_muted', isSoundMuted ? '1' : '0'); } catch(e) {}
+      }
+    }
+
+    function toggleSoundMute() {
+      isSoundMuted = !isSoundMuted;
+      localStorage.setItem('cb_sound_muted', isSoundMuted ? '1' : '0');
+      updateSoundButtonUI();
+      showToast(
+        isSoundMuted ? 'Тихий режим включен' : 'Звук уведомлений включен',
+        isSoundMuted ? 'Уведомления о сделках будут приходить тихо без звука' : 'При открытии/закрытии сделок будет звучать обычный сигнал'
+      );
+    }
 
     function togglePwd() {
       const inp = document.getElementById('s_mt5_password');
       inp.type = inp.type === 'password' ? 'text' : 'password';
-    }
-
-    function playWebChime() {
-      try {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return;
-        if (!audioCtx) audioCtx = new AC();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const now = audioCtx.currentTime;
-        [880, 1174.66].forEach((freq, idx) => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now + idx * 0.13);
-          gain.gain.setValueAtTime(0.3, now + idx * 0.13);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.13 + 0.24);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(now + idx * 0.13);
-          osc.stop(now + idx * 0.13 + 0.25);
-        });
-      } catch(e) {}
     }
 
     function showToast(title, msg) {
@@ -980,14 +983,11 @@
     }
 
     function sendPush(title, msg) {
-      playWebChime();
+      updateSoundButtonUI();
       showToast(title, msg);
       if (hasNative) {
         try { window.AndroidBridge.sendNotification(title, msg); } catch(e) {}
       }
-    }
-    function testPushNotification() {
-      sendPush('Crypto Bot 24/7', 'Звук, вибрация и уведомления работают отлично!');
     }
 
     async function httpGetJson(url) {
@@ -1494,7 +1494,7 @@
       const pnlStr = (activePnl >= 0 ? '+' : '') + '$' + activePnl.toFixed(2) + ` (${activePct >= 0 ? '+' : ''}${activePct.toFixed(2)}%)`;
 
       document.getElementById('valBalance').textContent = '$' + st.account.balance.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-      document.getElementById('valEquity').innerHTML = `${posList.length > 0 ? 'В сделке' : 'Заработано'}: <b style="color:${activePnl>=0?'#34d399':'#f87171'}">${pnlStr}</b>`;
+      document.getElementById('valEquity').innerHTML = `<b style="color:${activePnl>=0?'#34d399':'#f87171'}">${pnlStr}</b>`;
       document.getElementById('valPrice').textContent = fmtNum(st.market.bid);
       document.getElementById('valSpread').textContent = `Шаг ATR: ${st.market.atr.toFixed(1)}`;
       document.getElementById('valLot').textContent = `${st.account.preview_lot.toFixed(2)} лот`;
@@ -1737,6 +1737,7 @@
         document.getElementById('s_InpUseMandarin').checked = Boolean(st.settings.InpUseMandarin);
       }
 
+      updateSoundButtonUI();
       drawChart(st);
       updateCandleCountdown();
     }
@@ -1775,7 +1776,7 @@
     let latestApkUrl = SERVER_URL + '/Crypto_Bot_v2_50.apk';
 
     async function checkAppUpdateOnStartup() {
-      let localCode = 265;
+      let localCode = 266;
       if (hasNative && window.AndroidBridge.getAppVersionCode) {
         try { localCode = Number(window.AndroidBridge.getAppVersionCode()); } catch(e) {}
       }
