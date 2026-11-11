@@ -1776,9 +1776,9 @@
     let latestApkUrl = SERVER_URL + '/Crypto_Bot_v2_50.apk';
 
     async function checkAppUpdateOnStartup() {
-      let localCode = 266;
+      let localCode = 267;
       if (hasNative && window.AndroidBridge.getAppVersionCode) {
-        try { localCode = Number(window.AndroidBridge.getAppVersionCode()); } catch(e) {}
+        try { localCode = Math.max(localCode, Number(window.AndroidBridge.getAppVersionCode())); } catch(e) {}
       }
       try {
         const remote = await httpGetJson(SERVER_URL + '/api/app-version?t=' + Date.now());

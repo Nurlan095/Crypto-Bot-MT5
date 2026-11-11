@@ -1,6 +1,6 @@
 {
-    "changelog":  "Поднято нижнее меню над кнопками телефона, убран резкий звук уведомлений (тихий режим), выровнены все заголовки и плашки",
-    "version_code":  266,
+    "changelog":  "Поддержка автоматического обновления APK через GitHub Auto-Sync (v2.67)",
+    "version_code":  267,
     "apk_url":  "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk",
-    "version_name":  "2.66"
+    "version_name":  "2.67"
 }
