@@ -21,7 +21,23 @@ def run_cmd(cmd, cwd=None):
     return res.returncode, res.stdout.strip(), res.stderr.strip()
 
 
-def rebuild_and_sign_apk(html_bytes: bytes) -> bool:
+def patch_manifest_bytes(manifest_bytes: bytes, new_code: int, new_name: str) -> bytes:
+    try:
+        if len(new_name) == 4:
+            old_str = b"\x04\x00" + "2.67".encode("utf-16le") + b"\x00\x00"
+            new_str = b"\x04\x00" + new_name.encode("utf-16le") + b"\x00\x00"
+            if old_str in manifest_bytes:
+                manifest_bytes = manifest_bytes.replace(old_str, new_str, 1)
+        old_vc = b"\xff\xff\xff\xff\x08\x00\x00\x10" + (267).to_bytes(4, "little")
+        new_vc = b"\xff\xff\xff\xff\x08\x00\x00\x10" + int(new_code).to_bytes(4, "little")
+        if old_vc in manifest_bytes:
+            manifest_bytes = manifest_bytes.replace(old_vc, new_vc, 1)
+    except Exception as e:
+        print(f"[AutoSync] Manifest patch warning: {e}")
+    return manifest_bytes
+
+
+def rebuild_and_sign_apk(html_bytes: bytes, new_code: int = 268, new_name: str = "2.68") -> bool:
     if not os.path.exists(BASE_APK) or not os.path.exists(KEYSTORE):
         print("[AutoSync] Missing base_template.apk or release-key.jks")
         return False
@@ -39,6 +55,10 @@ def rebuild_and_sign_apk(html_bytes: bytes) -> bool:
                     if item.filename == "assets/index.html":
                         continue
                     data = zin.read(item.filename)
+                    if item.filename == "AndroidManifest.xml":
+                        data = patch_manifest_bytes(data, new_code, new_name)
+                        zout.writestr("AndroidManifest.xml", data)
+                        continue
                     # Keep resources.arsc uncompressed if it was stored uncompressed
                     zout.writestr(item, data)
                 zout.writestr("assets/index.html", html_bytes)
@@ -163,7 +183,7 @@ def sync_once() -> None:
             with open(os.path.join(APP_DIR, "dashboard.html"), "wb") as df:
                 df.write(html_bytes)
 
-            if rebuild_and_sign_apk(html_bytes):
+            if rebuild_and_sign_apk(html_bytes, new_code=new_code, new_name=new_name):
                 new_ver_obj = {
                     "version_code": new_code,
                     "version_name": new_name,

@@ -1,6 +1,10 @@
 import asyncio
 import json
 import os
+import re
+import shutil
+import subprocess
+import zipfile
 from contextlib import asynccontextmanager
 from typing import Any, Dict, Optional
 from fastapi import FastAPI, Body, Request
@@ -9,6 +13,124 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from bot_engine import CryptoBotEngine
 
 engine = CryptoBotEngine()
+
+
+def sync_server_artifacts_on_startup() -> None:
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_dir = "/opt/cryptobot-repo"
+    ver_path = os.path.join(app_dir, "version.json")
+    repo_ver_path = os.path.join(repo_dir, "server", "version.json")
+    base_apk = os.path.join(app_dir, "base_template.apk")
+    live_apk = os.path.join(app_dir, "Crypto_Bot_v2_50.apk")
+    keystore = os.path.join(app_dir, "release-key.jks")
+    dash_path = os.path.join(app_dir, "dashboard.html")
+
+    # 1. Sync github_auto_sync.py & ServerBridge.ex5 if repo exists
+    try:
+        repo_sync = os.path.join(repo_dir, "server", "github_auto_sync.py")
+        if os.path.exists(repo_sync):
+            shutil.copy2(repo_sync, os.path.join(app_dir, "github_auto_sync.py"))
+        repo_ex5 = os.path.join(repo_dir, "server", "ServerBridge.ex5")
+        mt5_ex5 = "/opt/mt5/MQL5/Experts/ServerBridge.ex5"
+        if os.path.exists(repo_ex5) and os.path.exists(os.path.dirname(mt5_ex5)):
+            shutil.copy2(repo_ex5, mt5_ex5)
+    except Exception as exc:
+        print(f"[StartupSync] Aux copy warning: {exc}")
+
+    # 2. Determine target version
+    cur_info = {"version_code": 267, "version_name": "2.67"}
+    if os.path.exists(ver_path):
+        try:
+            with open(ver_path, "r", encoding="utf-8") as f:
+                cur_info = json.load(f)
+        except Exception:
+            pass
+
+    repo_info = {}
+    if os.path.exists(repo_ver_path):
+        try:
+            with open(repo_ver_path, "r", encoding="utf-8") as f:
+                repo_info = json.load(f)
+        except Exception:
+            pass
+
+    target_code = max(int(cur_info.get("version_code", 267)), int(repo_info.get("version_code", 268)), 268)
+    target_name = f"{target_code / 100.0:.2f}"
+    target_changelog = repo_info.get("changelog") or cur_info.get("changelog") or f"Обновление v{target_name}"
+
+    if not os.path.exists(base_apk) or not os.path.exists(keystore) or not os.path.exists(dash_path):
+        return
+
+    # 3. Check if live_apk already has patched AndroidManifest.xml with target_name
+    need_apk_patch = (int(cur_info.get("version_code", 0)) < target_code) or (not os.path.exists(live_apk))
+    if not need_apk_patch and os.path.exists(live_apk):
+        try:
+            with zipfile.ZipFile(live_apk, "r") as zchk:
+                m_bytes = zchk.read("AndroidManifest.xml")
+                expected_str = b"\x04\x00" + target_name.encode("utf-16le") + b"\x00\x00"
+                if len(target_name) == 4 and expected_str not in m_bytes:
+                    need_apk_patch = True
+        except Exception:
+            need_apk_patch = True
+
+    if not need_apk_patch:
+        return
+
+    try:
+        with open(dash_path, "r", encoding="utf-8") as df:
+            html_text = df.read()
+        html_text = re.sub(r"let\s+localCode\s*=\s*\d+\s*;", f"let localCode = {target_code};", html_text)
+        html_bytes = html_text.encode("utf-8")
+        with open(dash_path, "wb") as df:
+            df.write(html_bytes)
+
+        raw_apk = "/tmp/cb_app_raw.apk"
+        aligned_apk = "/tmp/cb_app_aligned.apk"
+        signed_apk = "/tmp/cb_app_signed.apk"
+
+        with zipfile.ZipFile(base_apk, "r") as zin:
+            with zipfile.ZipFile(raw_apk, "w", compression=zipfile.ZIP_DEFLATED) as zout:
+                for item in zin.infolist():
+                    if item.filename.startswith("META-INF/") or item.filename == "assets/index.html":
+                        continue
+                    data = zin.read(item.filename)
+                    if item.filename == "AndroidManifest.xml":
+                        if len(target_name) == 4:
+                            old_str = b"\x04\x00" + "2.67".encode("utf-16le") + b"\x00\x00"
+                            new_str = b"\x04\x00" + target_name.encode("utf-16le") + b"\x00\x00"
+                            data = data.replace(old_str, new_str, 1)
+                        old_vc = b"\xff\xff\xff\xff\x08\x00\x00\x10" + (267).to_bytes(4, "little")
+                        new_vc = b"\xff\xff\xff\xff\x08\x00\x00\x10" + int(target_code).to_bytes(4, "little")
+                        data = data.replace(old_vc, new_vc, 1)
+                        zout.writestr("AndroidManifest.xml", data)
+                        continue
+                    zout.writestr(item, data)
+                zout.writestr("assets/index.html", html_bytes)
+
+        r1 = subprocess.run(["zipalign", "-f", "-p", "4", raw_apk, aligned_apk], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if r1.returncode == 0:
+            r2 = subprocess.run([
+                "apksigner", "sign",
+                "--ks", keystore,
+                "--ks-pass", "pass:android",
+                "--key-pass", "pass:android",
+                "--out", signed_apk,
+                aligned_apk,
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if r2.returncode == 0:
+                shutil.move(signed_apk, live_apk)
+                os.chmod(live_apk, 0o644)
+                new_ver_obj = {
+                    "version_code": target_code,
+                    "version_name": target_name,
+                    "apk_url": "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk",
+                    "changelog": target_changelog,
+                }
+                with open(ver_path, "w", encoding="utf-8") as vf:
+                    json.dump(new_ver_obj, vf, ensure_ascii=False, indent=2)
+                print(f"[StartupSync] Rebuilt APK with patched AndroidManifest v{target_name} (#{target_code})")
+    except Exception as exc:
+        print(f"[StartupSync] APK patch error: {exc}")
 
 
 def load_version_info() -> Dict[str, Any]:
@@ -38,6 +160,7 @@ async def bot_background_loop() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    sync_server_artifacts_on_startup()
     await engine.step_tick()
     task = asyncio.create_task(bot_background_loop())
     yield

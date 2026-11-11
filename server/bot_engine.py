@@ -1825,7 +1825,7 @@ class CryptoBotEngine:
         )
 
         return {
-            "version": "2.52",
+            "version": "2.68",
             "timestamp": int(time.time()),
             "last_update_ts": int(self.last_update_ts),
             "data_source": source_label,
