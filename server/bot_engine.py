@@ -18,12 +18,12 @@ MT5_WINE_STARTUP_INI = "/opt/mt5/startup.ini"
 
 DEFAULT_SETTINGS: Dict[str, Any] = {
     # Active symbol & bot state
-    "symbol": "BTCUSD",             # "BTCUSD" or "XAUUSD"
+    "symbol": "BTCUSD",             # Only BTCUSD (per David Trullas Fibonacci method)
     "is_running": True,             # Bot active or paused by user
     "mt5_login": "8112287",
     "mt5_server": "AMarkets-Demo",
     "mt5_password": "XvA!Xh8e",
-    "InpStrategyMode": 2,           # 1 = Мандарин Пробой (BOS), 2 = Активный Импульс M15, 3 = Отскок от уровней
+    "InpStrategyMode": 4,           # 4 = Метод Давида Трульяса (Фибоначчи) (Единственная стратегия)
     # Money Management
     "InpUseAutoLot": True,
     "InpRiskPercent": 3.0,
@@ -1635,40 +1635,12 @@ class CryptoBotEngine:
             return
 
         self.last_bar_time = cur_bar_time
-        strat_mode = int(self.settings.get("InpStrategyMode", 2))
 
-        if strat_mode == 1:
-            # Режим 1: Классический снайпер «Коробка Мандарин + Пробой BOS»
-            if bos_buy and is_marubozu and is_strong_atr and is_mandarin_full and htf_buy_ok and allow_buy_news:
-                self.open_position("BUY", comment="Strategy 1: Mandarin BOS Buy")
-            elif bos_sell and is_marubozu and is_strong_atr and is_mandarin_full and htf_sell_ok and allow_sell_news:
-                self.open_position("SELL", comment="Strategy 1: Mandarin BOS Sell")
-        elif strat_mode == 2:
-            # Режим 2: Активный Импульс M15 (быстрый вход по импульсной свече и пробою локального бара)
-            imp_buy = (close1 > open1) and (body_ratio >= 0.42) and (close1 > c2["high"] or bos_buy) and htf_buy_ok
-            imp_sell = (close1 < open1) and (body_ratio >= 0.42) and (close1 < c2["low"] or bos_sell) and htf_sell_ok
-            if imp_buy and allow_buy_news:
-                self.open_position("BUY", comment="Strategy 2: Impulse M15 Buy")
-            elif imp_sell and allow_sell_news:
-                self.open_position("SELL", comment="Strategy 2: Impulse M15 Sell")
-        elif strat_mode == 4:
-            # Режим 4: Метод Давида Трульяса Вила (MACD + RSI + Volume + Авто-сетка Фибоначчи 23.6% -> 38.2% / 61.8%)
-            if fibo_state.get("trigger_buy") and allow_buy_news:
-                self.open_position("BUY", comment="Strategy 4: Trullas Fibo 23.6 Buy")
-            elif fibo_state.get("trigger_sell") and allow_sell_news:
-                self.open_position("SELL", comment="Strategy 4: Trullas Fibo 23.6 Sell")
-        else:
-            # Режим 3: Разворот от уровней (Swing Reversal)
-            local_lows = [c["low"] for c in self.m15_candles[1:9]]
-            local_highs = [c["high"] for c in self.m15_candles[1:9]]
-            min_8 = min(local_lows) if local_lows else low1
-            max_8 = max(local_highs) if local_highs else high1
-            rev_buy = (close1 > open1) and (low1 <= min_8 + atr * 0.35) and (body_ratio >= 0.35)
-            rev_sell = (close1 < open1) and (high1 >= max_8 - atr * 0.35) and (body_ratio >= 0.35)
-            if rev_buy and allow_buy_news:
-                self.open_position("BUY", comment="Strategy 3: Swing Bounce Buy")
-            elif rev_sell and allow_sell_news:
-                self.open_position("SELL", comment="Strategy 3: Swing Bounce Sell")
+        # Единственная активная стратегия: Метод Давида Трульяса Вила (Фибоначчи 23.6% -> 38.2% / 50.0% / 61.8% + MACD + RSI)
+        if fibo_state.get("trigger_buy") and allow_buy_news:
+            self.open_position("BUY", comment="Trullas Fibo 23.6 Buy")
+        elif fibo_state.get("trigger_sell") and allow_sell_news:
+            self.open_position("SELL", comment="Trullas Fibo 23.6 Sell")
 
     def get_trade_history(self, limit: int = 30) -> List[Dict[str, Any]]:
         if self.is_mt5_live() and self.mt5_history:

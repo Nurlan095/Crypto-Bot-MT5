@@ -717,15 +717,11 @@
       <button class="btn-stop" id="btnToggleRun" onclick="toggleBot()">⏸ Стоп</button>
     </div>
 
-    <!-- Переключатель Биткоин / Золото -->
-    <div class="asset-row">
-      <button class="asset-btn active" id="btnBTC" onclick="setSymbol('BTCUSD')">
+    <!-- Активный инструмент: Только Биткоин (BTCUSD) по методу Давида Трульяса -->
+    <div class="asset-row" style="grid-template-columns:1fr;">
+      <button class="asset-btn active" id="btnBTC" style="cursor:default;">
         <span style="color:#f59e0b;font-weight:900;font-size:14px;">₿</span>
-        <span>Биткоин (BTCUSD)</span>
-      </button>
-      <button class="asset-btn" id="btnXAU" onclick="setSymbol('XAUUSD')">
-        <span style="color:#fbbf24;font-size:13px;">🥇</span>
-        <span>Золото (XAUUSD)</span>
+        <span>Биткоин (BTCUSD) · Метод Фибоначчи</span>
       </button>
     </div>
 
@@ -850,10 +846,7 @@
       <div class="strat-row">
         <div class="strat-title">Стратегия робота</div>
         <select class="risk-select" id="s_InpStrategyMode">
-          <option value="2" selected>⚡ Импульс M15 (Активная)</option>
-          <option value="1">🎯 Пробой «Мандарин»</option>
-          <option value="3">🔄 Отскок от уровней</option>
-          <option value="4">📐 Метод Давида Трульяса (Фибоначчи)</option>
+          <option value="4" selected>📐 Метод Давида Трульяса (Фибоначчи)</option>
         </select>
       </div>
 
@@ -869,8 +862,8 @@
 
       <div class="strat-row">
         <div>
-          <div class="strat-title">Сейф 50%</div>
-          <div class="strat-sub">Забирать половину прибыли</div>
+          <div class="strat-title">Сейф 50% (Фибо 38.2%)</div>
+          <div class="strat-sub">Забирать половину прибыли + перевод в БУ</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="s_InpUsePartialClose" checked />
@@ -891,8 +884,8 @@
 
       <div class="strat-row">
         <div>
-          <div class="strat-title">Только по тренду H1</div>
-          <div class="strat-sub">Сверяться с часовым графиком</div>
+          <div class="strat-title">Фильтр тренда и объема</div>
+          <div class="strat-sub">Подтверждение EMA + Volume SMA(20)</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="s_InpUseHTFFilter" checked />
@@ -902,8 +895,8 @@
 
       <div class="strat-row">
         <div>
-          <div class="strat-title">Ждать коробку «Мандарин»</div>
-          <div class="strat-sub">Дождаться узкого диапазона цен</div>
+          <div class="strat-title">Авто-сетка Фибоначчи + MACD/RSI</div>
+          <div class="strat-sub">Вход 23.6%, Сейф 38.2%, Трейл 50%, Тейк 61.8%</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="s_InpUseMandarin" checked />
@@ -1361,52 +1354,46 @@
         }
       }
 
-      // Коробка Мандарин (движется влево вместе со свечами)
-      if (boxEndIdx >= 0 && boxStartIdx < candles.length) {
-        const x1 = Math.max(2, boxStartIdx * stepX + shiftPx);
-        const x2 = Math.min(chartW - 4, (boxEndIdx + 1) * stepX + shiftPx);
-        if (x2 - x1 > 12) {
-          const y1 = yClamp(boxHighPrice);
-          const y2 = yClamp(boxLowPrice);
-          const bwBox = Math.max(16, x2 - x1);
-          const bhBox = Math.max(10, y2 - y1);
-          ctx.fillStyle = 'rgba(245, 158, 11, 0.14)';
-          ctx.strokeStyle = '#f59e0b';
-          ctx.lineWidth = 1.2;
-          ctx.fillRect(x1, y1, bwBox, bhBox);
-          ctx.strokeRect(x1, y1, bwBox, bhBox);
-          ctx.fillStyle = '#fbbf24';
-          ctx.font = 'bold 9.5px sans-serif';
-          const lblX = Math.max(6, Math.min(x1 + 2, chartW - 96));
-          ctx.fillText('Коробка Мандарин', lblX, Math.max(20, y1 - 4));
-        }
+      // Сетка Фибоначчи (Метод Давида Трульяса) вместо старой Коробки Мандарин
+      const fg = (state.market && state.market.fibo_grid) ? state.market.fibo_grid : {};
+      const isBuyGrid = (fg.direction || 1) >= 0;
+      const lvl236 = fg.lvl_236 || (bid * 0.9985);
+      const lvl382 = fg.lvl_382 || (bid * 0.9995);
+      const lvl500 = fg.lvl_500 || (bid * 1.0005);
+      const lvl618 = fg.lvl_618 || (bid * 1.0018);
+
+      const fiboRows = isBuyGrid ? [
+        { y: Math.round(chartH * 0.13), color: '#10b981', fill: 'rgba(16, 185, 129, 0.06)', label: `Фибо 61.8% (TP) · ${fmtNum(lvl618)}` },
+        { y: Math.round(chartH * 0.35), color: '#38bdf8', fill: 'rgba(56, 189, 248, 0.06)', label: `Фибо 50.0% (Трейл) · ${fmtNum(lvl500)}` },
+        { y: Math.round(chartH * 0.58), color: '#fbbf24', fill: 'rgba(251, 191, 36, 0.07)', label: `Фибо 38.2% (БУ/Сейф) · ${fmtNum(lvl382)}` },
+        { y: Math.round(chartH * 0.82), color: '#a855f7', fill: 'rgba(168, 85, 247, 0.06)', label: `Фибо 23.6% (Вход) · ${fmtNum(lvl236)}` }
+      ] : [
+        { y: Math.round(chartH * 0.13), color: '#a855f7', fill: 'rgba(168, 85, 247, 0.06)', label: `Фибо 23.6% (Вход) · ${fmtNum(lvl236)}` },
+        { y: Math.round(chartH * 0.36), color: '#fbbf24', fill: 'rgba(251, 191, 36, 0.07)', label: `Фибо 38.2% (БУ/Сейф) · ${fmtNum(lvl382)}` },
+        { y: Math.round(chartH * 0.59), color: '#38bdf8', fill: 'rgba(56, 189, 248, 0.06)', label: `Фибо 50.0% (Трейл) · ${fmtNum(lvl500)}` },
+        { y: Math.round(chartH * 0.82), color: '#10b981', fill: 'rgba(16, 185, 129, 0.06)', label: `Фибо 61.8% (TP) · ${fmtNum(lvl618)}` }
+      ];
+
+      // Полупрозрачные зоны сетки Фибоначчи
+      for (let r = 0; r < fiboRows.length - 1; r++) {
+        ctx.fillStyle = fiboRows[r].fill;
+        ctx.fillRect(0, fiboRows[r].y, chartW, fiboRows[r + 1].y - fiboRows[r].y);
       }
 
-      // Верхний уровень BUY
-      if (sh > 0) {
-        const y = 11;
-        ctx.strokeStyle = '#10b981';
+      // Уровни сетки Фибоначчи
+      fiboRows.forEach(row => {
+        ctx.strokeStyle = row.color;
         ctx.setLineDash([4, 3]);
-        ctx.lineWidth = 1.1;
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(chartW, y); ctx.stroke();
+        ctx.lineWidth = 1.05;
+        ctx.beginPath();
+        ctx.moveTo(0, row.y);
+        ctx.lineTo(chartW, row.y);
+        ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = '#10b981';
-        ctx.font = 'bold 9.5px sans-serif';
-        ctx.fillText(`BUY ${fmtNum(sh)}`, 6, y - 2);
-      }
-
-      // Нижний уровень SELL
-      if (sl > 0) {
-        const y = chartH - 8;
-        ctx.strokeStyle = '#ef4444';
-        ctx.setLineDash([4, 3]);
-        ctx.lineWidth = 1.1;
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(chartW, y); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = '#ef4444';
-        ctx.font = 'bold 9.5px sans-serif';
-        ctx.fillText(`SELL ${fmtNum(sl)}`, 6, y - 3);
-      }
+        ctx.fillStyle = row.color;
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText(row.label, 6, row.y - 3);
+      });
 
       // Японские свечи (движутся влево при каждом новом баре)
       candles.forEach((c, i) => {
@@ -1482,8 +1469,8 @@
       badge.className = 'badge-active ' + (st.is_running ? '' : 'badge-Active-pause');
 
       document.getElementById('btnToggleRun').textContent = st.is_running ? '⏸ Стоп' : '▶ Пуск';
-      document.getElementById('btnBTC').className = 'asset-btn ' + (st.symbol === 'BTCUSD' ? 'active' : '');
-      document.getElementById('btnXAU').className = 'asset-btn ' + (st.symbol === 'XAUUSD' ? 'active' : '');
+      const btnBtc = document.getElementById('btnBTC');
+      if (btnBtc) btnBtc.className = 'asset-btn active';
 
       const mt5Login = (st.settings && st.settings.mt5_login) ? st.settings.mt5_login : '8112287';
       document.getElementById('sourceSub').innerHTML = `<span class="dot-online"></span><span>Счет MT5 #${mt5Login} онлайн</span>`;
@@ -1508,7 +1495,7 @@
       if (posList.length === 0) {
         posEl.innerHTML = `
           <div class="trade-card" style="text-align:center;padding:10px;color:var(--muted);font-size:11.5px;">
-            Сейчас открытых сделок нет — робот ждет сигнала пробоя M15
+            Сейчас открытых сделок нет — робот ждет сигнала по Фибоначчи 23.6%
           </div>`;
       } else {
         const p = posList[0];
@@ -1552,9 +1539,7 @@
           </div>`;
       }
 
-      // Что делает робот
-      const ch = st.checklist || {};
-      const stratMode = (st.settings && st.settings.InpStrategyMode) ? Number(st.settings.InpStrategyMode) : 2;
+      // Что делает робот (только Метод Давида Трульяса - Фибоначчи)
       const fg = (st.market && st.market.fibo_grid) ? st.market.fibo_grid : {};
       if (!st.is_running) {
         document.getElementById('humanStatusBox').innerHTML = `
@@ -1564,30 +1549,19 @@
         document.getElementById('humanStatusBox').innerHTML = `
           <div><span style="color:#10b981;">●</span> Открыта сделка в MetaTrader 5!</div>
           <div><span style="color:#10b981;">●</span> Робот следит за ценой и защищает прибыль...</div>`;
-      } else if (stratMode === 4) {
+      } else {
         const fibLvl = fg.lvl_236 ? fmtNum(fg.lvl_236) : fmtNum(st.market.bid);
         document.getElementById('humanStatusBox').innerHTML = `
           <div><span style="color:#10b981;">●</span> Стратегия: Метод Давида Трульяса (Фибоначчи)</div>
           <div><span style="color:#10b981;">●</span> Ждет пробоя Фибо 23.6% (${fibLvl}) + MACD + RSI</div>`;
-      } else {
-        document.getElementById('humanStatusBox').innerHTML = `
-          <div><span style="color:#10b981;">●</span> Робот сканирует график ${st.symbol} (M15)</div>
-          <div><span style="color:#10b981;">●</span> Ждет пробоя уровня ${fmtNum(st.market.swing_high)} или ${fmtNum(st.market.swing_low)}</div>`;
       }
 
-      const items = stratMode === 4 ? [
+      const items = [
         ['Сетка Фибоначчи', Boolean(fg.is_active)],
         ['Дивергенция MACD', Boolean(fg.macd_div)],
         ['Фильтр RSI (14)', Boolean(fg.rsi_confirm)],
         ['Объем Volume', Boolean(fg.vol_confirm)],
         ['Пробой 23.6%', Boolean(fg.trigger_buy || fg.trigger_sell)],
-        ['Новости USD', !st.news.is_paused]
-      ] : [
-        ['Коробка Мандарин', ch.box_valid],
-        ['Спокойный рынок', ch.is_squeeze],
-        ['Сильная свеча', ch.is_marubozu],
-        ['Пробой уровня', ch.bos_buy || ch.bos_sell],
-        ['Торговый час', ch.is_active_session],
         ['Новости USD', !st.news.is_paused]
       ];
       document.getElementById('checkGrid').innerHTML = items.map(it => `
@@ -1680,7 +1654,7 @@
         document.getElementById('s_mt5_password').value = st.settings.mt5_password || '';
         document.getElementById('s_mt5_server').value = st.settings.mt5_server || 'AMarkets-Demo';
         const stratEl = document.getElementById('s_InpStrategyMode');
-        if (stratEl) stratEl.value = String(st.settings.InpStrategyMode || 2);
+        if (stratEl) stratEl.value = "4";
         document.getElementById('s_InpRiskPercent').value = Number(st.settings.InpRiskPercent || 3.0).toFixed(1);
         document.getElementById('s_InpUsePartialClose').checked = Boolean(st.settings.InpUsePartialClose);
         document.getElementById('s_InpUseNewsFilter').checked = Boolean(st.settings.InpUseNewsFilter);
@@ -1726,7 +1700,7 @@
     let latestApkUrl = SERVER_URL + '/Crypto_Bot_v2_50.apk';
 
     async function checkAppUpdateOnStartup() {
-      let localCode = 263;
+      let localCode = 264;
       if (hasNative && window.AndroidBridge.getAppVersionCode) {
         try { localCode = Number(window.AndroidBridge.getAppVersionCode()); } catch(e) {}
       }

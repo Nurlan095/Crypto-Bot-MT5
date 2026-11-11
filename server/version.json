@@ -1,6 +1,6 @@
 {
-    "changelog":  "Добавлена 4-я стратегия: Метод Давида Трульяса (Фибоначчи 23.6% + MACD + RSI)",
-    "version_code":  263,
+    "changelog":  "Только Биткоин (BTCUSD) и единая стратегия Давида Трульяса (Сетка Фибоначчи на графике вместо Коробки Мандарин)",
+    "version_code":  264,
     "apk_url":  "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk",
-    "version_name":  "2.63"
+    "version_name":  "2.64"
 }
