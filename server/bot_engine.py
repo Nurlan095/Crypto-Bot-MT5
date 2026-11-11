@@ -138,6 +138,21 @@ class CryptoBotEngine:
             "start_time": 0,
             "end_time": 0,
         }
+        self.fibo_grid: Dict[str, Any] = {
+            "is_active": False,
+            "direction": 0,
+            "price_0": 0.0,
+            "price_100": 0.0,
+            "lvl_236": 0.0,
+            "lvl_382": 0.0,
+            "lvl_500": 0.0,
+            "lvl_618": 0.0,
+            "macd_div": False,
+            "rsi_confirm": False,
+            "vol_confirm": False,
+            "trigger_buy": False,
+            "trigger_sell": False,
+        }
         self.historical_boxes: List[Dict[str, Any]] = []
         self.checklist: Dict[str, Any] = {}
 
@@ -681,6 +696,145 @@ class CryptoBotEngine:
         if htf_close < ema_0 and ema_0 < ema_2:
             return -1
         return 0
+
+    def evaluate_trullas_fibo(self, atr: float) -> Dict[str, Any]:
+        """Метод Давида Трульяса Вила: MACD(12,26,9) + RSI(14) + Volume + Авто-сетка Фибоначчи (23.6% / 38.2% / 61.8%)."""
+        default_grid: Dict[str, Any] = {
+            "is_active": False,
+            "direction": 0,
+            "price_0": 0.0,
+            "price_100": 0.0,
+            "lvl_236": 0.0,
+            "lvl_382": 0.0,
+            "lvl_500": 0.0,
+            "lvl_618": 0.0,
+            "macd_div": False,
+            "rsi_confirm": False,
+            "vol_confirm": False,
+            "trigger_buy": False,
+            "trigger_sell": False,
+        }
+        if len(self.m15_candles) < 40 or atr <= 0:
+            self.fibo_grid = default_grid
+            return default_grid
+
+        chron = list(reversed(self.m15_candles))
+        closes = [c["close"] for c in chron]
+        vols = [c["volume"] for c in chron]
+
+        # 1. MACD (12, 26, 9)
+        def _ema_list(vals: List[float], period: int) -> List[float]:
+            k = 2.0 / (period + 1.0)
+            out: List[float] = []
+            cur = vals[0]
+            for v in vals:
+                cur = v * k + cur * (1.0 - k)
+                out.append(cur)
+            return out
+
+        ema12 = _ema_list(closes, 12)
+        ema26 = _ema_list(closes, 26)
+        macd_line = [a - b for a, b in zip(ema12, ema26)]
+        sig_line = _ema_list(macd_line, 9)
+        macd_rev = list(reversed(macd_line))
+        sig_rev = list(reversed(sig_line))
+
+        # 2. RSI (14)
+        gains: List[float] = [0.0]
+        losses: List[float] = [0.0]
+        for idx in range(1, len(closes)):
+            d = closes[idx] - closes[idx - 1]
+            gains.append(max(0.0, d))
+            losses.append(max(0.0, -d))
+        avg_g = sum(gains[1:15]) / 14.0
+        avg_l = sum(losses[1:15]) / 14.0
+        rsi_series: List[float] = [50.0] * 14
+        for idx in range(14, len(closes)):
+            avg_g = (avg_g * 13.0 + gains[idx]) / 14.0
+            avg_l = (avg_l * 13.0 + losses[idx]) / 14.0
+            rs = (avg_g / avg_l) if avg_l > 1e-9 else 100.0
+            rsi_series.append(100.0 - (100.0 / (1.0 + rs)))
+        rsi_rev = list(reversed(rsi_series))
+
+        # 3. Volume SMA(20)
+        avg_vol = sum(vols[-21:-1]) / 20.0 if len(vols) >= 21 else max(1.0, vols[-1])
+        vol_confirm = (self.m15_candles[1]["volume"] >= avg_vol * 0.95)
+
+        # 4. Находим последний значимый импульс для натяжки сетки Фибоначчи (100% -> 0%)
+        window = self.m15_candles[1:25]
+        high_idx = max(range(len(window)), key=lambda idx: window[idx]["high"]) + 1
+        low_idx = min(range(len(window)), key=lambda idx: window[idx]["low"]) + 1
+        high_val = self.m15_candles[high_idx]["high"]
+        low_val = self.m15_candles[low_idx]["low"]
+        impulse = high_val - low_val
+
+        if impulse < atr * 1.2:
+            self.fibo_grid = default_grid
+            return default_grid
+
+        c1 = self.m15_candles[1]
+        close1, open1 = c1["close"], c1["open"]
+
+        # Если минимум сформировался позже максимума -> нисходящий импульс (100% вверху, 0% внизу) -> ищем BUY откат за 23.6%
+        if low_idx < high_idx:
+            price_100 = high_val
+            price_0 = low_val
+            lvl_236 = round(price_0 + impulse * 0.236, 2)
+            lvl_382 = round(price_0 + impulse * 0.382, 2)
+            lvl_500 = round(price_0 + impulse * 0.500, 2)
+            lvl_618 = round(price_0 + impulse * 0.618, 2)
+
+            prev_lows = [i for i in range(low_idx + 3, min(38, len(self.m15_candles))) if self.m15_candles[i]["low"] <= price_0 * 1.003]
+            macd_div = any(macd_rev[low_idx] > macd_rev[p] for p in prev_lows) or (macd_rev[1] > macd_rev[2] and (macd_rev[1] - sig_rev[1]) > (macd_rev[2] - sig_rev[2]))
+            rsi_confirm = (rsi_rev[low_idx] <= 42.0 or rsi_rev[1] > rsi_rev[2])
+            trigger_buy = (close1 > open1) and (close1 >= lvl_236) and (close1 < lvl_382) and macd_div and rsi_confirm
+
+            self.fibo_grid = {
+                "is_active": True,
+                "direction": 1,
+                "price_0": round(price_0, 2),
+                "price_100": round(price_100, 2),
+                "lvl_236": lvl_236,
+                "lvl_382": lvl_382,
+                "lvl_500": lvl_500,
+                "lvl_618": lvl_618,
+                "macd_div": bool(macd_div),
+                "rsi_confirm": bool(rsi_confirm),
+                "vol_confirm": bool(vol_confirm),
+                "trigger_buy": bool(trigger_buy),
+                "trigger_sell": False,
+            }
+        else:
+            # Максимум сформировался позже минимума -> восходящий импульс (100% внизу, 0% вверху) -> ищем SELL откат за 23.6%
+            price_100 = low_val
+            price_0 = high_val
+            lvl_236 = round(price_0 - impulse * 0.236, 2)
+            lvl_382 = round(price_0 - impulse * 0.382, 2)
+            lvl_500 = round(price_0 - impulse * 0.500, 2)
+            lvl_618 = round(price_0 - impulse * 0.618, 2)
+
+            prev_highs = [i for i in range(high_idx + 3, min(38, len(self.m15_candles))) if self.m15_candles[i]["high"] >= price_0 * 0.997]
+            macd_div = any(macd_rev[high_idx] < macd_rev[p] for p in prev_highs) or (macd_rev[1] < macd_rev[2] and (macd_rev[1] - sig_rev[1]) < (macd_rev[2] - sig_rev[2]))
+            rsi_confirm = (rsi_rev[high_idx] >= 58.0 or rsi_rev[1] < rsi_rev[2])
+            trigger_sell = (close1 < open1) and (close1 <= lvl_236) and (close1 > lvl_382) and macd_div and rsi_confirm
+
+            self.fibo_grid = {
+                "is_active": True,
+                "direction": -1,
+                "price_0": round(price_0, 2),
+                "price_100": round(price_100, 2),
+                "lvl_236": lvl_236,
+                "lvl_382": lvl_382,
+                "lvl_500": lvl_500,
+                "lvl_618": lvl_618,
+                "macd_div": bool(macd_div),
+                "rsi_confirm": bool(rsi_confirm),
+                "vol_confirm": bool(vol_confirm),
+                "trigger_buy": False,
+                "trigger_sell": bool(trigger_sell),
+            }
+
+        return self.fibo_grid
 
     # -------------------------------------------------------------------------
     # Economic Calendar News Filter & Analyzer (USD)
@@ -1390,6 +1544,7 @@ class CryptoBotEngine:
             "end_time": self.m15_candles[2]["time"] if len(self.m15_candles) > 2 else 0,
         }
         self.historical_boxes = self.scan_historical_boxes(atr)
+        fibo_state = self.evaluate_trullas_fibo(atr)
 
         # 4. Evaluate candle [1] and [2] conditions for live checklist & trading
         c1 = self.m15_candles[1]
@@ -1496,6 +1651,12 @@ class CryptoBotEngine:
                 self.open_position("BUY", comment="Strategy 2: Impulse M15 Buy")
             elif imp_sell and allow_sell_news:
                 self.open_position("SELL", comment="Strategy 2: Impulse M15 Sell")
+        elif strat_mode == 4:
+            # Режим 4: Метод Давида Трульяса Вила (MACD + RSI + Volume + Авто-сетка Фибоначчи 23.6% -> 38.2% / 61.8%)
+            if fibo_state.get("trigger_buy") and allow_buy_news:
+                self.open_position("BUY", comment="Strategy 4: Trullas Fibo 23.6 Buy")
+            elif fibo_state.get("trigger_sell") and allow_sell_news:
+                self.open_position("SELL", comment="Strategy 4: Trullas Fibo 23.6 Sell")
         else:
             # Режим 3: Разворот от уровней (Swing Reversal)
             local_lows = [c["low"] for c in self.m15_candles[1:9]]
@@ -1566,6 +1727,7 @@ class CryptoBotEngine:
                 "swing_low": self.last_swing_low,
                 "swing_low_time": self.last_swing_low_time,
                 "mandarin_box": self.mandarin_box,
+                "fibo_grid": self.fibo_grid,
                 "historical_boxes": self.historical_boxes,
             },
             "news": {
