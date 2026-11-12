@@ -1,6 +1,6 @@
 {
-    "changelog":  "v2.71: Профильные активы XAUUSD (Золото), BTCUSD (24/7), NAS100 и US500 (Чемпионская стратегия Давида Трульяса: MACD + RSI + Фибо 23.6%)",
-    "version_code":  271,
+    "changelog":  "v2.72: Каждая из 6 стратегий отдельно в Настройках с кнопкой Вкл/Выкл (ВКЛ/ВЫКЛ) и рекомендацией активов в скобках (XAUUSD, NAS100, US500, BTCUSD)",
+    "version_code":  272,
     "apk_url":  "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk",
-    "version_name":  "2.71"
+    "version_name":  "2.72"
 }

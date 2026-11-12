@@ -546,16 +546,54 @@
       font-weight: 700;
       padding-left: 10px;
     }
+    #tab-settings {
+      justify-content: flex-start;
+      gap: 8px;
+      padding-bottom: 14px;
+    }
+    #tab-settings .glass-card {
+      flex-shrink: 0;
+    }
     .strat-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 5px 0;
+      gap: 8px;
+      padding: 6px 0;
       border-bottom: 1px solid #172234;
     }
     .strat-row:last-child { border-bottom: none; }
-    .strat-title { font-size: 12.5px; font-weight: 700; color: #f1f5f9; }
-    .strat-sub { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+    .strat-title { font-size: 12px; font-weight: 800; color: #f1f5f9; line-height: 1.3; }
+    .strat-sub { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.3; }
+    .rec-paren {
+      color: #fbbf24;
+      font-weight: 800;
+      font-size: 11px;
+    }
+    .strat-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .strat-state-pill {
+      font-size: 9.5px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 5px;
+      min-width: 38px;
+      text-align: center;
+    }
+    .strat-state-pill.on {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.45);
+    }
+    .strat-state-pill.off {
+      background: rgba(148, 163, 184, 0.12);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
 
     /* Тумблер (Switch) */
     .switch {
@@ -951,7 +989,7 @@
         <img class="app-logo" src="data:image/webp;base64,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" alt="Logo" />
         <div>
           <div class="brand-title-row">
-            <span class="brand-name">Crypto Bot <span id="appVerLabel" style="font-size:10px;color:#34d399;font-weight:700;">v2.71</span></span>
+            <span class="brand-name">Crypto Bot <span id="appVerLabel" style="font-size:10px;color:#34d399;font-weight:700;">v2.72</span></span>
             <span id="statusBadge" class="badge-active">● АКТИВЕН</span>
           </div>
           <div class="brand-sub" id="sourceSub">
@@ -1118,21 +1156,125 @@
       </div>
     </div>
 
-    <div class="glass-card" style="flex:1;justify-content:space-around;">
+    <!-- Карточка 2: Каждая стратегия по отдельности (Вкл / Выкл + Рекомендация актива в скобках) -->
+    <div class="glass-card">
       <div class="gc-head">
-        <span class="gc-title">⚙️ Настройки стратегии</span>
+        <span class="gc-title">🎯 Стратегии робота (Вкл / Выкл отдельно)</span>
+        <span class="badge-active" id="activeStratsBadge">Активно: 5 из 6</span>
+      </div>
+
+      <!-- Стратегия 1 -->
+      <div class="strat-row">
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">
+            🏆 1. Метод Давида Трульяса: Фибо 23.6% <span class="rec-paren">(Рекомендация: NAS100, US500, BTCUSD)</span>
+          </div>
+          <div class="strat-sub">Чемпионская связка: MACD (12, 26, 9) + RSI (14) + пробой 23.6% Фибо → Сейф 38.2% → Тейк 61.8%</div>
+        </div>
+        <div class="strat-toggle-wrap">
+          <span class="strat-state-pill on" id="pill_InpStratTrullasFibo">ВКЛ</span>
+          <label class="switch">
+            <input type="checkbox" id="s_InpStratTrullasFibo" checked onchange="onStrategySwitchChange('InpStratTrullasFibo', 'Метод Давида Трульяса (Фибо 23.6%)')" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Стратегия 2 -->
+      <div class="strat-row">
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">
+            📐 2. Золотая Фибо Наставника 0.75–0.786 <span class="rec-paren">(Рекомендация: XAUUSD Золото, BTCUSD)</span>
+          </div>
+          <div class="strat-sub">Глубокий откат 0.75–0.786 / уровень 0.3618 + калькуляция 1/5 → Тейки 1.272 и 1.618</div>
+        </div>
+        <div class="strat-toggle-wrap">
+          <span class="strat-state-pill on" id="pill_InpStratMentorFibo786">ВКЛ</span>
+          <label class="switch">
+            <input type="checkbox" id="s_InpStratMentorFibo786" checked onchange="onStrategySwitchChange('InpStratMentorFibo786', 'Золотая Фибо Наставника (0.75–0.786)')" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Стратегия 3 -->
+      <div class="strat-row">
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">
+            🍊 3. Коробка «Мандарин» + Пробой BOS <span class="rec-paren">(Рекомендация: XAUUSD Золото, BTCUSD)</span>
+          </div>
+          <div class="strat-sub">Утренний узкий флэт (ATR Squeeze) + полнотелая свеча Marubozu + пробой структуры Swing</div>
+        </div>
+        <div class="strat-toggle-wrap">
+          <span class="strat-state-pill on" id="pill_InpStratMandarinBOS">ВКЛ</span>
+          <label class="switch">
+            <input type="checkbox" id="s_InpStratMandarinBOS" checked onchange="onStrategySwitchChange('InpStratMandarinBOS', 'Коробка Мандарин + Пробой BOS')" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Стратегия 4 -->
+      <div class="strat-row">
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">
+            ⚡ 4. Импульс M15 по тренду EMA 50 <span class="rec-paren">(Рекомендация: BTCUSD, NAS100, XAUUSD)</span>
+          </div>
+          <div class="strat-sub">Активный внутридневной пробой экстремума свечи M15 (тело ≥ 45%) по тренду H1 EMA(50)</div>
+        </div>
+        <div class="strat-toggle-wrap">
+          <span class="strat-state-pill on" id="pill_InpStratImpulseM15">ВКЛ</span>
+          <label class="switch">
+            <input type="checkbox" id="s_InpStratImpulseM15" checked onchange="onStrategySwitchChange('InpStratImpulseM15', 'Импульс M15 по тренду EMA 50')" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Стратегия 5 -->
+      <div class="strat-row">
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">
+            🔄 5. Отскок от уровней Swing-канала <span class="rec-paren">(Рекомендация: US500, XAUUSD, BTCUSD)</span>
+          </div>
+          <div class="strat-sub">Канальная торговля на отбой от локальных границ диапазона M15 с подтверждением RSI (14)</div>
+        </div>
+        <div class="strat-toggle-wrap">
+          <span class="strat-state-pill off" id="pill_InpStratSwingBounce">ВЫКЛ</span>
+          <label class="switch">
+            <input type="checkbox" id="s_InpStratSwingBounce" onchange="onStrategySwitchChange('InpStratSwingBounce', 'Отскок от уровней Swing-канала')" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Стратегия 6 -->
+      <div class="strat-row">
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">
+            📰 6. Импульс новостей USD: ФРС / CPI / NFP <span class="rec-paren">(Рекомендация: XAUUSD, NAS100, US500)</span>
+          </div>
+          <div class="strat-sub">Вход по факту выхода новостей США (Actual vs Forecast) после защитной паузы</div>
+        </div>
+        <div class="strat-toggle-wrap">
+          <span class="strat-state-pill on" id="pill_InpTradeNewsImpulse">ВКЛ</span>
+          <label class="switch">
+            <input type="checkbox" id="s_InpTradeNewsImpulse" checked onchange="onStrategySwitchChange('InpTradeNewsImpulse', 'Импульс новостей USD')" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Карточка 3: Управление риском, защитой и авто-расписанием -->
+    <div class="glass-card">
+      <div class="gc-head">
+        <span class="gc-title">🛡 Управление риском и защитой</span>
       </div>
 
       <div class="strat-row">
-        <div class="strat-title">Стратегия робота</div>
-        <select class="risk-select" id="s_InpStrategyMode">
-          <option value="4" selected>📐 Метод Давида Трульяса (Фибоначчи)</option>
-        </select>
-      </div>
-
-      <div class="strat-row">
-        <div class="strat-title">Риск на одну сделку</div>
-        <select class="risk-select" id="s_InpRiskPercent">
+        <div class="strat-title">Риск на одну сделку <span class="rec-paren">(По умолчанию: 3.0%)</span></div>
+        <select class="risk-select" id="s_InpRiskPercent" onchange="saveBotSettings(true)">
           <option value="1.0">1.0%</option>
           <option value="2.0">2.0%</option>
           <option value="3.0" selected>3.0%</option>
@@ -1141,67 +1283,67 @@
       </div>
 
       <div class="strat-row">
-        <div>
-          <div class="strat-title">Авто-калькуляция депозита 1/5 (По видео)</div>
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">🧮 Авто-калькуляция депозита 1/5 <span class="rec-paren">(Рекомендация: XAUUSD Золото, Все активы)</span></div>
           <div class="strat-sub">Депозит ÷ 5 частей · LOTT = (1/5) / SL_пункт / 100</div>
         </div>
         <label class="switch">
-          <input type="checkbox" id="s_InpUseDepositCalc15" checked />
+          <input type="checkbox" id="s_InpUseDepositCalc15" checked onchange="saveBotSettings(true)" />
           <span class="slider"></span>
         </label>
       </div>
 
       <div class="strat-row">
-        <div>
-          <div class="strat-title">Сейф 50% (Фибо 38.2% / 1.272)</div>
-          <div class="strat-sub">Забирать половину прибыли + перевод в БУ</div>
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">💰 Сейф 50% (Фибо 38.2% / 1.272) <span class="rec-paren">(Рекомендация: NAS100, US500, XAUUSD, BTCUSD)</span></div>
+          <div class="strat-sub">Забирать половину прибыли + авто-перевод в Безубыток</div>
         </div>
         <label class="switch">
-          <input type="checkbox" id="s_InpUsePartialClose" checked />
+          <input type="checkbox" id="s_InpUsePartialClose" checked onchange="saveBotSettings(true)" />
           <span class="slider"></span>
         </label>
       </div>
 
       <div class="strat-row">
-        <div>
-          <div class="strat-title">Защита от новостей USD</div>
-          <div class="strat-sub">Пауза перед важными новостями</div>
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">🛡 Защита от новостей USD <span class="rec-paren">(Рекомендация: XAUUSD, NAS100, US500)</span></div>
+          <div class="strat-sub">Авто-пауза за 15 мин до и 5 мин после важных новостей США</div>
         </div>
         <label class="switch">
-          <input type="checkbox" id="s_InpUseNewsFilter" checked />
+          <input type="checkbox" id="s_InpUseNewsFilter" checked onchange="saveBotSettings(true)" />
           <span class="slider"></span>
         </label>
       </div>
 
       <div class="strat-row">
-        <div>
-          <div class="strat-title">Фильтр тренда и объема</div>
-          <div class="strat-sub">Подтверждение EMA + Volume SMA(20)</div>
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">📈 Фильтр тренда H1 EMA 50 и объема <span class="rec-paren">(Рекомендация: Все активы)</span></div>
+          <div class="strat-sub">Запрет входа против старшего тренда + Volume SMA(20)</div>
         </div>
         <label class="switch">
-          <input type="checkbox" id="s_InpUseHTFFilter" checked />
+          <input type="checkbox" id="s_InpUseHTFFilter" checked onchange="saveBotSettings(true)" />
           <span class="slider"></span>
         </label>
       </div>
 
       <div class="strat-row">
-        <div>
-          <div class="strat-title">Кастомная Фибоначчи (0.236 / 0.75-0.786 → 1.272 / 1.618)</div>
-          <div class="strat-sub">Уровни наставника + метод Давида Трульяса</div>
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">📐 Отрисовка уровней Наставника + Коробки <span class="rec-paren">(Рекомендация: XAUUSD, NAS100)</span></div>
+          <div class="strat-sub">Показывать сетку 0.236 / 0.75–0.786 → 1.272 / 1.618 и коробку на графике</div>
         </div>
         <label class="switch">
-          <input type="checkbox" id="s_InpUseMandarin" checked />
+          <input type="checkbox" id="s_InpUseMandarin" checked onchange="saveBotSettings(true)" />
           <span class="slider"></span>
         </label>
       </div>
 
       <div class="strat-row">
-        <div>
-          <div class="strat-title">Авто-расписание: Будни XAU/NAS100 ⇄ Выходные BTC</div>
-          <div class="strat-sub">Пн–Пт профильный актив · Сб–Вс авто-переход на BTCUSD 24/7</div>
+        <div style="min-width:0;flex:1;">
+          <div class="strat-title">🗓 Авто-расписание Выходных <span class="rec-paren">(Будни: XAUUSD/NAS100 ⇄ Сб–Вс: BTCUSD 24/7)</span></div>
+          <div class="strat-sub">Пн–Пт профильный актив · Сб–Вс авто-переход на Биткоин 24/7</div>
         </div>
         <label class="switch">
-          <input type="checkbox" id="s_InpAutoWeekendBTC" checked />
+          <input type="checkbox" id="s_InpAutoWeekendBTC" checked onchange="saveBotSettings(true)" />
           <span class="slider"></span>
         </label>
       </div>
@@ -1567,12 +1709,58 @@
       await pollCycle();
     }
 
-    async function saveBotSettings() {
+    const STRATEGY_KEYS = [
+      'InpStratTrullasFibo',
+      'InpStratMentorFibo786',
+      'InpStratMandarinBOS',
+      'InpStratImpulseM15',
+      'InpStratSwingBounce',
+      'InpTradeNewsImpulse'
+    ];
+
+    function updateStrategyPillsUI() {
+      let activeCount = 0;
+      STRATEGY_KEYS.forEach(k => {
+        const chk = document.getElementById('s_' + k);
+        const pill = document.getElementById('pill_' + k);
+        const isOn = chk ? Boolean(chk.checked) : false;
+        if (isOn) activeCount++;
+        if (pill) {
+          pill.textContent = isOn ? 'ВКЛ' : 'ВЫКЛ';
+          pill.className = 'strat-state-pill ' + (isOn ? 'on' : 'off');
+        }
+      });
+      const bdg = document.getElementById('activeStratsBadge');
+      if (bdg) {
+        bdg.textContent = `Активно: ${activeCount} из ${STRATEGY_KEYS.length}`;
+        bdg.className = 'badge-active ' + (activeCount > 0 ? '' : 'badge-Active-pause');
+      }
+    }
+
+    async function onStrategySwitchChange(key, title) {
+      updateStrategyPillsUI();
+      const chk = document.getElementById('s_' + key);
+      const isOn = chk ? Boolean(chk.checked) : false;
+      await saveBotSettings(true);
+      showToast(
+        isOn ? 'Стратегия ВКЛЮЧЕНА' : 'Стратегия ОТКЛЮЧЕНА',
+        `${title}: ${isOn ? 'активна в работе 24/7' : 'поставлена на паузу'}`
+      );
+    }
+
+    async function saveBotSettings(silent) {
+      updateStrategyPillsUI();
       const payload = {
         mt5_login: document.getElementById('s_mt5_login').value.trim(),
         mt5_password: document.getElementById('s_mt5_password').value.trim(),
         mt5_server: document.getElementById('s_mt5_server').value.trim(),
-        InpStrategyMode: parseInt(document.getElementById('s_InpStrategyMode').value || '4', 10),
+        InpStrategyMode: 4,
+        InpStratTrullasFibo: document.getElementById('s_InpStratTrullasFibo') ? document.getElementById('s_InpStratTrullasFibo').checked : true,
+        InpStratMentorFibo786: document.getElementById('s_InpStratMentorFibo786') ? document.getElementById('s_InpStratMentorFibo786').checked : true,
+        InpStratMandarinBOS: document.getElementById('s_InpStratMandarinBOS') ? document.getElementById('s_InpStratMandarinBOS').checked : true,
+        InpStratImpulseM15: document.getElementById('s_InpStratImpulseM15') ? document.getElementById('s_InpStratImpulseM15').checked : true,
+        InpStratSwingBounce: document.getElementById('s_InpStratSwingBounce') ? document.getElementById('s_InpStratSwingBounce').checked : false,
+        InpTradeNewsImpulse: document.getElementById('s_InpTradeNewsImpulse') ? document.getElementById('s_InpTradeNewsImpulse').checked : true,
         InpRiskPercent: parseFloat(document.getElementById('s_InpRiskPercent').value || '3.0'),
         InpUseDepositCalc15: document.getElementById('s_InpUseDepositCalc15') ? document.getElementById('s_InpUseDepositCalc15').checked : true,
         InpUsePartialClose: document.getElementById('s_InpUsePartialClose').checked,
@@ -1583,7 +1771,9 @@
       };
       await httpPostJson(SERVER_URL + '/api/settings', payload);
       await pollCycle();
-      showToast('Настройки сохранены', 'Авто-калькуляция 1/5, Фибо и счет MT5 обновлены на сервере 24/7');
+      if (!silent) {
+        showToast('Настройки сохранены', 'Стратегии (Вкл/Выкл), авто-калькуляция 1/5 и счет MT5 обновлены на сервере 24/7');
+      }
     }
 
     function recalcExcelWidget() {
@@ -2341,8 +2531,21 @@
         document.getElementById('s_mt5_login').value = st.settings.mt5_login || '8112287';
         document.getElementById('s_mt5_password').value = st.settings.mt5_password || '';
         document.getElementById('s_mt5_server').value = st.settings.mt5_server || 'AMarkets-Demo';
-        const stratEl = document.getElementById('s_InpStrategyMode');
-        if (stratEl) stratEl.value = "4";
+
+        const s1 = document.getElementById('s_InpStratTrullasFibo');
+        if (s1) s1.checked = st.settings.InpStratTrullasFibo !== false;
+        const s2 = document.getElementById('s_InpStratMentorFibo786');
+        if (s2) s2.checked = st.settings.InpStratMentorFibo786 !== false;
+        const s3 = document.getElementById('s_InpStratMandarinBOS');
+        if (s3) s3.checked = st.settings.InpStratMandarinBOS !== false;
+        const s4 = document.getElementById('s_InpStratImpulseM15');
+        if (s4) s4.checked = st.settings.InpStratImpulseM15 !== false;
+        const s5 = document.getElementById('s_InpStratSwingBounce');
+        if (s5) s5.checked = Boolean(st.settings.InpStratSwingBounce);
+        const s6 = document.getElementById('s_InpTradeNewsImpulse');
+        if (s6) s6.checked = st.settings.InpTradeNewsImpulse !== false;
+        updateStrategyPillsUI();
+
         document.getElementById('s_InpRiskPercent').value = Number(st.settings.InpRiskPercent || 3.0).toFixed(1);
         const dep15El = document.getElementById('s_InpUseDepositCalc15');
         if (dep15El) dep15El.checked = st.settings.InpUseDepositCalc15 !== false;
@@ -3392,7 +3595,7 @@
     let latestApkUrl = SERVER_URL + '/Crypto_Bot_v2_50.apk';
 
     function getCurrentLocalVersionCode() {
-      let localCode = 271;
+      let localCode = 272;
       if (hasNative && window.AndroidBridge.getAppVersionCode) {
         try { localCode = Math.max(localCode, Number(window.AndroidBridge.getAppVersionCode())); } catch(e) {}
       }

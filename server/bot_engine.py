@@ -25,7 +25,13 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "mt5_login": "8112287",
     "mt5_server": "AMarkets-Demo",
     "mt5_password": "XvA!Xh8e",
-    "InpStrategyMode": 4,           # 4 = Метод Давида Трульяса (Фибоначчи) (Единственная стратегия)
+    "InpStrategyMode": 4,           # 4 = Метод Давида Трульяса (Фибоначчи)
+    # Индивидуальное включение / отключение каждой стратегии отдельно:
+    "InpStratTrullasFibo": True,    # 1. Метод Давида Трульяса: Фибо 23.6% + MACD + RSI (Рекомендация: NAS100, US500, BTCUSD)
+    "InpStratMentorFibo786": True,  # 2. Золотая Фибо Наставника: 0.75-0.786 / 0.3618 -> 1.272/1.618 (Рекомендация: XAUUSD Золото, BTCUSD)
+    "InpStratMandarinBOS": True,    # 3. Коробка утреннего пробоя «Мандарин» + BOS + Marubozu (Рекомендация: XAUUSD Золото, BTCUSD)
+    "InpStratImpulseM15": True,     # 4. Импульс M15 по тренду H1 EMA 50 (Рекомендация: BTCUSD, NAS100, XAUUSD)
+    "InpStratSwingBounce": False,   # 5. Отскок от уровней Swing-канала M15 (Рекомендация: US500, XAUUSD, BTCUSD)
     # Money Management
     "InpUseAutoLot": True,
     "InpUseDepositCalc15": True,    # Авто-калькуляция депозита 1/5 по видео + Excel (Депозитті 5-ке бөлу)
@@ -957,21 +963,16 @@ class CryptoBotEngine:
             rsi_confirm = bool(36.0 <= rsi_rev[0] <= 66.0 and rsi_rev[0] >= rsi_rev[1] - 1.5)
             candle_bull = (c0["close"] > c0["open"]) or (c1["close"] > c1["open"] and live_px >= c1["close"])
             # Снайперский коридор входа:
-            # 1) 0.236 - 0.3618/0.42 (импульс до 0.618 / 1.272)
-            # 2) 0.75 - 0.786 (глубокая золотая зона отката по видео наставника с целями 1.272 / 1.618)
+            # 1) 0.236 - 0.3618/0.42 (импульс до 0.618 / 1.272) — Метод Давида Трульяса (NAS100, US500, BTCUSD)
+            # 2) 0.75 - 0.786 (глубокая золотая зона отката по видео наставника с целями 1.272 / 1.618) — (XAUUSD Золото, BTCUSD)
             in_zone_236 = (lvl_236 <= live_px <= (price_0 + impulse * 0.42)) and ((lvl_618 - live_px) >= atr * 0.65)
             in_zone_750 = (lvl_011 <= live_px <= (price_0 + impulse * 0.28)) and strict_bull_div
-            in_buy_corridor = bool(in_zone_236 or in_zone_750)
             trend_allow_buy = (htf_dir >= 0) or strict_bull_div
+            base_buy_ok = bool(macd_div and rsi_confirm and vol_confirm and candle_bull and trend_allow_buy)
 
-            trigger_buy = bool(
-                in_buy_corridor
-                and macd_div
-                and rsi_confirm
-                and vol_confirm
-                and candle_bull
-                and trend_allow_buy
-            )
+            trig_236_buy = bool(in_zone_236 and base_buy_ok and self.settings.get("InpStratTrullasFibo", True))
+            trig_786_buy = bool(in_zone_750 and base_buy_ok and self.settings.get("InpStratMentorFibo786", True))
+            trigger_buy = bool(trig_236_buy or trig_786_buy)
 
             self.fibo_grid = {
                 "is_active": True,
@@ -993,6 +994,10 @@ class CryptoBotEngine:
                 "macd_div": bool(macd_div),
                 "rsi_confirm": bool(rsi_confirm),
                 "vol_confirm": bool(vol_confirm),
+                "trig_236_buy": trig_236_buy,
+                "trig_786_buy": trig_786_buy,
+                "trig_236_sell": False,
+                "trig_786_sell": False,
                 "trigger_buy": bool(trigger_buy),
                 "trigger_sell": False,
             }
@@ -1022,17 +1027,12 @@ class CryptoBotEngine:
             # Снайперский коридор входа SELL: 23.6%-42% Фибо или глубокая зона отката к вершине с дивергенцией
             in_zone_236_s = ((price_0 - impulse * 0.42) <= live_px <= lvl_236) and ((live_px - lvl_618) >= atr * 0.65)
             in_zone_750_s = ((price_0 - impulse * 0.28) <= live_px <= lvl_011) and strict_bear_div
-            in_sell_corridor = bool(in_zone_236_s or in_zone_750_s)
             trend_allow_sell = (htf_dir <= 0) or strict_bear_div
+            base_sell_ok = bool(macd_div and rsi_confirm and vol_confirm and candle_bear and trend_allow_sell)
 
-            trigger_sell = bool(
-                in_sell_corridor
-                and macd_div
-                and rsi_confirm
-                and vol_confirm
-                and candle_bear
-                and trend_allow_sell
-            )
+            trig_236_sell = bool(in_zone_236_s and base_sell_ok and self.settings.get("InpStratTrullasFibo", True))
+            trig_786_sell = bool(in_zone_750_s and base_sell_ok and self.settings.get("InpStratMentorFibo786", True))
+            trigger_sell = bool(trig_236_sell or trig_786_sell)
 
             self.fibo_grid = {
                 "is_active": True,
@@ -1054,6 +1054,10 @@ class CryptoBotEngine:
                 "macd_div": bool(macd_div),
                 "rsi_confirm": bool(rsi_confirm),
                 "vol_confirm": bool(vol_confirm),
+                "trig_236_buy": False,
+                "trig_786_buy": False,
+                "trig_236_sell": trig_236_sell,
+                "trig_786_sell": trig_786_sell,
                 "trigger_buy": False,
                 "trigger_sell": bool(trigger_sell),
             }
@@ -2013,13 +2017,78 @@ class CryptoBotEngine:
 
         self.last_bar_time = cur_bar_time
 
-        # Единственная активная стратегия: Метод Давида Трульяса Вила (Фибоначчи 23.6% -> 38.2% / 50.0% / 61.8% + MACD + RSI)
-        if fibo_state.get("trigger_buy") and allow_buy_news:
-            self._last_auto_trade_ts = now_ts
-            self.open_position("BUY", comment="Trullas Fibo 23.6 Buy")
-        elif fibo_state.get("trigger_sell") and allow_sell_news:
-            self._last_auto_trade_ts = now_ts
-            self.open_position("SELL", comment="Trullas Fibo 23.6 Sell")
+        # Выполняем проверку каждой включенной стратегии по отдельности:
+        # 1) Стратегия Давида Трульяса: Фибо 23.6% + MACD(12,26,9) + RSI(14) (Рекомендация: NAS100, US500, BTCUSD)
+        if self.settings.get("InpStratTrullasFibo", True):
+            if fibo_state.get("trig_236_buy") and allow_buy_news:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("BUY", comment="Trullas Fibo 23.6 Buy")
+                return
+            if fibo_state.get("trig_236_sell") and allow_sell_news:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("SELL", comment="Trullas Fibo 23.6 Sell")
+                return
+
+        # 2) Золотая Фибо Наставника: 0.75-0.786 / 0.3618 -> 1.272/1.618 (Рекомендация: XAUUSD Золото, BTCUSD)
+        if self.settings.get("InpStratMentorFibo786", True):
+            if fibo_state.get("trig_786_buy") and allow_buy_news:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("BUY", comment="Mentor Fibo 0.786 Buy")
+                return
+            if fibo_state.get("trig_786_sell") and allow_sell_news:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("SELL", comment="Mentor Fibo 0.786 Sell")
+                return
+
+        # 3) Коробка утреннего пробоя «Мандарин» + BOS + Marubozu (Рекомендация: XAUUSD Золото, BTCUSD)
+        if self.settings.get("InpStratMandarinBOS", True):
+            box_break_buy = box_valid and box_h > 0 and close1 > box_h and close2 <= box_h and is_marubozu
+            box_break_sell = box_valid and box_l > 0 and close1 < box_l and close2 >= box_l and is_marubozu
+            if (bos_buy or box_break_buy) and is_mandarin_full and htf_buy_ok and allow_buy_news:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("BUY", comment="Mandarin BOS Buy")
+                return
+            if (bos_sell or box_break_sell) and is_mandarin_full and htf_sell_ok and allow_sell_news:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("SELL", comment="Mandarin BOS Sell")
+                return
+
+        # 4) Импульс M15 по тренду H1 EMA 50 (Рекомендация: BTCUSD, NAS100, XAUUSD)
+        if self.settings.get("InpStratImpulseM15", True):
+            imp_body_ok = body_ratio >= 0.45 and (atr > 0 and rng >= atr * 0.90)
+            if imp_body_ok and close1 > open1 and close1 > c2["high"] and htf_buy_ok and fibo_state.get("macd_div") and allow_buy_news:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("BUY", comment="Impulse M15 Buy")
+                return
+            if imp_body_ok and close1 < open1 and close1 < c2["low"] and htf_sell_ok and fibo_state.get("macd_div") and allow_sell_news:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("SELL", comment="Impulse M15 Sell")
+                return
+
+        # 5) Отскок от уровней Swing-канала M15 (Рекомендация: US500, XAUUSD, BTCUSD)
+        if self.settings.get("InpStratSwingBounce", False) and len(self.m15_candles) >= 12:
+            sw_window = self.m15_candles[2:10]
+            ch_hi = max(b["high"] for b in sw_window)
+            ch_lo = min(b["low"] for b in sw_window)
+            if low1 <= ch_lo * 1.0005 and close1 > open1 and close1 > ch_lo and fibo_state.get("rsi_confirm") and allow_buy_news:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("BUY", comment="Swing Bounce Buy")
+                return
+            if high1 >= ch_hi * 0.9995 and close1 < open1 and close1 < ch_hi and fibo_state.get("rsi_confirm") and allow_sell_news:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("SELL", comment="Swing Bounce Sell")
+                return
+
+        # 6) Торговля на импульсе новостей USD (Рекомендация: XAUUSD Золото, NAS100, US500)
+        if self.settings.get("InpTradeNewsImpulse", True) and self.news_bias != 0:
+            if self.news_bias == 1 and close1 > open1 and body_ratio >= 0.50:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("BUY", comment="USD News Impulse Buy")
+                return
+            if self.news_bias == -1 and close1 < open1 and body_ratio >= 0.50:
+                self._last_auto_trade_ts = now_ts
+                self.open_position("SELL", comment="USD News Impulse Sell")
+                return
 
     def get_trade_history(self, limit: int = 30) -> List[Dict[str, Any]]:
         bal = max(100.0, float(self.get_account_metrics().get("balance") or self.settings.get("balance", 10000.0)))
@@ -2149,7 +2218,7 @@ class CryptoBotEngine:
         )
 
         return {
-            "version": "2.71",
+            "version": "2.72",
             "timestamp": int(time.time()),
             "last_update_ts": int(self.last_update_ts),
             "data_source": source_label,
