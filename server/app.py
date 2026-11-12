@@ -302,6 +302,9 @@ async def control_bot(payload: Dict[str, Any] = Body(...)) -> JSONResponse:
         bal = float(payload.get("balance", 10000.0))
         new_bal = engine.set_balance(bal)
         return JSONResponse(content={"ok": True, "balance": new_bal})
+    elif action == "ai_audit_fix":
+        ai_res = engine.run_ai_strategy_agent(atr=engine.atr_value, force_fix=True)
+        return JSONResponse(content={"ok": True, "ai_agent": ai_res, "state": engine.get_full_state()})
 
     return JSONResponse(content={"ok": True, "state": engine.get_full_state()})
 
