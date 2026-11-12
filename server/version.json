@@ -1,6 +1,6 @@
 {
-    "changelog":  "v2.70: Авто-калькуляция депозита 1/5 (по видео + Excel), 12 избранных инструментов TradingView и кастомная Фибоначчи",
-    "version_code":  270,
+    "changelog":  "v2.71: Профильные активы XAUUSD (Золото), BTCUSD (24/7), NAS100 и US500 (Чемпионская стратегия Давида Трульяса: MACD + RSI + Фибо 23.6%)",
+    "version_code":  271,
     "apk_url":  "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk",
-    "version_name":  "2.70"
+    "version_name":  "2.71"
 }

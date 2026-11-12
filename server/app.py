@@ -54,7 +54,7 @@ def sync_server_artifacts_on_startup() -> None:
         except Exception:
             pass
 
-    target_code = max(int(cur_info.get("version_code", 267)), int(repo_info.get("version_code", 270)), 270)
+    target_code = max(int(cur_info.get("version_code", 267)), int(repo_info.get("version_code", 271)), 271)
     target_name = f"{target_code / 100.0:.2f}"
     target_changelog = repo_info.get("changelog") or cur_info.get("changelog") or f"Обновление v{target_name}"
 
@@ -240,6 +240,12 @@ async def get_status() -> JSONResponse:
     state = engine.get_full_state()
     state["app_update"] = load_version_info()
     return JSONResponse(content=state)
+
+
+@app.get("/api/candles")
+async def get_candles(symbol: str = "XAUUSD", interval: str = "15m") -> JSONResponse:
+    candles = await engine.fetch_chart_candles(symbol=symbol.upper(), interval=interval)
+    return JSONResponse(content={"symbol": symbol.upper(), "interval": interval, "candles": candles})
 
 
 @app.get("/api/notifications")

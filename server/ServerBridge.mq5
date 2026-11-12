@@ -21,12 +21,67 @@ void SetSymbolFilling(string sym)
       trade.SetTypeFilling(ORDER_FILLING_RETURN);
 }
 
+string ResolveBrokerSymbol(string logicalSym)
+{
+   if(logicalSym == "BTCUSD")
+   {
+      string cands[] = {"BTCUSD", "BTCUSD.", "BTCUSDm", "#BTCUSD"};
+      for(int i = 0; i < ArraySize(cands); i++)
+         if(SymbolSelect(cands[i], true)) return cands[i];
+   }
+   else if(logicalSym == "XAUUSD")
+   {
+      string cands[] = {"XAUUSD", "XAUUSD.", "XAUUSDm", "GOLD"};
+      for(int i = 0; i < ArraySize(cands); i++)
+         if(SymbolSelect(cands[i], true)) return cands[i];
+   }
+   else if(logicalSym == "NAS100")
+   {
+      string cands[] = {"NAS100", "US100", "NDX", "USTEC", "#NDX", "NAS100.", "US100Roll", "NQ100"};
+      for(int i = 0; i < ArraySize(cands); i++)
+         if(SymbolSelect(cands[i], true)) return cands[i];
+      int tot = SymbolsTotal(false);
+      for(int s = 0; s < tot; s++)
+      {
+         string sn = SymbolName(s, false);
+         if(StringFind(sn, "NAS") >= 0 || StringFind(sn, "NDX") >= 0 || StringFind(sn, "US100") >= 0 || StringFind(sn, "USTEC") >= 0)
+            if(SymbolSelect(sn, true)) return sn;
+      }
+   }
+   else if(logicalSym == "US500")
+   {
+      string cands[] = {"US500", "SPX500", "SP500", "SPX", "#SPX", "US500.", "US500Roll", "SPX500."};
+      for(int i = 0; i < ArraySize(cands); i++)
+         if(SymbolSelect(cands[i], true)) return cands[i];
+      int tot = SymbolsTotal(false);
+      for(int s = 0; s < tot; s++)
+      {
+         string sn = SymbolName(s, false);
+         if(StringFind(sn, "US500") >= 0 || StringFind(sn, "SPX") >= 0 || StringFind(sn, "SP500") >= 0)
+            if(SymbolSelect(sn, true)) return sn;
+      }
+   }
+   SymbolSelect(logicalSym, true);
+   return logicalSym;
+}
+
+string NormalizeLogicalSymbol(string brokerSym)
+{
+   if(StringFind(brokerSym, "BTC") >= 0) return "BTCUSD";
+   if(StringFind(brokerSym, "XAU") >= 0 || StringFind(brokerSym, "GOLD") >= 0) return "XAUUSD";
+   if(StringFind(brokerSym, "NAS") >= 0 || StringFind(brokerSym, "NDX") >= 0 || StringFind(brokerSym, "US100") >= 0 || StringFind(brokerSym, "USTEC") >= 0) return "NAS100";
+   if(StringFind(brokerSym, "500") >= 0 || StringFind(brokerSym, "SPX") >= 0) return "US500";
+   return brokerSym;
+}
+
 int OnInit()
 {
    trade.SetExpertMagicNumber(202605);
    trade.SetDeviationInPoints(50);
-   SymbolSelect("BTCUSD", true);
-   SymbolSelect("XAUUSD", true);
+   ResolveBrokerSymbol("BTCUSD");
+   ResolveBrokerSymbol("XAUUSD");
+   ResolveBrokerSymbol("NAS100");
+   ResolveBrokerSymbol("US500");
    EventSetMillisecondTimer(500);
    OnTimer();
    return(INIT_SUCCEEDED);
@@ -108,7 +163,8 @@ void ProcessCommands()
 
       if(act == "OPEN" && n >= 6)
       {
-         string sym = parts[1];
+         string logicalSym = parts[1];
+         string sym = ResolveBrokerSymbol(logicalSym);
          string ptype = parts[2];
          double vol = StringToDouble(parts[3]);
          double sl = StringToDouble(parts[4]);
@@ -199,13 +255,25 @@ void WriteStateJson()
    double margin = AccountInfoDouble(ACCOUNT_MARGIN);
    double free_margin = AccountInfoDouble(ACCOUNT_MARGIN_FREE);
 
-   double btcBid = SymbolInfoDouble("BTCUSD", SYMBOL_BID);
-   double btcAsk = SymbolInfoDouble("BTCUSD", SYMBOL_ASK);
-   long btcSpread = SymbolInfoInteger("BTCUSD", SYMBOL_SPREAD);
+   string bSymBtc = ResolveBrokerSymbol("BTCUSD");
+   double btcBid = SymbolInfoDouble(bSymBtc, SYMBOL_BID);
+   double btcAsk = SymbolInfoDouble(bSymBtc, SYMBOL_ASK);
+   long btcSpread = SymbolInfoInteger(bSymBtc, SYMBOL_SPREAD);
 
-   double xauBid = SymbolInfoDouble("XAUUSD", SYMBOL_BID);
-   double xauAsk = SymbolInfoDouble("XAUUSD", SYMBOL_ASK);
-   long xauSpread = SymbolInfoInteger("XAUUSD", SYMBOL_SPREAD);
+   string bSymXau = ResolveBrokerSymbol("XAUUSD");
+   double xauBid = SymbolInfoDouble(bSymXau, SYMBOL_BID);
+   double xauAsk = SymbolInfoDouble(bSymXau, SYMBOL_ASK);
+   long xauSpread = SymbolInfoInteger(bSymXau, SYMBOL_SPREAD);
+
+   string bSymNas = ResolveBrokerSymbol("NAS100");
+   double nasBid = SymbolInfoDouble(bSymNas, SYMBOL_BID);
+   double nasAsk = SymbolInfoDouble(bSymNas, SYMBOL_ASK);
+   long nasSpread = SymbolInfoInteger(bSymNas, SYMBOL_SPREAD);
+
+   string bSymSp = ResolveBrokerSymbol("US500");
+   double spBid = SymbolInfoDouble(bSymSp, SYMBOL_BID);
+   double spAsk = SymbolInfoDouble(bSymSp, SYMBOL_ASK);
+   long spSpread = SymbolInfoInteger(bSymSp, SYMBOL_SPREAD);
 
    string json = "{";
    json += "\"connected\":" + (connected ? "true" : "false") + ",";
@@ -221,7 +289,9 @@ void WriteStateJson()
 
    json += "\"ticks\":{";
    json += "\"BTCUSD\":{\"bid\":" + DoubleToString(btcBid, 2) + ",\"ask\":" + DoubleToString(btcAsk, 2) + ",\"spread\":" + IntegerToString(btcSpread) + "},";
-   json += "\"XAUUSD\":{\"bid\":" + DoubleToString(xauBid, 2) + ",\"ask\":" + DoubleToString(xauAsk, 2) + ",\"spread\":" + IntegerToString(xauSpread) + "}";
+   json += "\"XAUUSD\":{\"bid\":" + DoubleToString(xauBid, 2) + ",\"ask\":" + DoubleToString(xauAsk, 2) + ",\"spread\":" + IntegerToString(xauSpread) + "},";
+   json += "\"NAS100\":{\"bid\":" + DoubleToString(nasBid, 2) + ",\"ask\":" + DoubleToString(nasAsk, 2) + ",\"spread\":" + IntegerToString(nasSpread) + "},";
+   json += "\"US500\":{\"bid\":" + DoubleToString(spBid, 2) + ",\"ask\":" + DoubleToString(spAsk, 2) + ",\"spread\":" + IntegerToString(spSpread) + "}";
    json += "},";
 
    // Open positions
@@ -232,7 +302,7 @@ void WriteStateJson()
    {
       ulong pticket = PositionGetTicket(i);
       if(pticket == 0) continue;
-      string psym = PositionGetString(POSITION_SYMBOL);
+      string psym = NormalizeLogicalSymbol(PositionGetString(POSITION_SYMBOL));
       long ptype = PositionGetInteger(POSITION_TYPE);
       double pvol = PositionGetDouble(POSITION_VOLUME);
       double popen = PositionGetDouble(POSITION_PRICE_OPEN);
@@ -280,7 +350,7 @@ void WriteStateJson()
          long dtype = HistoryDealGetInteger(dticket, DEAL_TYPE);
          if(dtype != DEAL_TYPE_BUY && dtype != DEAL_TYPE_SELL) continue;
 
-         string dsym = HistoryDealGetString(dticket, DEAL_SYMBOL);
+         string dsym = NormalizeLogicalSymbol(HistoryDealGetString(dticket, DEAL_SYMBOL));
          double dvol = HistoryDealGetDouble(dticket, DEAL_VOLUME);
          double dprice = HistoryDealGetDouble(dticket, DEAL_PRICE);
          double dpnl = HistoryDealGetDouble(dticket, DEAL_PROFIT) + HistoryDealGetDouble(dticket, DEAL_SWAP) + HistoryDealGetDouble(dticket, DEAL_COMMISSION);

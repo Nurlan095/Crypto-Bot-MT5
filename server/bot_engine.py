@@ -18,7 +18,9 @@ MT5_WINE_STARTUP_INI = "/opt/mt5/startup.ini"
 
 DEFAULT_SETTINGS: Dict[str, Any] = {
     # Active symbol & bot state
-    "symbol": "BTCUSD",             # Only BTCUSD (per David Trullas Fibonacci method)
+    "symbol": "XAUUSD",             # Активный актив: XAUUSD (Золото), BTCUSD, NAS100 (Nasdaq 100), US500 (S&P 500)
+    "InpAutoWeekendBTC": True,      # Авто-режим: Будни профильный актив (Золото/Nasdaq), Выходные Сб-Вс -> BTCUSD 24/7
+    "preferred_weekday_symbol": "XAUUSD",
     "is_running": True,             # Bot active or paused by user
     "mt5_login": "8112287",
     "mt5_server": "AMarkets-Demo",
@@ -72,6 +74,8 @@ SYMBOL_SPECS: Dict[str, Dict[str, Any]] = {
     "BTCUSD": {
         "binance_symbol": "BTCUSDT",
         "bybit_symbol": "BTCUSDT",
+        "yahoo_symbol": "BTC-USD",
+        "yahoo_alt": "BTC-USD",
         "digits": 2,
         "point": 0.01,
         "tick_size": 0.01,
@@ -86,6 +90,8 @@ SYMBOL_SPECS: Dict[str, Dict[str, Any]] = {
     "XAUUSD": {
         "binance_symbol": "PAXGUSDT",
         "bybit_symbol": "PAXGUSDT",
+        "yahoo_symbol": "GC=F",
+        "yahoo_alt": "XAUUSD=X",
         "digits": 2,
         "point": 0.01,
         "tick_size": 0.01,
@@ -96,6 +102,38 @@ SYMBOL_SPECS: Dict[str, Dict[str, Any]] = {
         "max_lot": 100.0,
         "step_lot": 0.01,
         "default_spread_points": 25,    # $0.25 typical gold spread
+    },
+    "NAS100": {
+        "binance_symbol": "",
+        "bybit_symbol": "",
+        "yahoo_symbol": "NQ=F",
+        "yahoo_alt": "^NDX",
+        "digits": 2,
+        "point": 0.01,
+        "tick_size": 0.01,
+        "tick_value": 0.01,     # Родной актив Давида Трульяса: Индекс Nasdaq 100
+        "contract_size": 1.0,
+        "leverage": 100.0,
+        "min_lot": 0.01,
+        "max_lot": 100.0,
+        "step_lot": 0.01,
+        "default_spread_points": 120,   # 1.20 pt typical index spread
+    },
+    "US500": {
+        "binance_symbol": "",
+        "bybit_symbol": "",
+        "yahoo_symbol": "ES=F",
+        "yahoo_alt": "^GSPC",
+        "digits": 2,
+        "point": 0.01,
+        "tick_size": 0.01,
+        "tick_value": 0.01,     # Родной актив Давида Трульяса: Индекс S&P 500
+        "contract_size": 1.0,
+        "leverage": 100.0,
+        "min_lot": 0.01,
+        "max_lot": 100.0,
+        "step_lot": 0.01,
+        "default_spread_points": 60,    # 0.60 pt typical S&P 500 spread
     },
 }
 
@@ -433,6 +471,15 @@ class CryptoBotEngine:
                 pass
 
         if "symbol" in updates and updates["symbol"] != old_symbol:
+            new_sym = str(updates["symbol"])
+            if new_sym in ("XAUUSD", "NAS100", "US500"):
+                self.settings["preferred_weekday_symbol"] = new_sym
+                with self._get_conn() as conn:
+                    conn.execute(
+                        "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+                        ("preferred_weekday_symbol", json.dumps(new_sym)),
+                    )
+                    conn.commit()
             self.last_bar_time = 0
             self.last_swing_high = 0.0
             self.last_swing_low = 0.0
@@ -441,9 +488,15 @@ class CryptoBotEngine:
             self.atr_value = 0.0
             self.m15_candles = []
             self.h1_candles = []
+            sym_labels = {
+                "XAUUSD": "XAUUSD (Золото · Калькуляция 1/5)",
+                "BTCUSD": "BTCUSD (Биткоин · 24/7)",
+                "NAS100": "NAS100 (Nasdaq 100 · Чемпионский актив Трульяса)",
+                "US500": "US500 (S&P 500 · Чемпионский актив Трульяса)",
+            }
             self.add_notification(
                 "Смена актива",
-                f"Активный инструмент переключен на {self.settings['symbol']}",
+                f"Активный инструмент переключен на {sym_labels.get(new_sym, new_sym)}",
                 "info",
             )
         return self.settings
@@ -501,12 +554,43 @@ class CryptoBotEngine:
         return [dict(r) for r in rows]
 
     # -------------------------------------------------------------------------
-    # Market Data Fetching (Binance -> Bybit -> Fallback)
+    # Market Data Fetching (MT5 Live -> Binance -> Yahoo Finance -> Kraken)
     # -------------------------------------------------------------------------
+    def _align_candles_to_mt5_tick(self, symbol: str, spec: Dict[str, Any]) -> None:
+        if not self.m15_candles:
+            return
+        last_close = self.m15_candles[0]["close"]
+        if self.is_mt5_live() and symbol in self.mt5_ticks:
+            t_info = self.mt5_ticks[symbol]
+            mt5_bid = float(t_info.get("bid") or 0.0)
+            mt5_ask = float(t_info.get("ask") or 0.0)
+            if mt5_bid > 0:
+                offset = mt5_bid - last_close
+                if abs(offset) > 0.05 and abs(offset) < mt5_bid * 0.15:
+                    for c in self.m15_candles:
+                        c["open"] = round(c["open"] + offset, spec["digits"])
+                        c["high"] = round(c["high"] + offset, spec["digits"])
+                        c["low"] = round(c["low"] + offset, spec["digits"])
+                        c["close"] = round(c["close"] + offset, spec["digits"])
+                    for c in self.h1_candles:
+                        c["open"] = round(c["open"] + offset, spec["digits"])
+                        c["high"] = round(c["high"] + offset, spec["digits"])
+                        c["low"] = round(c["low"] + offset, spec["digits"])
+                        c["close"] = round(c["close"] + offset, spec["digits"])
+                self.bid_price = mt5_bid
+                self.ask_price = mt5_ask if mt5_ask > 0 else round(mt5_bid + spec["default_spread_points"] * spec["point"], spec["digits"])
+                self.spread_points = int(t_info.get("spread") or spec["default_spread_points"])
+                return
+
+        half_spread = (spec["default_spread_points"] * spec["point"]) / 2.0
+        self.bid_price = round(last_close - half_spread, spec["digits"])
+        self.ask_price = round(last_close + half_spread, spec["digits"])
+        self.spread_points = spec["default_spread_points"]
+
     async def fetch_market_data(self) -> bool:
         symbol = self.settings["symbol"]
         spec = SYMBOL_SPECS.get(symbol, SYMBOL_SPECS["BTCUSD"])
-        b_sym = spec["binance_symbol"]
+        b_sym = spec.get("binance_symbol", "")
 
         # 0. Prefer exact MetaTrader 5 candles when MT5 Bridge is live
         if (
@@ -524,120 +608,167 @@ class CryptoBotEngine:
                 self.spread_points = int(t_info.get("spread") or spec["default_spread_points"])
             return True
 
-        async with httpx.AsyncClient(timeout=8.0) as client:
-            # 1. Try Binance Vision Global Market Data API (works without geo-restrictions) & Binance main API
-            for base_url in ("https://data-api.binance.vision", "https://api.binance.com"):
+        yh_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        async with httpx.AsyncClient(timeout=8.0, headers=yh_headers) as client:
+            # 1. Try Binance Vision & Binance main API (for BTCUSD & XAUUSD)
+            if b_sym:
+                for base_url in ("https://data-api.binance.vision", "https://api.binance.com"):
+                    try:
+                        m15_resp, h1_resp, book_resp = await asyncio.gather(
+                            client.get(
+                                f"{base_url}/api/v3/klines",
+                                params={"symbol": b_sym, "interval": "15m", "limit": 130},
+                            ),
+                            client.get(
+                                f"{base_url}/api/v3/klines",
+                                params={"symbol": b_sym, "interval": "1h", "limit": 80},
+                            ),
+                            client.get(
+                                f"{base_url}/api/v3/ticker/bookTicker",
+                                params={"symbol": b_sym},
+                            ),
+                        )
+                        if m15_resp.status_code == 200 and h1_resp.status_code == 200:
+                            m15_raw = m15_resp.json()
+                            h1_raw = h1_resp.json()
+                            book = book_resp.json() if book_resp.status_code == 200 else {}
+
+                            self.m15_candles = [
+                                {
+                                    "time": int(k[0] // 1000),
+                                    "open": float(k[1]),
+                                    "high": float(k[2]),
+                                    "low": float(k[3]),
+                                    "close": float(k[4]),
+                                    "volume": float(k[5]),
+                                }
+                                for k in reversed(m15_raw)
+                            ]
+                            self.h1_candles = [
+                                {
+                                    "time": int(k[0] // 1000),
+                                    "open": float(k[1]),
+                                    "high": float(k[2]),
+                                    "low": float(k[3]),
+                                    "close": float(k[4]),
+                                    "volume": float(k[5]),
+                                }
+                                for k in reversed(h1_raw)
+                            ]
+                            last_close = self.m15_candles[0]["close"]
+                            if self.is_mt5_live() and symbol in self.mt5_ticks and float(self.mt5_ticks[symbol].get("bid") or 0) > 0:
+                                self._align_candles_to_mt5_tick(symbol, spec)
+                            else:
+                                bid = float(book.get("bidPrice") or last_close)
+                                ask = float(book.get("askPrice") or last_close)
+                                if ask <= bid:
+                                    half_spread = (spec["default_spread_points"] * spec["point"]) / 2.0
+                                    bid = round(last_close - half_spread, spec["digits"])
+                                    ask = round(last_close + half_spread, spec["digits"])
+                                self.bid_price = bid
+                                self.ask_price = ask
+                                self.spread_points = max(
+                                    int(round((ask - bid) / spec["point"])),
+                                    spec["default_spread_points"],
+                                )
+                            self.data_source = f"Binance Live ({b_sym})"
+                            return True
+                    except Exception:
+                        pass
+
+            # 2. Yahoo Finance v8 Chart API (Primary for NAS100 / US500, Fallback for XAUUSD / BTCUSD)
+            y_tickers = [t for t in (spec.get("yahoo_symbol"), spec.get("yahoo_alt")) if t]
+            for y_sym in y_tickers:
+                for yh_host in ("https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"):
+                    try:
+                        m15_resp, h1_resp = await asyncio.gather(
+                            client.get(
+                                f"{yh_host}/v8/finance/chart/{y_sym}",
+                                params={"interval": "15m", "range": "5d"},
+                            ),
+                            client.get(
+                                f"{yh_host}/v8/finance/chart/{y_sym}",
+                                params={"interval": "60m", "range": "1mo"},
+                            ),
+                        )
+                        if m15_resp.status_code == 200 and h1_resp.status_code == 200:
+                            r15 = (m15_resp.json().get("chart", {}).get("result") or [None])[0]
+                            r60 = (h1_resp.json().get("chart", {}).get("result") or [None])[0]
+                            if r15 and r60:
+                                def _parse_yh(res_obj: Dict[str, Any], max_bars: int) -> List[Dict[str, Any]]:
+                                    ts_list = res_obj.get("timestamp") or []
+                                    q = ((res_obj.get("indicators") or {}).get("quote") or [{}])[0]
+                                    opens = q.get("open") or []
+                                    highs = q.get("high") or []
+                                    lows = q.get("low") or []
+                                    closes = q.get("close") or []
+                                    vols = q.get("volume") or []
+                                    parsed: List[Dict[str, Any]] = []
+                                    for idx_t, ts_val in enumerate(ts_list):
+                                        if idx_t >= len(closes) or closes[idx_t] is None or opens[idx_t] is None:
+                                            continue
+                                        parsed.append({
+                                            "time": int(ts_val),
+                                            "open": round(float(opens[idx_t]), spec["digits"]),
+                                            "high": round(float(highs[idx_t] if highs[idx_t] is not None else closes[idx_t]), spec["digits"]),
+                                            "low": round(float(lows[idx_t] if lows[idx_t] is not None else closes[idx_t]), spec["digits"]),
+                                            "close": round(float(closes[idx_t]), spec["digits"]),
+                                            "volume": float(vols[idx_t] if idx_t < len(vols) and vols[idx_t] is not None else 100.0),
+                                        })
+                                    return list(reversed(parsed[-max_bars:]))
+
+                                c15 = _parse_yh(r15, 130)
+                                c60 = _parse_yh(r60, 80)
+                                if len(c15) >= 35 and len(c60) >= 30:
+                                    self.m15_candles = c15
+                                    self.h1_candles = c60
+                                    self._align_candles_to_mt5_tick(symbol, spec)
+                                    self.data_source = f"Market Live ({symbol} · {y_sym})"
+                                    return True
+                    except Exception:
+                        pass
+
+            # 3. Fallback: Kraken Public OHLC API (for BTCUSD / XAUUSD)
+            if symbol in ("BTCUSD", "XAUUSD"):
                 try:
-                    m15_resp, h1_resp, book_resp = await asyncio.gather(
-                        client.get(
-                            f"{base_url}/api/v3/klines",
-                            params={"symbol": b_sym, "interval": "15m", "limit": 130},
-                        ),
-                        client.get(
-                            f"{base_url}/api/v3/klines",
-                            params={"symbol": b_sym, "interval": "1h", "limit": 80},
-                        ),
-                        client.get(
-                            f"{base_url}/api/v3/ticker/bookTicker",
-                            params={"symbol": b_sym},
-                        ),
+                    k_pair = "XBTUSD" if symbol == "BTCUSD" else "PAXGUSD"
+                    m15_resp, h1_resp = await asyncio.gather(
+                        client.get("https://api.kraken.com/0/public/OHLC", params={"pair": k_pair, "interval": 15}),
+                        client.get("https://api.kraken.com/0/public/OHLC", params={"pair": k_pair, "interval": 60}),
                     )
                     if m15_resp.status_code == 200 and h1_resp.status_code == 200:
-                        m15_raw = m15_resp.json()
-                        h1_raw = h1_resp.json()
-                        book = book_resp.json() if book_resp.status_code == 200 else {}
-
-                        # Convert to series where index 0 is newest (like MQL5 iTime/iClose)
-                        self.m15_candles = [
-                            {
-                                "time": int(k[0] // 1000),
-                                "open": float(k[1]),
-                                "high": float(k[2]),
-                                "low": float(k[3]),
-                                "close": float(k[4]),
-                                "volume": float(k[5]),
-                            }
-                            for k in reversed(m15_raw)
-                        ]
-                        self.h1_candles = [
-                            {
-                                "time": int(k[0] // 1000),
-                                "open": float(k[1]),
-                                "high": float(k[2]),
-                                "low": float(k[3]),
-                                "close": float(k[4]),
-                                "volume": float(k[5]),
-                            }
-                            for k in reversed(h1_raw)
-                        ]
-                        last_close = self.m15_candles[0]["close"]
-                        if self.is_mt5_live() and symbol in self.mt5_ticks:
-                            t_info = self.mt5_ticks[symbol]
-                            self.bid_price = float(t_info.get("bid") or last_close)
-                            self.ask_price = float(t_info.get("ask") or last_close)
-                            self.spread_points = int(t_info.get("spread") or spec["default_spread_points"])
-                        else:
-                            bid = float(book.get("bidPrice") or last_close)
-                            ask = float(book.get("askPrice") or last_close)
-                            if ask <= bid:
-                                half_spread = (spec["default_spread_points"] * spec["point"]) / 2.0
-                                bid = round(last_close - half_spread, spec["digits"])
-                                ask = round(last_close + half_spread, spec["digits"])
-                            self.bid_price = bid
-                            self.ask_price = ask
-                            self.spread_points = max(
-                                int(round((ask - bid) / spec["point"])),
-                                spec["default_spread_points"],
-                            )
-                        self.data_source = f"Binance Live ({b_sym})"
-                        return True
+                        res15 = m15_resp.json().get("result", {})
+                        res60 = h1_resp.json().get("result", {})
+                        k15 = next((v for k, v in res15.items() if k != "last"), [])
+                        k60 = next((v for k, v in res60.items() if k != "last"), [])
+                        if k15 and k60:
+                            self.m15_candles = [
+                                {
+                                    "time": int(row[0]),
+                                    "open": float(row[1]),
+                                    "high": float(row[2]),
+                                    "low": float(row[3]),
+                                    "close": float(row[4]),
+                                    "volume": float(row[6]),
+                                }
+                                for row in reversed(k15[-130:])
+                            ]
+                            self.h1_candles = [
+                                {
+                                    "time": int(row[0]),
+                                    "open": float(row[1]),
+                                    "high": float(row[2]),
+                                    "low": float(row[3]),
+                                    "close": float(row[4]),
+                                    "volume": float(row[6]),
+                                }
+                                for row in reversed(k60[-80:])
+                            ]
+                            self._align_candles_to_mt5_tick(symbol, spec)
+                            self.data_source = f"Kraken Live ({k_pair})"
+                            return True
                 except Exception:
                     pass
-
-            # 2. Fallback: Kraken Public OHLC API
-            try:
-                k_pair = "XBTUSD" if symbol == "BTCUSD" else "PAXGUSD"
-                m15_resp, h1_resp = await asyncio.gather(
-                    client.get("https://api.kraken.com/0/public/OHLC", params={"pair": k_pair, "interval": 15}),
-                    client.get("https://api.kraken.com/0/public/OHLC", params={"pair": k_pair, "interval": 60}),
-                )
-                if m15_resp.status_code == 200 and h1_resp.status_code == 200:
-                    res15 = m15_resp.json().get("result", {})
-                    res60 = h1_resp.json().get("result", {})
-                    k15 = next((v for k, v in res15.items() if k != "last"), [])
-                    k60 = next((v for k, v in res60.items() if k != "last"), [])
-                    if k15 and k60:
-                        self.m15_candles = [
-                            {
-                                "time": int(row[0]),
-                                "open": float(row[1]),
-                                "high": float(row[2]),
-                                "low": float(row[3]),
-                                "close": float(row[4]),
-                                "volume": float(row[6]),
-                            }
-                            for row in reversed(k15[-130:])
-                        ]
-                        self.h1_candles = [
-                            {
-                                "time": int(row[0]),
-                                "open": float(row[1]),
-                                "high": float(row[2]),
-                                "low": float(row[3]),
-                                "close": float(row[4]),
-                                "volume": float(row[6]),
-                            }
-                            for row in reversed(k60[-80:])
-                        ]
-                        last_close = self.m15_candles[0]["close"]
-                        half_spread = (spec["default_spread_points"] * spec["point"]) / 2.0
-                        self.bid_price = round(last_close - half_spread, spec["digits"])
-                        self.ask_price = round(last_close + half_spread, spec["digits"])
-                        self.spread_points = spec["default_spread_points"]
-                        self.data_source = f"Kraken Live ({k_pair})"
-                        return True
-            except Exception:
-                pass
 
         return False
 
@@ -1157,11 +1288,22 @@ class CryptoBotEngine:
     # -------------------------------------------------------------------------
     # Money Management & Position Sizing (Авто-калькуляция депозита 1/5 по видео + Excel)
     # -------------------------------------------------------------------------
+    def _to_sl_punkti(self, symbol: str, sl_distance_price: float) -> float:
+        if sl_distance_price <= 0:
+            return 154.0
+        if symbol == "XAUUSD" and sl_distance_price < 45.0:
+            # На Золоте (XAUUSD) в видео КАЛКУЛЯЦИЯ.MOV 1$ движения = 10 пунктов (например, $15.4 = 154 п., $6.1 = 61 п.)
+            return round(max(25.0, sl_distance_price * 10.0), 1)
+        if symbol == "US500" and sl_distance_price < 45.0:
+            return round(max(30.0, sl_distance_price * 5.0), 1)
+        return round(max(25.0, sl_distance_price), 1)
+
     def get_deposit_calc_state(self, sl_distance_price: float) -> Dict[str, Any]:
+        symbol = self.settings.get("symbol", "XAUUSD")
         balance = max(10.0, float(self.account["balance"]))
         working_part = round(balance / 5.0, 2)
         reserve_4_5 = round(balance - working_part, 2)
-        sl_punkti = round(max(20.0, sl_distance_price if sl_distance_price > 0 else 154.0), 1)
+        sl_punkti = self._to_sl_punkti(symbol, sl_distance_price)
         risk_pct = float(self.settings.get("InpRiskPercent", 3.0))
         scale = max(0.3, risk_pct / 3.0)
 
@@ -1214,7 +1356,7 @@ class CryptoBotEngine:
         # Авто-калькуляция депозита 1/5 по видео (Депозитті 5-ке бөлу + SL пункті)
         if self.settings.get("InpUseDepositCalc15", True):
             working_part = balance / 5.0
-            sl_punkti = max(20.0, sl_distance_price)
+            sl_punkti = self._to_sl_punkti(symbol, sl_distance_price)
             scale = max(0.33, risk_pct / 3.0)
             raw_lot = (working_part * scale) / (sl_punkti * 100.0)
         else:
@@ -1247,9 +1389,13 @@ class CryptoBotEngine:
     def _is_price_valid_for_symbol(self, symbol: str, price: float) -> bool:
         if price <= 0:
             return False
-        if symbol == "XAUUSD" and price > 15000:
+        if symbol == "XAUUSD" and (price < 500 or price > 15000):
             return False
         if symbol == "BTCUSD" and price < 15000:
+            return False
+        if symbol == "NAS100" and (price < 4000 or price > 70000):
+            return False
+        if symbol == "US500" and (price < 1500 or price > 25000):
             return False
         return True
 
@@ -1730,6 +1876,20 @@ class CryptoBotEngine:
     # -------------------------------------------------------------------------
     async def step_tick(self) -> None:
         self._sync_local_wine_mt5()
+        # Авто-переключение: Выходные (Сб/Вс) -> BTCUSD 24/7, Будни (Пн-Пт) -> выбранный профильный актив
+        if self.settings.get("InpAutoWeekendBTC", True) and not self.get_open_positions():
+            now_dt = datetime.now(timezone.utc)
+            is_weekend = now_dt.weekday() in (5, 6)
+            cur_sym = self.settings.get("symbol", "XAUUSD")
+            if is_weekend and cur_sym != "BTCUSD":
+                self._switched_for_weekend = True
+                self.save_settings({"symbol": "BTCUSD"})
+            elif (not is_weekend) and getattr(self, "_switched_for_weekend", False):
+                self._switched_for_weekend = False
+                pref_sym = self.settings.get("preferred_weekday_symbol", "XAUUSD")
+                if pref_sym != cur_sym:
+                    self.save_settings({"symbol": pref_sym})
+
         ok = await self.fetch_market_data()
         await self.refresh_news_calendar()
         if not ok or len(self.m15_candles) < 30:
@@ -1891,6 +2051,80 @@ class CryptoBotEngine:
             enriched.append(h)
         return enriched
 
+    async def fetch_chart_candles(self, symbol: str, interval: str = "15m") -> List[Dict[str, Any]]:
+        spec = SYMBOL_SPECS.get(symbol, SYMBOL_SPECS["BTCUSD"])
+        b_sym = spec.get("binance_symbol", "")
+        yh_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        async with httpx.AsyncClient(timeout=7.0, headers=yh_headers) as client:
+            if b_sym:
+                for base_url in ("https://data-api.binance.vision", "https://api.binance.com"):
+                    try:
+                        resp = await client.get(
+                            f"{base_url}/api/v3/klines",
+                            params={"symbol": b_sym, "interval": interval, "limit": 120},
+                        )
+                        if resp.status_code == 200:
+                            raw = resp.json()
+                            if isinstance(raw, list) and len(raw) > 10:
+                                return [
+                                    {
+                                        "time": int(k[0] // 1000),
+                                        "open": float(k[1]),
+                                        "high": float(k[2]),
+                                        "low": float(k[3]),
+                                        "close": float(k[4]),
+                                        "volume": float(k[5]),
+                                    }
+                                    for k in raw
+                                ]
+                    except Exception:
+                        pass
+
+            tf_map = {
+                "1m": ("1m", "2d"),
+                "5m": ("5m", "5d"),
+                "15m": ("15m", "5d"),
+                "1h": ("60m", "1mo"),
+                "4h": ("60m", "3mo"),
+                "1d": ("1d", "6mo"),
+            }
+            yh_int, yh_rng = tf_map.get(interval, ("15m", "5d"))
+            y_tickers = [t for t in (spec.get("yahoo_symbol"), spec.get("yahoo_alt")) if t]
+            for y_sym in y_tickers:
+                for yh_host in ("https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"):
+                    try:
+                        resp = await client.get(
+                            f"{yh_host}/v8/finance/chart/{y_sym}",
+                            params={"interval": yh_int, "range": yh_rng},
+                        )
+                        if resp.status_code == 200:
+                            r_obj = (resp.json().get("chart", {}).get("result") or [None])[0]
+                            if r_obj:
+                                ts_list = r_obj.get("timestamp") or []
+                                q = ((r_obj.get("indicators") or {}).get("quote") or [{}])[0]
+                                opens = q.get("open") or []
+                                highs = q.get("high") or []
+                                lows = q.get("low") or []
+                                closes = q.get("close") or []
+                                vols = q.get("volume") or []
+                                out: List[Dict[str, Any]] = []
+                                for idx_t, ts_val in enumerate(ts_list):
+                                    if idx_t >= len(closes) or closes[idx_t] is None or opens[idx_t] is None:
+                                        continue
+                                    out.append({
+                                        "time": int(ts_val),
+                                        "open": round(float(opens[idx_t]), spec["digits"]),
+                                        "high": round(float(highs[idx_t] if highs[idx_t] is not None else closes[idx_t]), spec["digits"]),
+                                        "low": round(float(lows[idx_t] if lows[idx_t] is not None else closes[idx_t]), spec["digits"]),
+                                        "close": round(float(closes[idx_t]), spec["digits"]),
+                                        "volume": float(vols[idx_t] if idx_t < len(vols) and vols[idx_t] is not None else 100.0),
+                                    })
+                                if len(out) > 10:
+                                    return out[-120:]
+                    except Exception:
+                        pass
+        return list(reversed(self.m15_candles[:90]))
+
     def get_full_state(self) -> Dict[str, Any]:
         symbol = self.settings["symbol"]
         atr = self.atr_value
@@ -1905,8 +2139,8 @@ class CryptoBotEngine:
             else ("ВНИЗ (Только SELL)" if self.htf_trend == -1 else "НЕЙТРАЛЬНО")
         )
 
-        # Return last 60 M15 candles in chronological order for chart rendering
-        chart_candles = list(reversed(self.m15_candles[:60]))
+        # Return last 90 M15 candles in chronological order for chart rendering
+        chart_candles = list(reversed(self.m15_candles[:90]))
 
         source_label = (
             f"MT5 Live #{self.mt5_login_id} ({self.mt5_account_name})"
@@ -1915,7 +2149,7 @@ class CryptoBotEngine:
         )
 
         return {
-            "version": "2.70",
+            "version": "2.71",
             "timestamp": int(time.time()),
             "last_update_ts": int(self.last_update_ts),
             "data_source": source_label,
