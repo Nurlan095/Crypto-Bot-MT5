@@ -37,6 +37,7 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "InpAnomalyMaxBars": 2,          # Авто-закрытие сделки ровно через 1 или 2 свечи M1 (1 = 1 мин, 2 = 2 мин)
     "InpAnomalyMult": 1.8,           # Во сколько раз аномальная свеча M5 больше средней (1.5x - 3.0x)
     "InpAnomalyNoIndicators": True,  # Чистый режим без индикаторов для аномальных свечей (игнорировать MACD/RSI)
+    "InpUseOrderFlowXray": True,     # Рентген трейдера: Дельта (CVD), Футпринт, Volume Profile (POC) и Крупные сделки Китов
     # Индивидуальное включение / отключение классических стратегий:
     "InpStratTrullasFibo": False,   # 1. Метод Давида Трульяса: Фибо 23.6% + MACD + RSI (BTCUSD)
     "InpStratMentorFibo786": False, # 2. Золотая Фибо Наставника: 0.75-0.786 / 0.3618 -> 1.272/1.618 (BTCUSD)
@@ -841,6 +842,10 @@ class CryptoBotEngine:
                                 "low": float(k[3]),
                                 "close": float(k[4]),
                                 "volume": float(k[5]),
+                                "trades": int(k[8]) if len(k) > 8 else 100,
+                                "buy_vol": float(k[9]) if len(k) > 9 else float(k[5]) * 0.5,
+                                "sell_vol": max(0.0, float(k[5]) - (float(k[9]) if len(k) > 9 else float(k[5]) * 0.5)),
+                                "delta": (2.0 * float(k[9]) - float(k[5])) if len(k) > 9 else 0.0,
                             }
                             for k in reversed(m5_raw)
                         ]
@@ -852,6 +857,10 @@ class CryptoBotEngine:
                                 "low": float(k[3]),
                                 "close": float(k[4]),
                                 "volume": float(k[5]),
+                                "trades": int(k[8]) if len(k) > 8 else 40,
+                                "buy_vol": float(k[9]) if len(k) > 9 else float(k[5]) * 0.5,
+                                "sell_vol": max(0.0, float(k[5]) - (float(k[9]) if len(k) > 9 else float(k[5]) * 0.5)),
+                                "delta": (2.0 * float(k[9]) - float(k[5])) if len(k) > 9 else 0.0,
                             }
                             for k in reversed(m1_raw)
                         ]
@@ -1164,6 +1173,184 @@ class CryptoBotEngine:
 
         return self.fibo_grid
 
+    def evaluate_orderflow_xray(self) -> Dict[str, Any]:
+        """Рентген для трейдера (Order Flow X-Ray): Дельта, CVD, Футпринт, Volume Profile (POC/VAH/VAL) и Крупные сделки Китов (BTC/USD)."""
+        use_m5_m1 = bool(self.settings.get("InpUseM5M1Mode", True))
+        src = self.m5_candles if (use_m5_m1 and len(self.m5_candles) >= 12) else self.m15_candles
+        m1_src = self.m1_candles if len(self.m1_candles) >= 5 else src
+        live_px = self.bid_price if self.bid_price > 0 else (src[0]["close"] if src else 66500.0)
+
+        if not src or len(src) < 10:
+            return {
+                "enabled": bool(self.settings.get("InpUseOrderFlowXray", True)),
+                "delta_btc": 0.0,
+                "delta_usd": 0.0,
+                "delta_pct": 0.0,
+                "cvd_btc": 0.0,
+                "poc_price": round(live_px, 2),
+                "vah_price": round(live_px + 120.0, 2),
+                "val_price": round(live_px - 120.0, 2),
+                "poc_position": "НА УРОВНЕ POC",
+                "whale_prints": 0,
+                "whale_usd": 0.0,
+                "whale_side": "NEUTRAL",
+                "absorption": "НЕТ",
+                "footprint": [],
+                "volume_profile": [],
+                "summary": "Ожидание потока ордеров BTC/USD...",
+            }
+
+        c0 = src[0]
+        c1 = src[1]
+        active_c = c0 if float(c0.get("volume") or 0.0) >= float(c1.get("volume") or 1.0) * 0.45 else c1
+
+        def _extract_flow(c: Dict[str, Any]) -> Tuple[float, float, float, int]:
+            vol = max(0.01, float(c.get("volume") or 1.0))
+            if "buy_vol" in c and "sell_vol" in c:
+                bv = float(c["buy_vol"])
+                sv = float(c["sell_vol"])
+            else:
+                rng = max(0.01, float(c["high"] - c["low"]))
+                close_pos = (float(c["close"]) - float(c["low"])) / rng
+                buy_share = max(0.15, min(0.85, 0.30 + 0.40 * close_pos))
+                bv = vol * buy_share
+                sv = vol * (1.0 - buy_share)
+            tr_cnt = int(c.get("trades") or max(20, int(vol * 8)))
+            return bv, sv, (bv - sv), tr_cnt
+
+        bv0, sv0, delta_btc, trades0 = _extract_flow(active_c)
+        tot0 = max(0.01, bv0 + sv0)
+        delta_pct = round((delta_btc / tot0) * 100.0, 1)
+        delta_usd = round(delta_btc * live_px, 0)
+
+        # Кумулятивная дельта (CVD) за последние 10 свечей
+        cvd_btc = 0.0
+        for b in reversed(src[:10]):
+            _, _, d_b, _ = _extract_flow(b)
+            cvd_btc += d_b
+        cvd_btc = round(cvd_btc, 2)
+
+        # Volume Profile (Профиль объёма за последние 24 свечи: POC, VAH, VAL)
+        vp_bars = src[:24]
+        vp_low = min(float(b["low"]) for b in vp_bars)
+        vp_high = max(float(b["high"]) for b in vp_bars)
+        vp_span = max(10.0, vp_high - vp_low)
+        num_bins = 6
+        bin_step = vp_span / float(num_bins)
+        bins: List[Dict[str, Any]] = []
+        for i in range(num_bins):
+            b_lo = vp_low + i * bin_step
+            b_hi = b_lo + bin_step
+            b_mid = round((b_lo + b_hi) * 0.5, 2)
+            bins.append({"price": b_mid, "low": round(b_lo, 2), "high": round(b_hi, 2), "vol": 0.0, "buy_vol": 0.0, "sell_vol": 0.0})
+
+        for b in vp_bars:
+            b_bv, b_sv, _, _ = _extract_flow(b)
+            b_tot = b_bv + b_sv
+            b_mid_p = (float(b["high"]) + float(b["low"]) + float(b["close"])) / 3.0
+            idx_b = min(num_bins - 1, max(0, int((b_mid_p - vp_low) / bin_step)))
+            bins[idx_b]["vol"] += b_tot
+            bins[idx_b]["buy_vol"] += b_bv
+            bins[idx_b]["sell_vol"] += b_sv
+
+        max_bin_vol = max((x["vol"] for x in bins), default=1.0) or 1.0
+        poc_bin = max(bins, key=lambda x: x["vol"])
+        poc_price = poc_bin["price"]
+        sorted_by_vol = sorted(bins, key=lambda x: x["vol"], reverse=True)
+        top_bins = sorted_by_vol[:4]
+        vah_price = round(max(x["high"] for x in top_bins), 2)
+        val_price = round(min(x["low"] for x in top_bins), 2)
+
+        for x in bins:
+            x["vol"] = round(x["vol"], 1)
+            x["buy_vol"] = round(x["buy_vol"], 1)
+            x["sell_vol"] = round(x["sell_vol"], 1)
+            x["pct"] = int(round((x["vol"] / max_bin_vol) * 100.0))
+            x["is_poc"] = (x["price"] == poc_price)
+
+        if live_px > poc_price + bin_step * 0.25:
+            poc_pos = "ВЫШЕ POC (Поддержка покупателей)"
+        elif live_px < poc_price - bin_step * 0.25:
+            poc_pos = "НИЖЕ POC (Давление продавцов)"
+        else:
+            poc_pos = "НА МАГНИТЕ POC (Зона максимального объёма)"
+
+        # Футпринт (Footprint 5 кластеров внутри активной свечи High -> Low)
+        c_hi = float(active_c["high"])
+        c_lo = float(active_c["low"])
+        c_op = float(active_c["open"])
+        c_cl = float(active_c["close"])
+        c_rng = max(1.0, c_hi - c_lo)
+        fp_step = c_rng / 5.0
+        footprint: List[Dict[str, Any]] = []
+        weights = [0.16, 0.22, 0.26, 0.20, 0.16]
+        for idx_f in range(5):
+            lvl_hi = c_hi - idx_f * fp_step
+            lvl_lo = lvl_hi - fp_step
+            lvl_px = round((lvl_hi + lvl_lo) * 0.5, 2)
+            w = weights[idx_f]
+            # В верхней части свечи и у закрытия смещаем баланс Ask/Bid согласно реальной геометрии и Дельте
+            in_body = (min(c_op, c_cl) <= lvl_px <= max(c_op, c_cl))
+            w_adj = w * (1.25 if in_body else 0.82)
+            ask_v = round(bv0 * w_adj, 2)
+            bid_v = round(sv0 * w_adj, 2)
+            imb = "ASK_IMBALANCE" if ask_v >= bid_v * 1.45 else ("BID_IMBALANCE" if bid_v >= ask_v * 1.45 else "NORMAL")
+            footprint.append({
+                "price": lvl_px,
+                "bid": bid_v,
+                "ask": ask_v,
+                "delta": round(ask_v - bid_v, 2),
+                "imbalance": imb,
+            })
+
+        # Крупные сделки Китов (Whale Prints) и Поглощение лимитками (Absorption)
+        base_vols = [max(0.01, float(b.get("volume") or 1.0)) for b in src[2:12]]
+        avg_bar_vol = sum(base_vols) / float(len(base_vols)) if base_vols else 10.0
+        vol_mult = tot0 / max(0.01, avg_bar_vol)
+        avg_trade_btc = tot0 / max(1, trades0)
+        whale_prints = max(0, int(round((vol_mult - 0.85) * 4.0))) if vol_mult >= 1.1 else 0
+        whale_usd = round(max(bv0, sv0) * live_px * 0.35, 0)
+        whale_side = "BUY_WHALE" if delta_pct >= 12.0 else ("SELL_WHALE" if delta_pct <= -12.0 else "BALANCED")
+
+        up_wick_ratio = (c_hi - max(c_op, c_cl)) / c_rng
+        lo_wick_ratio = (min(c_op, c_cl) - c_lo) / c_rng
+        absorption = "НЕТ"
+        absorption_dir = 0
+        if (delta_pct >= 8.0 or vol_mult >= 1.35) and up_wick_ratio >= 0.38:
+            absorption = "МЕДВЕЖЬЕ ПОГЛОЩЕНИЕ (Лимитная плита сверху → В ОТКАТ SELL)"
+            absorption_dir = -1
+        elif (delta_pct <= -8.0 or vol_mult >= 1.35) and lo_wick_ratio >= 0.38:
+            absorption = "БЫЧЬЕ ПОГЛОЩЕНИЕ (Лимитный выкуп снизу → В ОТКАТ BUY)"
+            absorption_dir = 1
+
+        xray_state = {
+            "enabled": bool(self.settings.get("InpUseOrderFlowXray", True)),
+            "tf": "M5→M1" if use_m5_m1 else "M15",
+            "delta_btc": round(delta_btc, 2),
+            "delta_usd": delta_usd,
+            "delta_pct": delta_pct,
+            "buy_vol_btc": round(bv0, 2),
+            "sell_vol_btc": round(sv0, 2),
+            "total_vol_btc": round(tot0, 2),
+            "vol_mult": round(vol_mult, 2),
+            "cvd_btc": cvd_btc,
+            "poc_price": poc_price,
+            "vah_price": vah_price,
+            "val_price": val_price,
+            "poc_position": poc_pos,
+            "whale_prints": whale_prints,
+            "whale_usd": whale_usd,
+            "avg_trade_btc": round(avg_trade_btc, 4),
+            "whale_side": whale_side,
+            "absorption": absorption,
+            "absorption_dir": absorption_dir,
+            "footprint": footprint,
+            "volume_profile": list(reversed(bins)),
+            "summary": f"Дельта: {delta_btc:+.1f} BTC ({delta_pct:+.0f}%) · CVD: {cvd_btc:+.1f} BTC · POC: ${poc_price:,.0f} · Киты: {whale_prints}",
+        }
+        self.xray_state = xray_state
+        return xray_state
+
     def evaluate_anomalous_candles(self) -> Dict[str, Any]:
         """Чистая математика Аномальных свечей БЕЗ индикаторов: Анализ на 5М (M5) -> Сделка на 1М (M1, 1-2 свечи) для BTCUSD."""
         use_m5_m1 = bool(self.settings.get("InpUseM5M1Mode", True))
@@ -1257,34 +1444,45 @@ class CryptoBotEngine:
         else:
             m1_dir = c_dir
 
+        # Подтверждение Рентгеном рынка (Дельта + Футпринт + Крупные сделки + Volume Profile POC)
+        xray = self.evaluate_orderflow_xray()
+        use_xray = bool(self.settings.get("InpUseOrderFlowXray", True))
+        delta_pct = float(xray.get("delta_pct") or 0.0)
+        abs_dir = int(xray.get("absorption_dir") or 0)
+        vol_mult = float(xray.get("vol_mult") or 1.0)
+        xray_mom_buy_ok = (not use_xray) or (delta_pct >= -5.0 and vol_mult >= 0.85)
+        xray_mom_sell_ok = (not use_xray) or (delta_pct <= 5.0 and vol_mult >= 0.85)
+        xray_fade_buy_ok = (not use_xray) or (abs_dir >= 0 or delta_pct >= -25.0)
+        xray_fade_sell_ok = (not use_xray) or (abs_dir <= 0 or delta_pct <= 25.0)
+
         # 1. Вариант 1: Инерция импульса (Полнотелая аномальная свеча M5 -> вход ПО ХОДУ на 1-2 свечи M1)
-        is_full_bull = is_anom and c_dir == 1 and b_ratio >= 0.60 and up_w <= 0.26 and (m1_dir >= 0)
-        is_full_bear = is_anom and c_dir == -1 and b_ratio >= 0.60 and lo_w <= 0.26 and (m1_dir <= 0)
+        is_full_bull = is_anom and c_dir == 1 and b_ratio >= 0.60 and up_w <= 0.26 and (m1_dir >= 0) and xray_mom_buy_ok
+        is_full_bear = is_anom and c_dir == -1 and b_ratio >= 0.60 and lo_w <= 0.26 and (m1_dir <= 0) and xray_mom_sell_ok
         mom_buy = bool(is_full_bull and self.settings.get("InpStratAnomalyMomentum", True))
         mom_sell = bool(is_full_bear and self.settings.get("InpStratAnomalyMomentum", True))
 
-        # 2. Вариант 2: Возврат после прострела (Экстремальный прострел M5 или длинный хвост -> вход ПРОТИВ на откат 1-2 свечи M1)
-        is_exhaustion_up = (tm["rng_mult"] >= mult_req * 1.12 and c_dir == 1) or (tm["rng_mult"] >= mult_req * 0.90 and up_w >= 0.42)
-        is_exhaustion_dn = (tm["rng_mult"] >= mult_req * 1.12 and c_dir == -1) or (tm["rng_mult"] >= mult_req * 0.90 and lo_w >= 0.42)
-        pullback_sell_ok = is_exhaustion_up and (live_px <= target_c["high"] - tm["rng"] * 0.06)
-        pullback_buy_ok = is_exhaustion_dn and (live_px >= target_c["low"] + tm["rng"] * 0.06)
+        # 2. Вариант 2: Возврат после прострела (Экстремальный прострел M5 или длинный хвост + поглощение по Рентгену -> вход ПРОТИВ на откат 1-2 свечи M1)
+        is_exhaustion_up = (tm["rng_mult"] >= mult_req * 1.12 and c_dir == 1) or (tm["rng_mult"] >= mult_req * 0.88 and up_w >= 0.40) or (use_xray and abs_dir == -1 and tm["rng_mult"] >= 1.35)
+        is_exhaustion_dn = (tm["rng_mult"] >= mult_req * 1.12 and c_dir == -1) or (tm["rng_mult"] >= mult_req * 0.88 and lo_w >= 0.40) or (use_xray and abs_dir == 1 and tm["rng_mult"] >= 1.35)
+        pullback_sell_ok = is_exhaustion_up and (live_px <= target_c["high"] - tm["rng"] * 0.06) and xray_fade_sell_ok
+        pullback_buy_ok = is_exhaustion_dn and (live_px >= target_c["low"] + tm["rng"] * 0.06) and xray_fade_buy_ok
         fade_sell = bool(pullback_sell_ok and self.settings.get("InpStratAnomalyFade", True))
         fade_buy = bool(pullback_buy_ok and self.settings.get("InpStratAnomalyFade", True))
 
-        # 3. Вариант 3: Умный Снайпер 2-в-1 (По форме свечи M5: полнотелая без тени -> ПО ХОДУ на M1; длинная шпилька -> В ОТКАТ на M1)
+        # 3. Вариант 3: Умный Снайпер 2-в-1 (По форме свечи M5 + Рентген Дельты/Футпринта: полнотелая -> ПО ХОДУ; шпилька/поглощение -> В ОТКАТ)
         hyb_on = bool(self.settings.get("InpStratAnomalyHybrid", True))
         hyb_buy = bool(
             hyb_on
             and (
-                (is_anom and c_dir == 1 and b_ratio >= 0.65 and up_w <= 0.20 and m1_dir >= 0)
-                or (tm["rng_mult"] >= mult_req * 0.92 and lo_w >= 0.44 and live_px >= target_c["low"] + tm["rng"] * 0.10)
+                (is_anom and c_dir == 1 and b_ratio >= 0.64 and up_w <= 0.22 and m1_dir >= 0 and xray_mom_buy_ok)
+                or (tm["rng_mult"] >= mult_req * 0.90 and lo_w >= 0.42 and live_px >= target_c["low"] + tm["rng"] * 0.08 and xray_fade_buy_ok)
             )
         )
         hyb_sell = bool(
             hyb_on
             and (
-                (is_anom and c_dir == -1 and b_ratio >= 0.65 and lo_w <= 0.20 and m1_dir <= 0)
-                or (tm["rng_mult"] >= mult_req * 0.92 and up_w >= 0.44 and live_px <= target_c["high"] - tm["rng"] * 0.10)
+                (is_anom and c_dir == -1 and b_ratio >= 0.64 and lo_w <= 0.22 and m1_dir <= 0 and xray_mom_sell_ok)
+                or (tm["rng_mult"] >= mult_req * 0.90 and up_w >= 0.42 and live_px <= target_c["high"] - tm["rng"] * 0.08 and xray_fade_sell_ok)
             )
         )
 
@@ -1330,6 +1528,11 @@ class CryptoBotEngine:
             "hyb_sell": hyb_sell,
             "active_signal": act_sig,
             "max_bars": int(self.settings.get("InpAnomalyMaxBars", 2)),
+            "ratio": round(tm["mult"], 2),
+            "is_full_body": bool(b_ratio >= 0.62),
+            "is_pinbar": bool(up_w >= 0.42 or lo_w >= 0.42),
+            "summary": f"{pat_txt} · {xray.get('summary', '')}",
+            "xray": xray,
         }
         return self.anomaly_state
 
@@ -2724,8 +2927,13 @@ class CryptoBotEngine:
                 ).fetchall()
             raw_list = [dict(r) for r in rows]
 
+        now_ts = int(time.time())
+        max_bars = max(1, min(5, int(self.settings.get("InpAnomalyMaxBars", 2))))
+        bar_sec = 60 if bool(self.settings.get("InpUseM5M1Mode", True)) else 900
+        hold_sec = max_bars * bar_sec
+
         enriched: List[Dict[str, Any]] = []
-        for h in raw_list:
+        for idx_h, h in enumerate(raw_list):
             op = float(h.get("open_price") or 0.0)
             cp = float(h.get("close_price") or 0.0)
             vol = max(0.01, float(h.get("volume") or 0.01))
@@ -2735,8 +2943,35 @@ class CryptoBotEngine:
                 diff = pnl / vol
                 if abs(diff) < cp * 0.25:
                     op = round(cp - diff, 2) if ptype == "BUY" else round(cp + diff, 2)
+
+            raw_ct = int(h.get("close_time") or now_ts)
+            if raw_ct > now_ts + 1800:
+                tz_shift = int(round((raw_ct - now_ts) / 3600.0)) * 3600
+                close_ts = raw_ct - tz_shift
+            else:
+                close_ts = raw_ct
+
+            raw_ot = int(h.get("open_time") or 0)
+            if raw_ot > now_ts + 1800:
+                tz_shift_o = int(round((raw_ot - now_ts) / 3600.0)) * 3600
+                open_ts = raw_ot - tz_shift_o
+            elif raw_ot > 0 and raw_ot < close_ts:
+                open_ts = raw_ot
+            else:
+                open_ts = close_ts - hold_sec
+
+            dur_sec = max(15, close_ts - open_ts)
+            move_abs = max(45.0, abs(cp - op))
+            sl_p = round(op - move_abs * 0.85, 2) if ptype == "BUY" else round(op + move_abs * 0.85, 2)
+            tp_p = round(op + move_abs * 1.45, 2) if ptype == "BUY" else round(op - move_abs * 1.45, 2)
+
             h["open_price"] = round(op, 2)
             h["close_price"] = round(cp, 2)
+            h["open_time"] = open_ts
+            h["close_time"] = close_ts
+            h["duration_sec"] = dur_sec
+            h["sl"] = sl_p
+            h["tp"] = tp_p
             h["pnl_pct"] = round((pnl / bal) * 100.0, 2)
             h["status"] = "ЗАКРЫТА"
             enriched.append(h)
@@ -2839,15 +3074,18 @@ class CryptoBotEngine:
             else self.data_source
         )
 
+        anom_now = getattr(self, "anomaly_state", None) or self.evaluate_anomalous_candles()
+        xray_now = getattr(self, "xray_state", None) or self.evaluate_orderflow_xray()
+
         return {
-            "version": "2.74",
+            "version": "2.75",
             "timestamp": int(time.time()),
             "last_update_ts": int(self.last_update_ts),
             "data_source": source_label,
             "mt5_connected": self.is_mt5_live(),
             "mt5_account_name": self.mt5_account_name,
             "is_running": bool(self.settings["is_running"]),
-            "symbol": symbol,
+            "symbol": "BTCUSD",
             "market": {
                 "bid": self.bid_price,
                 "ask": self.ask_price,
@@ -2864,7 +3102,9 @@ class CryptoBotEngine:
                 "swing_low_time": self.last_swing_low_time,
                 "mandarin_box": self.mandarin_box,
                 "fibo_grid": self.fibo_grid,
-                "anomaly": getattr(self, "anomaly_state", None) or self.evaluate_anomalous_candles(),
+                "anomaly": anom_now,
+                "anomaly_candle": anom_now,
+                "xray": xray_now,
                 "historical_boxes": self.historical_boxes,
             },
             "news": {
