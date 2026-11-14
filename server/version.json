@@ -1,6 +1,1 @@
-{
-    "changelog":  "v2.73: Добавлен ИИ-Агент проверки сигналов (0-100%), анализа и авто-исправления ошибок 6 стратегий + исправлены формулы Фибо, RSI, SL/TP и BOS",
-    "version_code":  273,
-    "apk_url":  "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk",
-    "version_name":  "2.73"
-}
+﻿{"version_code": 274, "version_name": "2.74", "apk_url": "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk"}

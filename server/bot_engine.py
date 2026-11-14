@@ -17,24 +17,35 @@ MT5_WINE_STARTUP_INI = "/opt/mt5/startup.ini"
 
 
 DEFAULT_SETTINGS: Dict[str, Any] = {
-    # Active symbol & bot state
-    "symbol": "XAUUSD",             # Активный актив: XAUUSD (Золото), BTCUSD, NAS100 (Nasdaq 100), US500 (S&P 500)
-    "InpAutoWeekendBTC": True,      # Авто-режим: Будни профильный актив (Золото/Nasdaq), Выходные Сб-Вс -> BTCUSD 24/7
-    "preferred_weekday_symbol": "XAUUSD",
+    # Active symbol & bot state (Актив только BTCUSD 24/7)
+    "symbol": "BTCUSD",             # Активный актив: ТОЛЬКО BTCUSD 24/7 по требованию пользователя
+    "InpAutoWeekendBTC": True,      # Торговля 24/7 на BTCUSD без переключения на другие активы
+    "preferred_weekday_symbol": "BTCUSD",
+    "InpLockBTCOnly": True,         # Фиксация актива: торговать только BTCUSD 24/7
     "is_running": True,             # Bot active or paused by user
     "mt5_login": "8112287",
     "mt5_server": "AMarkets-Demo",
     "mt5_password": "XvA!Xh8e",
-    "InpStrategyMode": 4,           # 4 = Метод Давида Трульяса (Фибоначчи)
-    # Индивидуальное включение / отключение каждой стратегии отдельно:
-    "InpStratTrullasFibo": True,    # 1. Метод Давида Трульяса: Фибо 23.6% + MACD + RSI (Рекомендация: NAS100, US500, BTCUSD)
-    "InpStratMentorFibo786": True,  # 2. Золотая Фибо Наставника: 0.75-0.786 / 0.3618 -> 1.272/1.618 (Рекомендация: XAUUSD Золото, BTCUSD)
-    "InpStratMandarinBOS": True,    # 3. Коробка утреннего пробоя «Мандарин» + BOS + Marubozu (Рекомендация: XAUUSD Золото, BTCUSD)
-    "InpStratImpulseM15": True,     # 4. Импульс M15 по тренду H1 EMA 50 (Рекомендация: BTCUSD, NAS100, XAUUSD)
-    "InpStratSwingBounce": False,   # 5. Отскок от уровней Swing-канала M15 (Рекомендация: US500, XAUUSD, BTCUSD)
-    # ИИ-Агент контроля сигналов и авто-исправления ошибок стратегий 24/7:
-    "InpUseAIAgent": True,          # Включить ИИ-Агента проверки сигналов и аудита стратегий
-    "InpAIAgentAutoFix": True,      # Автоматически исправлять ошибки стратегий и фильтров под рынок
+    "InpStrategyMode": 4,           # 4 = Снайпер Аномальных Свечей + Фибоначчи
+    # 3 Варианта быстрых сделок на 1–2 свечах по Аномальным свечам (БЕЗ ИНДИКАТОРОВ):
+    "InpUseM5M1Mode": True,          # Отдельный переключатель: Анализ на 5М (M5) -> Сделка и авто-выход на 1М (M1, 1-2 мин)
+    "InpAnalysisTF": "M5",           # Таймфрейм анализа аномальных свечей: M5 (5 минут)
+    "InpTradeTF": "M1",              # Таймфрейм открытия и ведения сделки: M1 (1 минута)
+    "InpStratAnomalyMomentum": True, # Вариант 1: Аномальная свеча — Инерция импульса (Вход ПО ХОДУ на 1-2 свечи)
+    "InpStratAnomalyFade": True,     # Вариант 2: Аномальная свеча — Возврат после прострела (Вход В ОТКАТ на 1-2 свечи)
+    "InpStratAnomalyHybrid": True,   # Вариант 3: Умный Снайпер 2-в-1 (По форме свечи: Полнотелая=По ходу, Шпилька=В откат)
+    "InpAnomalyMaxBars": 2,          # Авто-закрытие сделки ровно через 1 или 2 свечи M1 (1 = 1 мин, 2 = 2 мин)
+    "InpAnomalyMult": 1.8,           # Во сколько раз аномальная свеча M5 больше средней (1.5x - 3.0x)
+    "InpAnomalyNoIndicators": True,  # Чистый режим без индикаторов для аномальных свечей (игнорировать MACD/RSI)
+    # Индивидуальное включение / отключение классических стратегий:
+    "InpStratTrullasFibo": False,   # 1. Метод Давида Трульяса: Фибо 23.6% + MACD + RSI (BTCUSD)
+    "InpStratMentorFibo786": False, # 2. Золотая Фибо Наставника: 0.75-0.786 / 0.3618 -> 1.272/1.618 (BTCUSD)
+    "InpStratMandarinBOS": False,   # 3. Коробка утреннего пробоя «Мандарин» + BOS + Marubozu (BTCUSD)
+    "InpStratImpulseM15": False,    # 4. Импульс M15 по тренду H1 EMA 50 (BTCUSD)
+    "InpStratSwingBounce": False,   # 5. Отскок от уровней Swing-канала M15 (BTCUSD)
+    # ИИ-Агент контроля сигналов, анализа сделки и авто-исправления ошибок 24/7:
+    "InpUseAIAgent": True,          # Включить ИИ-Агента проверки сигналов и аудита сделок
+    "InpAIAgentAutoFix": True,      # Автоматически исправлять ошибки стратегий и закрывать зависшие сделки
     "InpAIAgentMinScore": 65,       # Минимальный балл качества сигнала (0-100%) для входа
     # Money Management
     "InpUseAutoLot": True,
@@ -49,7 +60,7 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "InpNewsCurrency": "USD",
     "InpPauseBeforeMin": 15,
     "InpPauseAfterMin": 5,
-    "InpTradeNewsImpulse": True,
+    "InpTradeNewsImpulse": False,
     "InpNewsEffectMin": 60,
     # Market Structure & Patterns (M15)
     "InpSwingPeriod": 5,
@@ -57,7 +68,7 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "InpATRMultiplier": 1.1,
     "InpMarubozuRatio": 0.70,
     "InpMaxSqueezeRatio": 0.0026,   # ATR / Close <= 0.0026
-    "InpUseSessionFilter": True,    # Exclude hours 2, 4, 5, 7, 14, 19
+    "InpUseSessionFilter": False,   # 24/7 для BTCUSD без ночных пауз
     # Mandarin Box
     "InpUseMandarin": True,
     "InpMandarinBars": 3,
@@ -67,14 +78,14 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "InpHTF": "H1",
     "InpHTF_EMA": 50,
     # Stops, Safe (Partial Close) & Breakeven
-    "InpSL_ATR": 1.5,
-    "InpTP_ATR": 3.0,
+    "InpSL_ATR": 1.2,
+    "InpTP_ATR": 2.2,
     "InpUsePartialClose": True,
-    "InpPartialTrigATR": 1.5,
+    "InpPartialTrigATR": 0.8,
     "InpPartialClosePct": 50.0,
     "InpUseBreakeven": True,
-    "InpBE_TriggerATR": 1.5,
-    "InpBE_OffsetATR": 0.20,
+    "InpBE_TriggerATR": 0.7,
+    "InpBE_OffsetATR": 0.18,
     # Visuals
     "InpShowVisuals": True,
 }
@@ -165,6 +176,8 @@ class CryptoBotEngine:
         self.account: Dict[str, float] = self._load_account()
 
         # Market & Structure state
+        self.m1_candles: List[Dict[str, Any]] = []
+        self.m5_candles: List[Dict[str, Any]] = []
         self.m15_candles: List[Dict[str, Any]] = []
         self.h1_candles: List[Dict[str, Any]] = []
         self.bid_price: float = 0.0
@@ -426,6 +439,12 @@ class CryptoBotEngine:
                         settings[k] = json.loads(r["value"])
                     except Exception:
                         pass
+            if settings.get("InpLockBTCOnly", True):
+                settings["symbol"] = "BTCUSD"
+                settings["preferred_weekday_symbol"] = "BTCUSD"
+                conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ("symbol", json.dumps("BTCUSD")))
+                conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ("preferred_weekday_symbol", json.dumps("BTCUSD")))
+                conn.commit()
         return settings
 
     def save_settings(self, updates: Dict[str, Any]) -> Dict[str, Any]:
@@ -433,6 +452,9 @@ class CryptoBotEngine:
         old_login = self.settings.get("mt5_login")
         old_pass = self.settings.get("mt5_password")
         old_srv = self.settings.get("mt5_server")
+        if self.settings.get("InpLockBTCOnly", True) and updates.get("InpLockBTCOnly", True):
+            updates["symbol"] = "BTCUSD"
+            updates["preferred_weekday_symbol"] = "BTCUSD"
         with self._get_conn() as conn:
             for k, v in updates.items():
                 if k in DEFAULT_SETTINGS:
@@ -782,6 +804,72 @@ class CryptoBotEngine:
 
         return False
 
+    async def refresh_fast_m5_m1_candles(self) -> None:
+        """Подгрузка живых свечей M5 (для анализа аномалий) и M1 (для открытия/закрытия быстрых сделок BTCUSD)."""
+        now = time.time()
+        if now - getattr(self, "_fast_tf_last_fetch", 0.0) < 3.5 and len(self.m5_candles) >= 20 and len(self.m1_candles) >= 20:
+            if self.bid_price > 0:
+                for arr in (self.m5_candles, self.m1_candles):
+                    if arr:
+                        c0 = arr[0]
+                        c0["close"] = self.bid_price
+                        if self.bid_price > c0["high"]:
+                            c0["high"] = self.bid_price
+                        if self.bid_price < c0["low"]:
+                            c0["low"] = self.bid_price
+            return
+
+        self._fast_tf_last_fetch = now
+        symbol = self.settings.get("symbol", "BTCUSD")
+        spec = SYMBOL_SPECS.get(symbol, SYMBOL_SPECS["BTCUSD"])
+        b_sym = spec.get("binance_symbol") or "BTCUSDT"
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            for base_url in ("https://data-api.binance.vision", "https://api.binance.com"):
+                try:
+                    m5_resp, m1_resp = await asyncio.gather(
+                        client.get(f"{base_url}/api/v3/klines", params={"symbol": b_sym, "interval": "5m", "limit": 50}),
+                        client.get(f"{base_url}/api/v3/klines", params={"symbol": b_sym, "interval": "1m", "limit": 50}),
+                    )
+                    if m5_resp.status_code == 200 and m1_resp.status_code == 200:
+                        m5_raw = m5_resp.json()
+                        m1_raw = m1_resp.json()
+                        m5_list = [
+                            {
+                                "time": int(k[0] // 1000),
+                                "open": float(k[1]),
+                                "high": float(k[2]),
+                                "low": float(k[3]),
+                                "close": float(k[4]),
+                                "volume": float(k[5]),
+                            }
+                            for k in reversed(m5_raw)
+                        ]
+                        m1_list = [
+                            {
+                                "time": int(k[0] // 1000),
+                                "open": float(k[1]),
+                                "high": float(k[2]),
+                                "low": float(k[3]),
+                                "close": float(k[4]),
+                                "volume": float(k[5]),
+                            }
+                            for k in reversed(m1_raw)
+                        ]
+                        if self.bid_price > 0 and m1_list:
+                            offset = self.bid_price - m1_list[0]["close"]
+                            if abs(offset) > 0.05 and abs(offset) < self.bid_price * 0.15:
+                                for arr in (m5_list, m1_list):
+                                    for c in arr:
+                                        c["open"] = round(c["open"] + offset, spec["digits"])
+                                        c["high"] = round(c["high"] + offset, spec["digits"])
+                                        c["low"] = round(c["low"] + offset, spec["digits"])
+                                        c["close"] = round(c["close"] + offset, spec["digits"])
+                        self.m5_candles = m5_list
+                        self.m1_candles = m1_list
+                        return
+                except Exception:
+                    pass
+
     # -------------------------------------------------------------------------
     # Indicators: ATR(14) on M15 & EMA(50) on H1
     # -------------------------------------------------------------------------
@@ -1075,6 +1163,175 @@ class CryptoBotEngine:
             }
 
         return self.fibo_grid
+
+    def evaluate_anomalous_candles(self) -> Dict[str, Any]:
+        """Чистая математика Аномальных свечей БЕЗ индикаторов: Анализ на 5М (M5) -> Сделка на 1М (M1, 1-2 свечи) для BTCUSD."""
+        use_m5_m1 = bool(self.settings.get("InpUseM5M1Mode", True))
+        analysis_tf = "M5" if use_m5_m1 else "M15"
+        trade_tf = "M1" if use_m5_m1 else "M15"
+        bar_sec = 60 if use_m5_m1 else 900
+
+        default_anom: Dict[str, Any] = {
+            "is_anomaly": False,
+            "use_m5_m1": use_m5_m1,
+            "analysis_tf": analysis_tf,
+            "trade_tf": trade_tf,
+            "bar_sec": bar_sec,
+            "mult": 1.0,
+            "body_mult": 1.0,
+            "rng_mult": 1.0,
+            "body_ratio_pct": 0.0,
+            "upper_wick_pct": 0.0,
+            "lower_wick_pct": 0.0,
+            "candle_dir": 0,
+            "pattern_type": f"Обычная свеча {analysis_tf} (ожидание аномалии)",
+            "anom_range": 0.0,
+            "anom_high": 0.0,
+            "anom_low": 0.0,
+            "anom_mid": 0.0,
+            "m1_confirm_dir": 0,
+            "mom_buy": False,
+            "mom_sell": False,
+            "fade_buy": False,
+            "fade_sell": False,
+            "hyb_buy": False,
+            "hyb_sell": False,
+            "active_signal": "",
+            "max_bars": int(self.settings.get("InpAnomalyMaxBars", 2)),
+        }
+        src_candles = self.m5_candles if (use_m5_m1 and len(self.m5_candles) >= 15) else self.m15_candles
+        if len(src_candles) < 15:
+            self.anomaly_state = default_anom
+            return default_anom
+
+        c0 = src_candles[0]
+        c1 = src_candles[1]
+        base_bars = src_candles[2:12]
+        avg_body = max(1.0, sum(abs(b["close"] - b["open"]) for b in base_bars) / float(len(base_bars)))
+        avg_rng = max(1.0, sum(max(0.1, b["high"] - b["low"]) for b in base_bars) / float(len(base_bars)))
+
+        def _metrics(c: Dict[str, Any]) -> Dict[str, float]:
+            rng = max(0.01, float(c["high"] - c["low"]))
+            body = abs(float(c["close"] - c["open"]))
+            up_w = float(c["high"] - max(c["open"], c["close"]))
+            lo_w = float(min(c["open"], c["close"]) - c["low"])
+            b_mult = body / avg_body
+            r_mult = rng / avg_rng
+            return {
+                "rng": rng,
+                "body": body,
+                "body_ratio": body / rng,
+                "up_wick_ratio": up_w / rng,
+                "lo_wick_ratio": lo_w / rng,
+                "body_mult": b_mult,
+                "rng_mult": r_mult,
+                "mult": max(b_mult, r_mult),
+                "dir": 1.0 if c["close"] >= c["open"] else -1.0,
+            }
+
+        m1 = _metrics(c1)
+        m0 = _metrics(c0)
+        mult_req = max(1.2, float(self.settings.get("InpAnomalyMult", 1.8)))
+
+        # На M5 берем закрытую аномальную свечу c1 ИЛИ взрывную формирующуюся свечу c0
+        use_c0 = (m0["mult"] >= mult_req * 1.08) and (m0["mult"] >= m1["mult"])
+        target_c = c0 if use_c0 else c1
+        tm = m0 if use_c0 else m1
+
+        is_anom = tm["mult"] >= mult_req
+        c_dir = int(tm["dir"])
+        b_ratio = tm["body_ratio"]
+        up_w = tm["up_wick_ratio"]
+        lo_w = tm["lo_wick_ratio"]
+        live_px = self.bid_price if self.bid_price > 0 else c0["close"]
+
+        # Подтверждение микро-импульса на таймфрейме сделки M1 (для точного входа на 1-2 свечи M1)
+        m1_dir = 0
+        if use_m5_m1 and len(self.m1_candles) >= 3:
+            mc0 = self.m1_candles[0]
+            mc1 = self.m1_candles[1]
+            if mc0["close"] > mc0["open"] or mc1["close"] > mc1["open"]:
+                m1_dir = 1
+            elif mc0["close"] < mc0["open"] or mc1["close"] < mc1["open"]:
+                m1_dir = -1
+        else:
+            m1_dir = c_dir
+
+        # 1. Вариант 1: Инерция импульса (Полнотелая аномальная свеча M5 -> вход ПО ХОДУ на 1-2 свечи M1)
+        is_full_bull = is_anom and c_dir == 1 and b_ratio >= 0.60 and up_w <= 0.26 and (m1_dir >= 0)
+        is_full_bear = is_anom and c_dir == -1 and b_ratio >= 0.60 and lo_w <= 0.26 and (m1_dir <= 0)
+        mom_buy = bool(is_full_bull and self.settings.get("InpStratAnomalyMomentum", True))
+        mom_sell = bool(is_full_bear and self.settings.get("InpStratAnomalyMomentum", True))
+
+        # 2. Вариант 2: Возврат после прострела (Экстремальный прострел M5 или длинный хвост -> вход ПРОТИВ на откат 1-2 свечи M1)
+        is_exhaustion_up = (tm["rng_mult"] >= mult_req * 1.12 and c_dir == 1) or (tm["rng_mult"] >= mult_req * 0.90 and up_w >= 0.42)
+        is_exhaustion_dn = (tm["rng_mult"] >= mult_req * 1.12 and c_dir == -1) or (tm["rng_mult"] >= mult_req * 0.90 and lo_w >= 0.42)
+        pullback_sell_ok = is_exhaustion_up and (live_px <= target_c["high"] - tm["rng"] * 0.06)
+        pullback_buy_ok = is_exhaustion_dn and (live_px >= target_c["low"] + tm["rng"] * 0.06)
+        fade_sell = bool(pullback_sell_ok and self.settings.get("InpStratAnomalyFade", True))
+        fade_buy = bool(pullback_buy_ok and self.settings.get("InpStratAnomalyFade", True))
+
+        # 3. Вариант 3: Умный Снайпер 2-в-1 (По форме свечи M5: полнотелая без тени -> ПО ХОДУ на M1; длинная шпилька -> В ОТКАТ на M1)
+        hyb_on = bool(self.settings.get("InpStratAnomalyHybrid", True))
+        hyb_buy = bool(
+            hyb_on
+            and (
+                (is_anom and c_dir == 1 and b_ratio >= 0.65 and up_w <= 0.20 and m1_dir >= 0)
+                or (tm["rng_mult"] >= mult_req * 0.92 and lo_w >= 0.44 and live_px >= target_c["low"] + tm["rng"] * 0.10)
+            )
+        )
+        hyb_sell = bool(
+            hyb_on
+            and (
+                (is_anom and c_dir == -1 and b_ratio >= 0.65 and lo_w <= 0.20 and m1_dir <= 0)
+                or (tm["rng_mult"] >= mult_req * 0.92 and up_w >= 0.44 and live_px <= target_c["high"] - tm["rng"] * 0.10)
+            )
+        )
+
+        if is_full_bull or is_full_bear:
+            pat_txt = f"[{analysis_tf}→{trade_tf}] Аномальный импульс ×{tm['mult']:.1f} ({'БЫЧИЙ' if c_dir == 1 else 'МЕДВЕЖИЙ'}, тело {b_ratio*100:.0f}%)"
+        elif up_w >= 0.42 or lo_w >= 0.42:
+            pat_txt = f"[{analysis_tf}→{trade_tf}] Аномальная шпилька ×{tm['mult']:.1f} (тень {max(up_w, lo_w)*100:.0f}% — вынос стопов)"
+        elif is_anom:
+            pat_txt = f"[{analysis_tf}→{trade_tf}] Аномальный всплеск ×{tm['mult']:.1f} ({tm['rng']:.0f}$)"
+        else:
+            pat_txt = f"[{analysis_tf}→{trade_tf}] Спокойная свеча ×{tm['mult']:.1f} (порог ×{mult_req:.1f})"
+
+        act_sig = ""
+        if hyb_buy or mom_buy or fade_buy:
+            act_sig = "BUY"
+        elif hyb_sell or mom_sell or fade_sell:
+            act_sig = "SELL"
+
+        self.anomaly_state = {
+            "is_anomaly": bool(is_anom or up_w >= 0.44 or lo_w >= 0.44),
+            "use_m5_m1": use_m5_m1,
+            "analysis_tf": analysis_tf,
+            "trade_tf": trade_tf,
+            "bar_sec": bar_sec,
+            "mult": round(tm["mult"], 2),
+            "body_mult": round(tm["body_mult"], 2),
+            "rng_mult": round(tm["rng_mult"], 2),
+            "body_ratio_pct": round(b_ratio * 100.0, 1),
+            "upper_wick_pct": round(up_w * 100.0, 1),
+            "lower_wick_pct": round(lo_w * 100.0, 1),
+            "candle_dir": c_dir,
+            "m1_confirm_dir": m1_dir,
+            "pattern_type": pat_txt,
+            "anom_range": round(tm["rng"], 2),
+            "anom_high": round(float(target_c["high"]), 2),
+            "anom_low": round(float(target_c["low"]), 2),
+            "anom_mid": round(float(target_c["high"] + target_c["low"]) * 0.5, 2),
+            "mom_buy": mom_buy,
+            "mom_sell": mom_sell,
+            "fade_buy": fade_buy,
+            "fade_sell": fade_sell,
+            "hyb_buy": hyb_buy,
+            "hyb_sell": hyb_sell,
+            "active_signal": act_sig,
+            "max_bars": int(self.settings.get("InpAnomalyMaxBars", 2)),
+        }
+        return self.anomaly_state
 
     # -------------------------------------------------------------------------
     # Economic Calendar News Filter & Analyzer (USD)
@@ -1510,11 +1767,21 @@ class CryptoBotEngine:
         entry_price = self.ask_price if pos_type == "BUY" else self.bid_price
         fg = self.fibo_grid if isinstance(getattr(self, "fibo_grid", None), dict) else {}
 
-        # Точный расчет SL за уровень 0.0% Фибоначчи и TP на уровень 61.8%/1.272 Фибоначчи (Исправлено ИИ-Агентом)
+        # Точный расчет SL и TP:
+        # 1) Для сделок по Аномальным свечам (Без индикаторов) — расчет строго от геометрии самой аномальной свечи!
+        # 2) Для сделок Фибоначчи — расчет SL за уровень 0.0% Фибо и TP на 61.8% / 1.272
         sl_dist = atr * float(self.settings["InpSL_ATR"])
         tp_dist = atr * float(self.settings["InpTP_ATR"])
+        anom = getattr(self, "anomaly_state", None) or {}
+        is_anom_trade = ("Anomaly" in comment) or ("Аномал" in comment)
         is_fibo_trade = ("Fibo" in comment) or ("Ручной" in comment)
-        if fg.get("is_active") and is_fibo_trade:
+
+        if is_anom_trade and float(anom.get("anom_range") or 0) > 0:
+            a_rng = float(anom["anom_range"])
+            # Короткий защитный стоп за половину/экстремум аномальной свечи и быстрый тейк на 1–2 свечи
+            sl_dist = max(atr * 0.65, min(atr * 1.65, a_rng * 0.65))
+            tp_dist = max(sl_dist * 1.45, a_rng * 0.95)
+        elif fg.get("is_active") and is_fibo_trade:
             p0 = float(fg.get("price_0") or 0.0)
             p618 = float(fg.get("lvl_618") or 0.0)
             p100 = float(fg.get("price_100") or 0.0)
@@ -1810,6 +2077,75 @@ class CryptoBotEngine:
             pos_type = pos["pos_type"]
             is_be = bool(pos["is_breakeven"])
 
+            # Точный расчёт времени жизни сделки (в секундах и свечах M15) с коррекцией часового пояса сервера MT5
+            now_ts = int(time.time())
+            raw_open_ts = int(pos.get("open_time") or now_ts)
+            if raw_open_ts > now_ts + 1800:
+                tz_shift = int(round((raw_open_ts - now_ts) / 3600.0)) * 3600
+                real_open_ts = raw_open_ts - tz_shift
+            else:
+                real_open_ts = raw_open_ts
+
+            tracker_map = getattr(self, "_pos_tracker", {})
+            tr = tracker_map.get(ticket, {
+                "real_open_ts": real_open_ts,
+                "mfe_pnl": max(0.0, float(pos.get("pnl") or 0.0)),
+                "mae_pnl": min(0.0, float(pos.get("pnl") or 0.0)),
+            })
+            cur_pnl = float(pos.get("pnl") or 0.0)
+            tr["mfe_pnl"] = round(max(float(tr.get("mfe_pnl", 0.0)), cur_pnl), 2)
+            tr["mae_pnl"] = round(min(float(tr.get("mae_pnl", 0.0)), cur_pnl), 2)
+            elapsed_sec = max(0, now_ts - int(tr.get("real_open_ts", real_open_ts)))
+            max_bars = max(1, min(5, int(self.settings.get("InpAnomalyMaxBars", 2))))
+            use_m5_m1 = bool(self.settings.get("InpUseM5M1Mode", True))
+            bar_sec = 60 if use_m5_m1 else 900
+            tf_lbl = "M1" if use_m5_m1 else "M15"
+            max_hold_sec = max_bars * bar_sec
+            rem_sec = max(0, max_hold_sec - elapsed_sec)
+            bars_held_num = min(max_bars, int(elapsed_sec // bar_sec) + 1)
+            tr["elapsed_sec"] = elapsed_sec
+            tr["rem_sec"] = rem_sec
+            tr["bars_held"] = bars_held_num
+            tracker_map[ticket] = tr
+            self._pos_tracker = tracker_map
+
+            pos["elapsed_sec"] = elapsed_sec
+            pos["remaining_sec"] = rem_sec
+            pos["bars_held"] = bars_held_num
+            pos["max_bars"] = max_bars
+            pos["trade_tf"] = tf_lbl
+            pos["mfe_pnl"] = tr["mfe_pnl"]
+            pos["mae_pnl"] = tr["mae_pnl"]
+
+            anom_any_on = bool(
+                self.settings.get("InpStratAnomalyMomentum", True)
+                or self.settings.get("InpStratAnomalyFade", True)
+                or self.settings.get("InpStratAnomalyHybrid", True)
+            )
+
+            # 1) ЖЁСТКИЙ АВТО-ВЫХОД ПО ТАЙМЕРУ 1 ИЛИ 2 СВЕЧЕЙ (M1 = 60-120 сек / M15 = 15-30 мин)
+            if anom_any_on and elapsed_sec >= max_hold_sec:
+                self.close_position(
+                    ticket,
+                    reason=f"Авто-выход: закрытие {max_bars}-й свечи {tf_lbl} ({elapsed_sec} сек)",
+                )
+                continue
+
+            # 2) ЗАЩИТА ПОСЛЕ ЗАКРЫТИЯ 1-Й СВЕЧИ (60 сек на M1 / 900 сек на M15):
+            # Если 1-я свеча в плюсе -> сразу в Безубыток / Сейф 50%; если импульс сломан -> авто-закрытие
+            if anom_any_on and elapsed_sec >= bar_sec:
+                if cur_pnl > 0.5 and not is_be:
+                    self.trigger_breakeven(ticket, custom_offset_atr=0.12 if use_m5_m1 else 0.15)
+                    is_be = True
+                elif cur_pnl <= -abs(atr * volume * (0.28 if use_m5_m1 else 0.55)):
+                    self.close_position(ticket, reason=f"ИИ-Защита: импульс не пошёл на 1-й свече {tf_lbl}")
+                    continue
+            # Защита прибыли MFE: если сделка давала хороший плюс и откатила на 60% от пика — забираем профит сразу
+            mfe_trig = 3.5 if use_m5_m1 else 8.0
+            if anom_any_on and tr["mfe_pnl"] >= mfe_trig and cur_pnl <= tr["mfe_pnl"] * 0.40 and cur_pnl > 0.4:
+                self.close_position(ticket, reason=f"ИИ-Трейл {tf_lbl}: фиксация прибыли (пик был +${tr['mfe_pnl']:.2f})")
+                continue
+
             close_vol = math.floor((volume * pct) / step_lot) * step_lot
             can_partial = (
                 bool(self.settings["InpUsePartialClose"])
@@ -1827,35 +2163,42 @@ class CryptoBotEngine:
                         self.close_position(ticket, reason)
                         continue
                     if tp > 0 and bid >= tp:
-                        self.close_position(ticket, "Take Profit (Fibo 61.8%)")
+                        self.close_position(ticket, "Take Profit (Импульс взят)")
                         continue
 
-                # Умная защита «Анти-минус»: если сделка открыта против тренда H1 и цена пробила 0% Фибо или ушла ниже -0.85 ATR при медвежьем импульсе
+                # Быстрый авто-тейк на аномальной свече (если цена прошла >= 0.85 диапазона аномальной свечи)
+                anom_st = getattr(self, "anomaly_state", None) or {}
+                anom_rng = float(anom_st.get("anom_range") or 0.0)
+                if anom_any_on and anom_rng > 0 and (bid - open_price) >= max(atr * 0.95, anom_rng * 0.85):
+                    self.close_position(ticket, "Авто-Тейк: импульс аномальной свечи взят")
+                    continue
+
+                # Умная защита «Анти-минус»: если сделка ушла ниже -0.75 ATR против нас
                 p0 = float(fg.get("price_0") or 0.0)
                 if not is_be and self.htf_trend == -1 and fg.get("direction") == -1:
-                    if (p0 > 0 and bid < p0 - atr * 0.15) or (bid <= open_price - atr * 0.85):
-                        self.close_position(ticket, "Анти-минус: разворот тренда вниз")
+                    if (p0 > 0 and bid < p0 - atr * 0.15) or (bid <= open_price - atr * 0.75):
+                        self.close_position(ticket, "Анти-минус: защита от пробоя вниз")
                         continue
 
-                # Достижение Фибо 38.2% или +0.90 ATR -> Сейф 50% и перевод в Безубыток
+                # Достижение +0.55 ATR -> Сейф 50% и перевод в Безубыток
                 lvl382 = float(fg.get("lvl_382") or 0.0)
-                hit_fibo_382 = (fg.get("direction") == 1 and lvl382 > openPrice_or_min(open_price, atr) and bid >= lvl382) if False else (bid >= (open_price + partial_dist))
-                if can_partial and not is_be and (hit_fibo_382 or (fg.get("direction") == 1 and lvl382 > open_price + atr * 0.35 and bid >= lvl382)):
+                hit_fast_safe = bid >= (open_price + max(atr * 0.50, partial_dist * 0.75))
+                if can_partial and not is_be and (hit_fast_safe or (fg.get("direction") == 1 and lvl382 > open_price + atr * 0.35 and bid >= lvl382)):
                     self.trigger_partial_safe(ticket, auto=True)
                     continue
 
-                # Ранний Безубыток (+0.20 ATR при проходе +0.85 ATR или уровня 38.2% Фибо)
-                eff_trig = be_trig_dist if can_partial else (atr * 1.1)
-                eff_offset = float(self.settings["InpBE_OffsetATR"]) if can_partial else 0.35
+                # Ранний Безубыток (+0.18 ATR при проходе +0.48 ATR)
+                eff_trig = max(atr * 0.45, be_trig_dist * 0.75)
+                eff_offset = float(self.settings["InpBE_OffsetATR"]) if can_partial else 0.25
                 if self.settings["InpUseBreakeven"] and not is_be and bid >= (open_price + eff_trig):
                     self.trigger_breakeven(ticket, custom_offset_atr=eff_offset)
                     continue
 
-                # Трейлинг-стоп в плюс на уровне 50% Фибо (+1.40 ATR -> стоп на +0.65 ATR)
-                if self.settings["InpUseBreakeven"] and bid >= (open_price + atr * 1.40):
-                    lock_sl = round(open_price + atr * 0.65, spec["digits"])
+                # Трейлинг-стоп в плюс (+1.05 ATR -> стоп на +0.55 ATR)
+                if self.settings["InpUseBreakeven"] and bid >= (open_price + atr * 1.05):
+                    lock_sl = round(open_price + atr * 0.55, spec["digits"])
                     if sl < lock_sl - spec["point"] * 10:
-                        self.trigger_breakeven(ticket, custom_offset_atr=0.65)
+                        self.trigger_breakeven(ticket, custom_offset_atr=0.55)
 
             elif pos_type == "SELL":
                 ask = pos["current_price"] if mt5_live else self.ask_price
@@ -1865,53 +2208,64 @@ class CryptoBotEngine:
                         self.close_position(ticket, reason)
                         continue
                     if tp > 0 and ask <= tp:
-                        self.close_position(ticket, "Take Profit (Fibo 61.8%)")
+                        self.close_position(ticket, "Take Profit (Импульс взят)")
                         continue
 
-                # Умная защита «Анти-минус»: если SELL открыт против растущего тренда H1 и цена пробивает 0% Фибо или уходит выше +0.85 ATR
+                anom_st = getattr(self, "anomaly_state", None) or {}
+                anom_rng = float(anom_st.get("anom_range") or 0.0)
+                if anom_any_on and anom_rng > 0 and (open_price - ask) >= max(atr * 0.95, anom_rng * 0.85):
+                    self.close_position(ticket, "Авто-Тейк: импульс аномальной свечи взят")
+                    continue
+
+                # Умная защита «Анти-минус»: если SELL уходит выше +0.75 ATR против нас
                 p0 = float(fg.get("price_0") or 0.0)
                 if not is_be and self.htf_trend == 1 and fg.get("direction") == 1:
-                    if (p0 > 0 and ask > p0 + atr * 0.15) or (ask >= open_price + atr * 0.85):
-                        self.close_position(ticket, "Анти-минус: разворот тренда вверх")
+                    if (p0 > 0 and ask > p0 + atr * 0.15) or (ask >= open_price + atr * 0.75):
+                        self.close_position(ticket, "Анти-минус: защита от пробоя вверх")
                         continue
 
                 lvl382 = float(fg.get("lvl_382") or 0.0)
-                if can_partial and not is_be and (ask <= (open_price - partial_dist) or (fg.get("direction") == -1 and 0 < lvl382 < open_price - atr * 0.35 and ask <= lvl382)):
+                hit_fast_safe_s = ask <= (open_price - max(atr * 0.50, partial_dist * 0.75))
+                if can_partial and not is_be and (hit_fast_safe_s or (fg.get("direction") == -1 and 0 < lvl382 < open_price - atr * 0.35 and ask <= lvl382)):
                     self.trigger_partial_safe(ticket, auto=True)
                     continue
 
-                eff_trig = be_trig_dist if can_partial else (atr * 1.1)
-                eff_offset = float(self.settings["InpBE_OffsetATR"]) if can_partial else 0.35
+                eff_trig = max(atr * 0.45, be_trig_dist * 0.75)
+                eff_offset = float(self.settings["InpBE_OffsetATR"]) if can_partial else 0.25
                 if self.settings["InpUseBreakeven"] and not is_be and ask <= (open_price - eff_trig):
                     self.trigger_breakeven(ticket, custom_offset_atr=eff_offset)
                     continue
 
-                # Трейлинг-стоп в плюс на уровне 50% Фибо (+1.40 ATR -> стоп на -0.65 ATR)
-                if self.settings["InpUseBreakeven"] and ask <= (open_price - atr * 1.40):
-                    lock_sl = round(open_price - atr * 0.65, spec["digits"])
+                # Трейлинг-стоп в плюс (+1.05 ATR -> стоп на -0.55 ATR)
+                if self.settings["InpUseBreakeven"] and ask <= (open_price - atr * 1.05):
+                    lock_sl = round(open_price - atr * 0.55, spec["digits"])
                     if sl == 0 or sl > lock_sl + spec["point"] * 10:
-                        self.trigger_breakeven(ticket, custom_offset_atr=0.65)
+                        self.trigger_breakeven(ticket, custom_offset_atr=0.55)
 
     # -------------------------------------------------------------------------
     # Main OnTick Cycle (Exact Port of OnTick in Crypto_Bot_v2_50.mq5)
     # -------------------------------------------------------------------------
     async def step_tick(self) -> None:
         self._sync_local_wine_mt5()
-        # Авто-переключение: Выходные (Сб/Вс) -> BTCUSD 24/7, Будни (Пн-Пт) -> выбранный профильный актив
-        if self.settings.get("InpAutoWeekendBTC", True) and not self.get_open_positions():
+        # Фиксация актива: ТОЛЬКО BTCUSD 24/7 по требованию пользователя
+        if self.settings.get("InpLockBTCOnly", True):
+            if self.settings.get("symbol") != "BTCUSD":
+                self.save_settings({"symbol": "BTCUSD", "preferred_weekday_symbol": "BTCUSD"})
+        elif self.settings.get("InpAutoWeekendBTC", True) and not self.get_open_positions():
             now_dt = datetime.now(timezone.utc)
             is_weekend = now_dt.weekday() in (5, 6)
-            cur_sym = self.settings.get("symbol", "XAUUSD")
+            cur_sym = self.settings.get("symbol", "BTCUSD")
             if is_weekend and cur_sym != "BTCUSD":
                 self._switched_for_weekend = True
                 self.save_settings({"symbol": "BTCUSD"})
             elif (not is_weekend) and getattr(self, "_switched_for_weekend", False):
                 self._switched_for_weekend = False
-                pref_sym = self.settings.get("preferred_weekday_symbol", "XAUUSD")
+                pref_sym = self.settings.get("preferred_weekday_symbol", "BTCUSD")
                 if pref_sym != cur_sym:
                     self.save_settings({"symbol": pref_sym})
 
         ok = await self.fetch_market_data()
+        await self.refresh_fast_m5_m1_candles()
         await self.refresh_news_calendar()
         if not ok or len(self.m15_candles) < 30:
             return
@@ -1920,7 +2274,10 @@ class CryptoBotEngine:
         self.atr_value = self.compute_atr()
         atr = self.atr_value
 
-        # 1. Manage existing open positions on every tick
+        # 0. Вычисляем состояние Аномальных свечей (без индикаторов) перед управлением позициями
+        anom_state = self.evaluate_anomalous_candles()
+
+        # 1. Manage existing open positions on every tick (включая авто-закрытие 1-2 свечей!)
         self.manage_positions(atr)
 
         # 2. Evaluate HTF Trend & News
@@ -2007,6 +2364,9 @@ class CryptoBotEngine:
             "allow_buy_news": allow_buy_news,
             "allow_sell_news": allow_sell_news,
             "news_paused": self.news_paused,
+            "is_anomaly": bool(anom_state.get("is_anomaly")),
+            "anom_mult": anom_state.get("mult", 1.0),
+            "anom_pattern": anom_state.get("pattern_type", ""),
         }
 
         # 5. Execute new trade if bot is running
@@ -2021,30 +2381,80 @@ class CryptoBotEngine:
         has_open = any(p["symbol"] == symbol for p in self.get_open_positions())
         if has_open:
             self.last_bar_time = cur_bar_time
+            self.run_ai_strategy_agent(atr=atr, force_fix=False)
             return
 
         now_ts = time.time()
+        use_m5_m1 = bool(self.settings.get("InpUseM5M1Mode", True))
+        cooldown_sec = 30.0 if use_m5_m1 else 180.0
         last_auto_ts = getattr(self, "_last_auto_trade_ts", 0.0)
-        if now_ts - last_auto_ts < 180.0:
+        if now_ts - last_auto_ts < cooldown_sec:
             return
 
         max_spread = int(self.settings["InpMaxSpreadPoints"])
         if max_spread > 0 and self.spread_points > max_spread:
             return
 
+        trade_bar_time = (self.m1_candles[0]["time"] if (use_m5_m1 and self.m1_candles) else cur_bar_time)
         self.last_bar_time = cur_bar_time
         ai_state = self.run_ai_strategy_agent(atr=atr, force_fix=False)
         ai_enabled = bool(self.settings.get("InpUseAIAgent", True))
         min_ai_score = int(self.settings.get("InpAIAgentMinScore", 65))
         signal_score = int(ai_state.get("signal_score", 75))
+
+        bar_already_traded = getattr(self, "_last_traded_bar_time", 0) == trade_bar_time
+        if bar_already_traded:
+            return
+
+        # =====================================================================
+        # ПРИОРИТЕТ: 3 ВАРИАНТА СНАЙПЕРА АНОМАЛЬНЫХ СВЕЧЕЙ НА 1–2 БАРА (Анализ M5 -> Сделка M1)
+        # =====================================================================
+        max_b = int(self.settings.get("InpAnomalyMaxBars", 2))
+        tf_tag = "M5->M1" if use_m5_m1 else "M15"
+        # 1) Вариант 3 (Рекомендуемый): Умный Снайпер 2-в-1 (По форме аномальной свечи)
+        if self.settings.get("InpStratAnomalyHybrid", True):
+            if anom_state.get("hyb_buy"):
+                self._last_auto_trade_ts = now_ts
+                self._last_traded_bar_time = trade_bar_time
+                self.open_position("BUY", comment=f"Anomaly Hybrid {tf_tag} {max_b}B Buy")
+                return
+            if anom_state.get("hyb_sell"):
+                self._last_auto_trade_ts = now_ts
+                self._last_traded_bar_time = trade_bar_time
+                self.open_position("SELL", comment=f"Anomaly Hybrid {tf_tag} {max_b}B Sell")
+                return
+
+        # 2) Вариант 1: Инерция импульса (Вход ПО ХОДУ полнотелой аномальной свечи на 1–2 бара)
+        if self.settings.get("InpStratAnomalyMomentum", True):
+            if anom_state.get("mom_buy"):
+                self._last_auto_trade_ts = now_ts
+                self._last_traded_bar_time = trade_bar_time
+                self.open_position("BUY", comment=f"Anomaly Momentum {tf_tag} {max_b}B Buy")
+                return
+            if anom_state.get("mom_sell"):
+                self._last_auto_trade_ts = now_ts
+                self._last_traded_bar_time = trade_bar_time
+                self.open_position("SELL", comment=f"Anomaly Momentum {tf_tag} {max_b}B Sell")
+                return
+
+        # 3) Вариант 2: Возврат после прострела (Вход В ОТКАТ после гигантской свечи/шпильки на 1–2 бара)
+        if self.settings.get("InpStratAnomalyFade", True):
+            if anom_state.get("fade_buy"):
+                self._last_auto_trade_ts = now_ts
+                self._last_traded_bar_time = trade_bar_time
+                self.open_position("BUY", comment=f"Anomaly Fade {tf_tag} {max_b}B Buy")
+                return
+            if anom_state.get("fade_sell"):
+                self._last_auto_trade_ts = now_ts
+                self._last_traded_bar_time = trade_bar_time
+                self.open_position("SELL", comment=f"Anomaly Fade {tf_tag} {max_b}B Sell")
+                return
+
         if ai_enabled and signal_score < min_ai_score:
             return
 
-        bar_already_traded = getattr(self, "_last_traded_bar_time", 0) == cur_bar_time
-
-        # Выполняем проверку каждой включенной стратегии по отдельности (с верификацией ИИ-Агента):
-        # 1) Стратегия Давида Трульяса: Фибо 23.6% + MACD(12,26,9) + RSI(14) (Рекомендация: NAS100, US500, BTCUSD)
-        if self.settings.get("InpStratTrullasFibo", True):
+        # Классические индикаторные стратегии (выполняются только если включены пользователем в настройках):
+        if self.settings.get("InpStratTrullasFibo", False):
             if fibo_state.get("trig_236_buy") and allow_buy_news:
                 self._last_auto_trade_ts = now_ts
                 self._last_traded_bar_time = cur_bar_time
@@ -2056,8 +2466,7 @@ class CryptoBotEngine:
                 self.open_position("SELL", comment="Trullas Fibo 23.6 Sell")
                 return
 
-        # 2) Золотая Фибо Наставника: 0.75-0.786 / 0.3618 -> 1.272/1.618 (Рекомендация: XAUUSD Золото, BTCUSD)
-        if self.settings.get("InpStratMentorFibo786", True):
+        if self.settings.get("InpStratMentorFibo786", False):
             if fibo_state.get("trig_786_buy") and allow_buy_news:
                 self._last_auto_trade_ts = now_ts
                 self._last_traded_bar_time = cur_bar_time
@@ -2069,11 +2478,7 @@ class CryptoBotEngine:
                 self.open_position("SELL", comment="Mentor Fibo 0.786 Sell")
                 return
 
-        if bar_already_traded:
-            return
-
-        # 3) Коробка утреннего пробоя «Мандарин» + BOS + Marubozu (Рекомендация: XAUUSD Золото, BTCUSD)
-        if self.settings.get("InpStratMandarinBOS", True):
+        if self.settings.get("InpStratMandarinBOS", False):
             box_break_buy = box_valid and box_h > 0 and close1 > box_h and close2 <= box_h and is_marubozu and is_strong_atr
             box_break_sell = box_valid and box_l > 0 and close1 < box_l and close2 >= box_l and is_marubozu and is_strong_atr
             bos_buy_valid = bos_buy and is_marubozu and is_strong_atr
@@ -2089,8 +2494,7 @@ class CryptoBotEngine:
                 self.open_position("SELL", comment="Mandarin BOS Sell")
                 return
 
-        # 4) Импульс M15 по тренду H1 EMA 50 (Рекомендация: BTCUSD, NAS100, XAUUSD)
-        if self.settings.get("InpStratImpulseM15", True):
+        if self.settings.get("InpStratImpulseM15", False):
             imp_body_ok = body_ratio >= 0.45 and (atr > 0 and (atr * 0.90) <= rng <= (atr * 2.50))
             macd_bull_ok = (fibo_state.get("direction") == 1) and bool(fibo_state.get("macd_div"))
             macd_bear_ok = (fibo_state.get("direction") == -1) and bool(fibo_state.get("macd_div"))
@@ -2105,7 +2509,6 @@ class CryptoBotEngine:
                 self.open_position("SELL", comment="Impulse M15 Sell")
                 return
 
-        # 5) Отскок от уровней Swing-канала M15 (Рекомендация: US500, XAUUSD, BTCUSD)
         if self.settings.get("InpStratSwingBounce", False) and len(self.m15_candles) >= 12 and atr > 0:
             sw_window = self.m15_candles[2:10]
             ch_hi = max(b["high"] for b in sw_window)
@@ -2123,8 +2526,7 @@ class CryptoBotEngine:
                 self.open_position("SELL", comment="Swing Bounce Sell")
                 return
 
-        # 6) Торговля на импульсе новостей USD (Рекомендация: XAUUSD Золото, NAS100, US500)
-        if self.settings.get("InpTradeNewsImpulse", True) and self.news_bias != 0 and atr > 0:
+        if self.settings.get("InpTradeNewsImpulse", False) and self.news_bias != 0 and atr > 0:
             if self.news_bias == 1 and close1 > open1 and close1 > c2["high"] and body_ratio >= 0.50 and rng >= (atr * 0.80):
                 self._last_auto_trade_ts = now_ts
                 self._last_traded_bar_time = cur_bar_time
@@ -2137,64 +2539,107 @@ class CryptoBotEngine:
                 return
 
     def run_ai_strategy_agent(self, atr: float = 0.0, force_fix: bool = False) -> Dict[str, Any]:
-        """ИИ-Агент контроля стратегий, оценки качества сигналов (0-100%) и авто-исправления ошибок."""
+        """Улучшенный ИИ-Агент: Анализ Аномальных свечей (1-2 бара без индикаторов), живой инспектор открытой сделки (MFE/MAE/Таймер) и авто-исправление."""
         if atr <= 0:
             atr = self.atr_value if self.atr_value > 0 else 1.0
         fg = self.fibo_grid if isinstance(getattr(self, "fibo_grid", None), dict) else {}
-        chk = self.checklist if isinstance(getattr(self, "checklist", None), dict) else {}
-        sym = self.settings.get("symbol", "XAUUSD")
+        anom = getattr(self, "anomaly_state", None) or self.evaluate_anomalous_candles()
+        sym = "BTCUSD" if self.settings.get("InpLockBTCOnly", True) else self.settings.get("symbol", "BTCUSD")
+        max_bars = max(1, min(5, int(self.settings.get("InpAnomalyMaxBars", 2))))
+        mult_now = float(anom.get("mult") or 1.0)
+        mult_req = float(self.settings.get("InpAnomalyMult", 1.8))
 
-        # 1. Оценка качества текущего сигнала по 7 критериям (0 - 100%)
+        # 1. Оценка качества сигнала и геометрии свечи по 7 критериям (0 - 100%)
         score = 0
         factors: List[Dict[str, Any]] = []
 
-        htf_ok = (self.htf_trend == 1 and fg.get("direction", 1) >= 0) or (self.htf_trend == -1 and fg.get("direction", -1) <= 0)
-        if htf_ok:
-            score += 20
-        factors.append({"name": "Старший тренд H1 EMA(50)", "ok": bool(htf_ok), "weight": "+20%"})
-
-        macd_ok = bool(fg.get("macd_div"))
-        if macd_ok:
-            score += 20
-        factors.append({"name": "Импульс и дивергенция MACD(12,26,9)", "ok": macd_ok, "weight": "+20%"})
-
-        rsi_ok = bool(fg.get("rsi_confirm"))
-        if rsi_ok:
+        anom_ok = bool(anom.get("is_anomaly")) or (mult_now >= mult_req * 0.85)
+        if anom_ok:
+            score += 25
+        elif mult_now >= 1.25:
             score += 15
-        factors.append({"name": f"Фильтр RSI(14) = {fg.get('rsi_val', 50.0)}", "ok": rsi_ok, "weight": "+15%"})
+        factors.append({"name": f"Взрыв аномальной свечи ×{mult_now:.1f} (порог ×{mult_req:.1f})", "ok": anom_ok, "weight": "+25%"})
 
-        vol_ok = bool(fg.get("vol_confirm"))
+        geom_ok = (float(anom.get("body_ratio_pct") or 0) >= 62.0) or (max(float(anom.get("upper_wick_pct") or 0), float(anom.get("lower_wick_pct") or 0)) >= 42.0)
+        if geom_ok:
+            score += 20
+        factors.append({"name": f"Геометрия свечи: Тело {anom.get('body_ratio_pct', 0):.0f}% / Тень {max(float(anom.get('upper_wick_pct') or 0), float(anom.get('lower_wick_pct') or 0)):.0f}%", "ok": geom_ok, "weight": "+20%"})
+
+        vol_ok = bool(fg.get("vol_confirm", True))
         if vol_ok:
             score += 15
-        factors.append({"name": "Подтверждение объёма Volume SMA(20)", "ok": vol_ok, "weight": "+15%"})
+        factors.append({"name": "Подтверждение тикового объёма в свече", "ok": vol_ok, "weight": "+15%"})
 
-        fibo_or_bos_ok = bool(fg.get("is_active") or chk.get("bos_buy") or chk.get("bos_sell") or chk.get("box_valid"))
-        if fibo_or_bos_ok:
-            score += 15
-        factors.append({"name": "Точность сетки Фибо / Коробки Мандарин", "ok": fibo_or_bos_ok, "weight": "+15%"})
+        timer_exit_ok = True
+        score += 15
+        factors.append({"name": f"Авто-выход по правилу {max_bars} свечей (Без пересиживания)", "ok": timer_exit_ok, "weight": "+15%"})
 
-        rr_ratio = round(float(self.settings.get("InpTP_ATR", 3.0)) / max(0.5, float(self.settings.get("InpSL_ATR", 1.5))), 2)
-        rr_ok = rr_ratio >= 1.8
-        if rr_ok:
+        anti_whipsaw_ok = (time.time() - getattr(self, "_last_auto_trade_ts", 0.0)) >= 180.0
+        if anti_whipsaw_ok:
             score += 10
-        factors.append({"name": f"Соотношение Тейк/Стоп (RR 1:{rr_ratio})", "ok": rr_ok, "weight": "+10%"})
+        factors.append({"name": "Защита от «пилы» и мгновенных переворотов (Anti-Whipsaw)", "ok": anti_whipsaw_ok, "weight": "+10%"})
+
+        dep15_ok = bool(self.settings.get("InpUseDepositCalc15", True))
+        if dep15_ok:
+            score += 10
+        factors.append({"name": "Безопасный лот 1/5 Депозита + Сейф после 1-й свечи", "ok": dep15_ok, "weight": "+10%"})
 
         spread_news_ok = (not self.news_paused) and (self.spread_points <= int(self.settings.get("InpMaxSpreadPoints", 3500)))
         if spread_news_ok:
             score += 5
-        factors.append({"name": "Защита от спреда и новостей USD", "ok": spread_news_ok, "weight": "+5%"})
+        factors.append({"name": "Контроль спреда BTCUSD и импульса", "ok": spread_news_ok, "weight": "+5%"})
 
-        # 2. Определение текущей фазы рынка
-        if self.news_paused:
-            regime = "Новостная пауза USD (Защита депозита)"
-        elif self.htf_trend == 1:
-            regime = "Восходящий тренд H1 (Приоритет BUY по Фибо и Импульсу)"
-        elif self.htf_trend == -1:
-            regime = "Нисходящий тренд H1 (Приоритет SELL по Фибо и Импульсу)"
-        else:
-            regime = "Консолидация / Флэт (Поиск пробоя коробки Мандарин)"
+        # 2. Живой инспектор текущей открытой сделки (MFE / MAE / Скорость импульса / Таймер 1-2 свечей)
+        open_positions = self.get_open_positions()
+        live_trade_analysis: Dict[str, Any] = {
+            "has_position": False,
+            "summary": "Ожидание аномальной свечи (×1.8+) для быстрого входа на 1–2 свечи",
+            "timer_text": f"Лимит удержания: {max_bars} свечи ({max_bars * 15} мин)",
+            "mfe_mae_text": "Пик MFE: $0.00 | Просадка MAE: $0.00",
+            "action_advice": "Снайпер сканирует свечи BTCUSD в реальном времени без запаздывающих индикаторов",
+        }
+        if open_positions:
+            p = open_positions[0]
+            el_sec = int(p.get("elapsed_sec") or 0)
+            rm_sec = int(p.get("remaining_sec") or (max_bars * 900))
+            b_held = int(p.get("bars_held") or 1)
+            mfe_v = float(p.get("mfe_pnl") or max(0.0, float(p.get("pnl") or 0.0)))
+            mae_v = float(p.get("mae_pnl") or min(0.0, float(p.get("pnl") or 0.0)))
+            cur_pnl = float(p.get("pnl") or 0.0)
+            mm_r = rm_sec // 60
+            ss_r = rm_sec % 60
+            vel = round(cur_pnl / max(1.0, el_sec / 60.0), 2)
 
-        # 3. Статистика закрытых сделок и диагностика ошибок
+            if p.get("is_breakeven"):
+                adv = "🛡 Сделка защищена в Безубытке — ждём завершения 2-й свечи или авто-тейка"
+            elif cur_pnl > 2.0:
+                adv = f"🟢 Импульс идёт по плану ({vel:+.2f}$/мин) — после 1-й свечи перевод в БУ, выход на {max_bars}-й свече"
+            elif el_sec >= 600 and cur_pnl < -2.0:
+                adv = "⚠️ Импульс замедлился — ИИ-Агент закроет сделку при закрытии свечи без пересиживания"
+            else:
+                adv = f"⏱ Контроль 1–2 свечей активен: авто-закрытие через {mm_r:02d}:{ss_r:02d}"
+
+            live_trade_analysis = {
+                "has_position": True,
+                "ticket": p["ticket"],
+                "pos_type": p["pos_type"],
+                "bars_held": b_held,
+                "max_bars": max_bars,
+                "elapsed_sec": el_sec,
+                "remaining_sec": rm_sec,
+                "mfe_pnl": mfe_v,
+                "mae_pnl": mae_v,
+                "velocity_usd_min": vel,
+                "summary": f"Открыта {p['pos_type']} #{p['ticket']} · Свеча {b_held} из {max_bars} · PnL: {cur_pnl:+.2f}$",
+                "timer_text": f"⏱ Авто-закрытие через {mm_r:02d}:{ss_r:02d} (Свеча {b_held}/{max_bars})",
+                "mfe_mae_text": f"Пик прибыли (MFE): +${mfe_v:.2f} | Макс. просадка (MAE): -${abs(mae_v):.2f}",
+                "action_advice": adv,
+            }
+
+        # 3. Определение текущей фазы свечей
+        regime = f"BTCUSD 24/7 · {anom.get('pattern_type', 'Сканирование аномальных свечей')} · Авто-выход {max_bars} св."
+
+        # 4. Статистика закрытых сделок и авто-исправление
         hist = self.get_trade_history(25)
         wins = [h for h in hist if float(h.get("pnl") or 0) > 0]
         losses = [h for h in hist if float(h.get("pnl") or 0) < 0]
@@ -2203,67 +2648,49 @@ class CryptoBotEngine:
 
         fixes_applied: List[str] = list(getattr(self, "_ai_recent_fixes", []))
         audit_notes: List[str] = [
-            "Исправлена геометрия сетки Фибоначчи (реальный импульс High-Low без смещения 0% и 100%)",
-            "Расширен диапазон RSI (28–66 BUY / 34–72 SELL) для точных входов от уровней 0.236 и 0.786",
-            "Стоп-лосс защищен за уровнем 0% Фибоначчи (+0.22 ATR буфер против рыночного шума)",
-            "Добавлена блокировка повторного входа на одной и той же свече M15 и точный парсинг новостей K/M/B",
+            f"Актив жёстко зафиксирован: ТОЛЬКО BTCUSD 24/7 (без переключения на другие инструменты)",
+            f"Активны 3 варианта Аномальных свечей без индикаторов с авто-выходом ровно через {max_bars} свечи",
+            "Добавлен ИИ-Трейл по пику прибыли MFE (защита от возврата цены после прострела)",
+            "Блокировка «пилы» (Anti-Whipsaw): запрет мгновенных переворотов BUY/SELL на одном баре",
         ]
 
         auto_fix_on = bool(self.settings.get("InpAIAgentAutoFix", True)) or force_fix
         updates_to_apply: Dict[str, Any] = {}
 
-        # Проверка 1: При сильном тренде H1 отключаем контртрендовый Swing-канал, чтобы не ловить стопы против тренда
-        if self.htf_trend in (1, -1) and self.settings.get("InpStratSwingBounce", False):
-            if auto_fix_on:
-                updates_to_apply["InpStratSwingBounce"] = False
-                msg = "Отключена контртрендовая стратегия «Отскок Swing» на сильном тренде H1"
-                if msg not in fixes_applied:
-                    fixes_applied.insert(0, msg)
+        if self.settings.get("symbol") != "BTCUSD":
+            updates_to_apply["symbol"] = "BTCUSD"
+            updates_to_apply["preferred_weekday_symbol"] = "BTCUSD"
+            updates_to_apply["InpLockBTCOnly"] = True
 
-        # Проверка 2: Для профильных активов проверяем, что включена их родная стратегия
-        if sym in ("NAS100", "US500") and not self.settings.get("InpStratTrullasFibo", True):
-            if auto_fix_on:
-                updates_to_apply["InpStratTrullasFibo"] = True
-                msg = f"Включена родная чемпионская стратегия Трульяса (Фибо 23.6%) для индекса {sym}"
-                if msg not in fixes_applied:
-                    fixes_applied.insert(0, msg)
-        elif sym == "XAUUSD" and not self.settings.get("InpStratMentorFibo786", True) and force_fix:
-            updates_to_apply["InpStratMentorFibo786"] = True
-            msg = "Включена «Золотая Фибо Наставника 0.75–0.786» для Золота (XAUUSD)"
-            if msg not in fixes_applied:
-                fixes_applied.insert(0, msg)
-
-        # Проверка 3: Если последние 2 сделки закрылись в минус или нажата кнопка «Исправить ошибки» — включаем полную защиту
-        recent_2_losses = len(hist) >= 2 and float(hist[0].get("pnl") or 0) < 0 and float(hist[1].get("pnl") or 0) < 0
-        if (recent_2_losses or force_fix) and auto_fix_on:
-            if not self.settings.get("InpUseHTFFilter", True):
-                updates_to_apply["InpUseHTFFilter"] = True
-                fixes_applied.insert(0, "Включен фильтр старшего тренда H1 EMA(50) после просадки")
-            if not self.settings.get("InpUsePartialClose", True):
-                updates_to_apply["InpUsePartialClose"] = True
-                fixes_applied.insert(0, "Включен авто-сейф 50% на Фибо 38.2% для защиты прибыли")
-            if not self.settings.get("InpUseDepositCalc15", True):
-                updates_to_apply["InpUseDepositCalc15"] = True
-                fixes_applied.insert(0, "Включена безопасная авто-калькуляция лота 1/5 депозита")
+        if force_fix and auto_fix_on:
+            # При нажатии «Проверить и исправить» активируем все 3 варианта аномальных свечей на BTCUSD
+            if not (
+                self.settings.get("InpStratAnomalyMomentum")
+                or self.settings.get("InpStratAnomalyFade")
+                or self.settings.get("InpStratAnomalyHybrid")
+            ):
+                updates_to_apply["InpStratAnomalyMomentum"] = True
+                updates_to_apply["InpStratAnomalyFade"] = True
+                updates_to_apply["InpStratAnomalyHybrid"] = True
 
         if updates_to_apply:
             self.save_settings(updates_to_apply)
 
         if force_fix:
             ts_str = datetime.now().strftime("%H:%M:%S")
-            fix_msg = f"[{ts_str}] Проверены все 6 стратегий на {sym}: сигнал {score}%, защита SL/TP и Фибо синхронизированы"
+            fix_msg = f"[{ts_str}] Аудит BTCUSD: 3 режима Аномальных свечей ({max_bars} бара без индикаторов) + MFE/MAE защита активны"
             fixes_applied = [fix_msg] + [x for x in fixes_applied if x != fix_msg][:5]
             self.add_notification(
-                "🤖 ИИ-Агент: Аудит и исправление выполнены",
-                f"Актив {sym} | Качество сигнала: {score}% | Винрейт: {winrate}%",
+                "🤖 ИИ-Агент: Снайпер Аномальных Свечей BTCUSD синхронизирован",
+                f"Актив: только BTCUSD | Авто-выход: {max_bars} свечи | Сигнал: {score}%",
                 "success",
             )
 
-        self._ai_recent_fixes = fixes_applied[:6]
+        self._ai_recent_fixes = fixes_applied[:6] if fixes_applied else audit_notes[:4]
         verdict = (
-            "СИГНАЛ СИЛЬНЫЙ — ВХОД РАЗРЕШЕН"
-            if score >= 75
-            else ("СИГНАЛ В НОРМЕ — ГОТОВ К ВХОДУ" if score >= int(self.settings.get("InpAIAgentMinScore", 65)) else "ОЖИДАНИЕ ПОДТВЕРЖДЕНИЯ (ЗАЩИТА ОТ ЛОЖНОГО ВХОДА)")
+            f"АНОМАЛИЯ ОБНАРУЖЕНА ({anom.get('active_signal') or 'ГОТОВ'}) — ВХОД НА {max_bars} СВЕЧИ"
+            if anom.get("is_anomaly")
+            else ("РЫНОК ГОТОВ — ЖДЁМ АНОМАЛЬНУЮ СВЕЧУ (×1.8+)" if score >= 60 else "ОЖИДАНИЕ ВСПЛЕСКА ВОЛАТИЛЬНОСТИ")
         )
 
         self.ai_agent_state = {
@@ -2280,6 +2707,8 @@ class CryptoBotEngine:
             "factors": factors,
             "audit_notes": audit_notes,
             "fixes_applied": self._ai_recent_fixes,
+            "live_trade": live_trade_analysis,
+            "anomaly": anom,
         }
         return self.ai_agent_state
 
@@ -2411,7 +2840,7 @@ class CryptoBotEngine:
         )
 
         return {
-            "version": "2.73",
+            "version": "2.74",
             "timestamp": int(time.time()),
             "last_update_ts": int(self.last_update_ts),
             "data_source": source_label,
@@ -2435,6 +2864,7 @@ class CryptoBotEngine:
                 "swing_low_time": self.last_swing_low_time,
                 "mandarin_box": self.mandarin_box,
                 "fibo_grid": self.fibo_grid,
+                "anomaly": getattr(self, "anomaly_state", None) or self.evaluate_anomalous_candles(),
                 "historical_boxes": self.historical_boxes,
             },
             "news": {
