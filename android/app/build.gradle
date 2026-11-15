@@ -10,8 +10,8 @@ android {
         applicationId "com.nurik.cryptobot"
         minSdk 24
         targetSdk 35
-        versionCode 273
-        versionName "2.73"
+        versionCode 276
+        versionName "2.76"
     }
 
     signingConfigs {

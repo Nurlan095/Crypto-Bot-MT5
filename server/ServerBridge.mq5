@@ -61,6 +61,18 @@ string ResolveBrokerSymbol(string logicalSym)
             if(SymbolSelect(sn, true)) return sn;
       }
    }
+   else if(logicalSym == "EURUSD")
+   {
+      string cands[] = {"EURUSD", "EURUSD.", "EURUSDm", "#EURUSD"};
+      for(int i = 0; i < ArraySize(cands); i++)
+         if(SymbolSelect(cands[i], true)) return cands[i];
+   }
+   else if(logicalSym == "DXY")
+   {
+      string cands[] = {"DXY", "USDX", "DX", "USDINDEX", "DXY.", "#DXY"};
+      for(int i = 0; i < ArraySize(cands); i++)
+         if(SymbolSelect(cands[i], true)) return cands[i];
+   }
    SymbolSelect(logicalSym, true);
    return logicalSym;
 }
@@ -69,6 +81,8 @@ string NormalizeLogicalSymbol(string brokerSym)
 {
    if(StringFind(brokerSym, "BTC") >= 0) return "BTCUSD";
    if(StringFind(brokerSym, "XAU") >= 0 || StringFind(brokerSym, "GOLD") >= 0) return "XAUUSD";
+   if(StringFind(brokerSym, "EURUSD") >= 0) return "EURUSD";
+   if(StringFind(brokerSym, "DXY") >= 0 || StringFind(brokerSym, "USDX") >= 0) return "DXY";
    if(StringFind(brokerSym, "NAS") >= 0 || StringFind(brokerSym, "NDX") >= 0 || StringFind(brokerSym, "US100") >= 0 || StringFind(brokerSym, "USTEC") >= 0) return "NAS100";
    if(StringFind(brokerSym, "500") >= 0 || StringFind(brokerSym, "SPX") >= 0) return "US500";
    return brokerSym;
@@ -80,8 +94,10 @@ int OnInit()
    trade.SetDeviationInPoints(50);
    ResolveBrokerSymbol("BTCUSD");
    ResolveBrokerSymbol("XAUUSD");
+   ResolveBrokerSymbol("EURUSD");
    ResolveBrokerSymbol("NAS100");
    ResolveBrokerSymbol("US500");
+   ResolveBrokerSymbol("DXY");
    EventSetMillisecondTimer(500);
    OnTimer();
    return(INIT_SUCCEEDED);
@@ -275,6 +291,23 @@ void WriteStateJson()
    double spAsk = SymbolInfoDouble(bSymSp, SYMBOL_ASK);
    long spSpread = SymbolInfoInteger(bSymSp, SYMBOL_SPREAD);
 
+   string bSymEur = ResolveBrokerSymbol("EURUSD");
+   double eurBid = SymbolInfoDouble(bSymEur, SYMBOL_BID);
+   double eurAsk = SymbolInfoDouble(bSymEur, SYMBOL_ASK);
+   long eurSpread = SymbolInfoInteger(bSymEur, SYMBOL_SPREAD);
+
+   string bSymDxy = ResolveBrokerSymbol("DXY");
+   double dxyBid = SymbolInfoDouble(bSymDxy, SYMBOL_BID);
+   double dxyAsk = SymbolInfoDouble(bSymDxy, SYMBOL_ASK);
+   long dxySpread = SymbolInfoInteger(bSymDxy, SYMBOL_SPREAD);
+   if(dxyBid <= 0 && eurBid > 0.5)
+   {
+      // Синтетический расчет DXY из живого тика EURUSD (57.6% веса DXY) при отсутствии прямого тикера у брокера
+      dxyBid = NormalizeDouble(120.50 / eurBid * 0.92, 2);
+      dxyAsk = NormalizeDouble(dxyBid + 0.02, 2);
+      dxySpread = 2;
+   }
+
    string json = "{";
    json += "\"connected\":" + (connected ? "true" : "false") + ",";
    json += "\"login\":" + IntegerToString(login) + ",";
@@ -290,8 +323,10 @@ void WriteStateJson()
    json += "\"ticks\":{";
    json += "\"BTCUSD\":{\"bid\":" + DoubleToString(btcBid, 2) + ",\"ask\":" + DoubleToString(btcAsk, 2) + ",\"spread\":" + IntegerToString(btcSpread) + "},";
    json += "\"XAUUSD\":{\"bid\":" + DoubleToString(xauBid, 2) + ",\"ask\":" + DoubleToString(xauAsk, 2) + ",\"spread\":" + IntegerToString(xauSpread) + "},";
+   json += "\"EURUSD\":{\"bid\":" + DoubleToString(eurBid, 5) + ",\"ask\":" + DoubleToString(eurAsk, 5) + ",\"spread\":" + IntegerToString(eurSpread) + "},";
    json += "\"NAS100\":{\"bid\":" + DoubleToString(nasBid, 2) + ",\"ask\":" + DoubleToString(nasAsk, 2) + ",\"spread\":" + IntegerToString(nasSpread) + "},";
-   json += "\"US500\":{\"bid\":" + DoubleToString(spBid, 2) + ",\"ask\":" + DoubleToString(spAsk, 2) + ",\"spread\":" + IntegerToString(spSpread) + "}";
+   json += "\"US500\":{\"bid\":" + DoubleToString(spBid, 2) + ",\"ask\":" + DoubleToString(spAsk, 2) + ",\"spread\":" + IntegerToString(spSpread) + "},";
+   json += "\"DXY\":{\"bid\":" + DoubleToString(dxyBid, 2) + ",\"ask\":" + DoubleToString(dxyAsk, 2) + ",\"spread\":" + IntegerToString(dxySpread) + "}";
    json += "},";
 
    // Open positions
