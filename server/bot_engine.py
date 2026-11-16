@@ -38,17 +38,17 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "InpAnomalyMaxBars": 2,          # Авто-закрытие сделки ровно через 1 или 2 свечи
     "InpAnomalyMult": 1.8,           # Во сколько раз аномальная свеча больше средней (1.5x - 3.0x)
     "InpAnomalyNoIndicators": True,  # Чистый режим без запаздывающих индикаторов для аномальных свечей
-    "InpUseOrderFlowXray": True,     # Рентген трейдера: Дельта (CVD), Футпринт, Volume Profile (POC) и Крупные сделки Китов
+    "InpUseOrderFlowXray": False,    # Убрано (Рентген отключен для максимальной скорости бота)
     # Очищенный список только прибыльных стратегий (без медленных и путающих дублей):
     "InpStratTrullasFibo": True,    # 2. Метод Давида Трульяса: Фибо 23.6% + MACD + RSI (H1 -> M15)
     "InpStratMentorFibo786": True,  # 3. Золотая Фибо Наставника: 0.75-0.786 -> 1.272/1.618 (H1 -> M15)
     "InpStratMandarinBOS": False,   # Отключено по умолчанию (чтобы не дублировать пробои)
     "InpStratImpulseM15": False,    # Отключено по умолчанию (заменено Умным Снайпером)
     "InpStratSwingBounce": False,   # Отключено (флэтовый режим убран, чтобы не мешать тренду)
-    # ИИ-Агент контроля сигналов, анализа сделки и авто-исправления ошибок 24/7:
-    "InpUseAIAgent": True,          # Включить ИИ-Агента проверки сигналов и аудита сделок
-    "InpAIAgentAutoFix": True,      # Автоматически исправлять ошибки стратегий и закрывать зависшие сделки
-    "InpAIAgentMinScore": 65,       # Минимальный балл качества сигнала (0-100%) для входа
+    # ИИ-Агенты отключены (чтобы не замедлять работу бота):
+    "InpUseAIAgent": False,         # Отключено
+    "InpAIAgentAutoFix": False,     # Отключено
+    "InpAIAgentMinScore": 0,        # Без блокировки входов агентом
     # Money Management
     "InpUseAutoLot": True,
     "InpUseDepositCalc15": True,    # Авто-калькуляция депозита 1/5 по видео + Excel (Депозитті 5-ке бөлу)
@@ -473,9 +473,13 @@ class CryptoBotEngine:
                         settings[k] = json.loads(r["value"])
                     except Exception:
                         pass
-            # Разблокируем выбор всех прибыльных активов (BTCUSD, XAUUSD, NAS100, EURUSD, US500)
+            # Разблокируем выбор всех прибыльных активов и отключаем замедляющие агенты и рентген
             settings["InpLockBTCOnly"] = False
-            conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ("InpLockBTCOnly", json.dumps(False)))
+            settings["InpUseOrderFlowXray"] = False
+            settings["InpUseAIAgent"] = False
+            settings["InpAIAgentAutoFix"] = False
+            for k_off in ("InpLockBTCOnly", "InpUseOrderFlowXray", "InpUseAIAgent", "InpAIAgentAutoFix"):
+                conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (k_off, json.dumps(False)))
             conn.commit()
         return settings
 
@@ -485,6 +489,9 @@ class CryptoBotEngine:
         old_pass = self.settings.get("mt5_password")
         old_srv = self.settings.get("mt5_server")
         updates["InpLockBTCOnly"] = False
+        updates["InpUseOrderFlowXray"] = False
+        updates["InpUseAIAgent"] = False
+        updates["InpAIAgentAutoFix"] = False
         with self._get_conn() as conn:
             for k, v in updates.items():
                 if k in DEFAULT_SETTINGS:
@@ -1476,45 +1483,35 @@ class CryptoBotEngine:
         else:
             m1_dir = c_dir
 
-        # Подтверждение Рентгеном рынка (Дельта + Футпринт + Крупные сделки + Volume Profile POC)
-        xray = self.evaluate_orderflow_xray()
-        use_xray = bool(self.settings.get("InpUseOrderFlowXray", True))
-        delta_pct = float(xray.get("delta_pct") or 0.0)
-        abs_dir = int(xray.get("absorption_dir") or 0)
-        vol_mult = float(xray.get("vol_mult") or 1.0)
-        xray_mom_buy_ok = (not use_xray) or (delta_pct >= -5.0 and vol_mult >= 0.85)
-        xray_mom_sell_ok = (not use_xray) or (delta_pct <= 5.0 and vol_mult >= 0.85)
-        xray_fade_buy_ok = (not use_xray) or (abs_dir >= 0 or delta_pct >= -25.0)
-        xray_fade_sell_ok = (not use_xray) or (abs_dir <= 0 or delta_pct <= 25.0)
-
+        # Прямой быстрый расчет без замедляющего Рентгена и ИИ-агентов:
         # 1. Вариант 1: Инерция импульса (Полнотелая аномальная свеча M5 -> вход ПО ХОДУ на 1-2 свечи M1)
-        is_full_bull = is_anom and c_dir == 1 and b_ratio >= 0.60 and up_w <= 0.26 and (m1_dir >= 0) and xray_mom_buy_ok
-        is_full_bear = is_anom and c_dir == -1 and b_ratio >= 0.60 and lo_w <= 0.26 and (m1_dir <= 0) and xray_mom_sell_ok
+        is_full_bull = is_anom and c_dir == 1 and b_ratio >= 0.60 and up_w <= 0.26 and (m1_dir >= 0)
+        is_full_bear = is_anom and c_dir == -1 and b_ratio >= 0.60 and lo_w <= 0.26 and (m1_dir <= 0)
         mom_buy = bool(is_full_bull and self.settings.get("InpStratAnomalyMomentum", True))
         mom_sell = bool(is_full_bear and self.settings.get("InpStratAnomalyMomentum", True))
 
-        # 2. Вариант 2: Возврат после прострела (Экстремальный прострел M5 или длинный хвост + поглощение по Рентгену -> вход ПРОТИВ на откат 1-2 свечи M1)
-        is_exhaustion_up = (tm["rng_mult"] >= mult_req * 1.12 and c_dir == 1) or (tm["rng_mult"] >= mult_req * 0.88 and up_w >= 0.40) or (use_xray and abs_dir == -1 and tm["rng_mult"] >= 1.35)
-        is_exhaustion_dn = (tm["rng_mult"] >= mult_req * 1.12 and c_dir == -1) or (tm["rng_mult"] >= mult_req * 0.88 and lo_w >= 0.40) or (use_xray and abs_dir == 1 and tm["rng_mult"] >= 1.35)
-        pullback_sell_ok = is_exhaustion_up and (live_px <= target_c["high"] - tm["rng"] * 0.06) and xray_fade_sell_ok
-        pullback_buy_ok = is_exhaustion_dn and (live_px >= target_c["low"] + tm["rng"] * 0.06) and xray_fade_buy_ok
+        # 2. Вариант 2: Возврат после прострела (Экстремальный прострел M5 или длинный хвост -> вход ПРОТИВ на откат 1-2 свечи M1)
+        is_exhaustion_up = (tm["rng_mult"] >= mult_req * 1.12 and c_dir == 1) or (tm["rng_mult"] >= mult_req * 0.88 and up_w >= 0.40)
+        is_exhaustion_dn = (tm["rng_mult"] >= mult_req * 1.12 and c_dir == -1) or (tm["rng_mult"] >= mult_req * 0.88 and lo_w >= 0.40)
+        pullback_sell_ok = is_exhaustion_up and (live_px <= target_c["high"] - tm["rng"] * 0.06)
+        pullback_buy_ok = is_exhaustion_dn and (live_px >= target_c["low"] + tm["rng"] * 0.06)
         fade_sell = bool(pullback_sell_ok and self.settings.get("InpStratAnomalyFade", True))
         fade_buy = bool(pullback_buy_ok and self.settings.get("InpStratAnomalyFade", True))
 
-        # 3. Вариант 3: Умный Снайпер 2-в-1 (По форме свечи M5 + Рентген Дельты/Футпринта: полнотелая -> ПО ХОДУ; шпилька/поглощение -> В ОТКАТ)
+        # 3. Вариант 3: Умный Снайпер 2-в-1 (По форме свечи M5: полнотелая -> ПО ХОДУ; шпилька -> В ОТКАТ)
         hyb_on = bool(self.settings.get("InpStratAnomalyHybrid", True))
         hyb_buy = bool(
             hyb_on
             and (
-                (is_anom and c_dir == 1 and b_ratio >= 0.64 and up_w <= 0.22 and m1_dir >= 0 and xray_mom_buy_ok)
-                or (tm["rng_mult"] >= mult_req * 0.90 and lo_w >= 0.42 and live_px >= target_c["low"] + tm["rng"] * 0.08 and xray_fade_buy_ok)
+                (is_anom and c_dir == 1 and b_ratio >= 0.64 and up_w <= 0.22 and m1_dir >= 0)
+                or (tm["rng_mult"] >= mult_req * 0.90 and lo_w >= 0.42 and live_px >= target_c["low"] + tm["rng"] * 0.08)
             )
         )
         hyb_sell = bool(
             hyb_on
             and (
-                (is_anom and c_dir == -1 and b_ratio >= 0.64 and lo_w <= 0.22 and m1_dir <= 0 and xray_mom_sell_ok)
-                or (tm["rng_mult"] >= mult_req * 0.90 and up_w >= 0.42 and live_px <= target_c["high"] - tm["rng"] * 0.08 and xray_fade_sell_ok)
+                (is_anom and c_dir == -1 and b_ratio >= 0.64 and lo_w <= 0.22 and m1_dir <= 0)
+                or (tm["rng_mult"] >= mult_req * 0.90 and up_w >= 0.42 and live_px <= target_c["high"] - tm["rng"] * 0.08)
             )
         )
 
@@ -1563,8 +1560,7 @@ class CryptoBotEngine:
             "ratio": round(tm["mult"], 2),
             "is_full_body": bool(b_ratio >= 0.62),
             "is_pinbar": bool(up_w >= 0.42 or lo_w >= 0.42),
-            "summary": f"{pat_txt} · {xray.get('summary', '')}",
-            "xray": xray,
+            "summary": pat_txt,
         }
         return self.anomaly_state
 
@@ -2691,7 +2687,6 @@ class CryptoBotEngine:
         has_open = any(p["symbol"] == symbol for p in self.get_open_positions())
         if has_open:
             self.last_bar_time = cur_bar_time
-            self.run_ai_strategy_agent(atr=atr, force_fix=False)
             return
 
         now_ts = time.time()
@@ -2707,10 +2702,6 @@ class CryptoBotEngine:
 
         trade_bar_time = (self.m1_candles[0]["time"] if (use_m5_m1 and self.m1_candles) else cur_bar_time)
         self.last_bar_time = cur_bar_time
-        ai_state = self.run_ai_strategy_agent(atr=atr, force_fix=False)
-        ai_enabled = bool(self.settings.get("InpUseAIAgent", True))
-        min_ai_score = int(self.settings.get("InpAIAgentMinScore", 65))
-        signal_score = int(ai_state.get("signal_score", 75))
 
         bar_already_traded = getattr(self, "_last_traded_bar_time", 0) == trade_bar_time
         if bar_already_traded:
@@ -2718,6 +2709,7 @@ class CryptoBotEngine:
 
         # =====================================================================
         # ПРИОРИТЕТ: УМНЫЙ СНАЙПЕР АНОМАЛЬНЫХ СВЕЧЕЙ + ПОВОДЫРЬ DXY (M5 -> M1)
+        # (Прямой вход без замедляющих ИИ-агентов и Рентгена)
         # =====================================================================
         max_b = int(self.settings.get("InpAnomalyMaxBars", 2))
         tf_tag = "M5->M1" if use_m5_m1 else "H1->M15"
@@ -2736,9 +2728,6 @@ class CryptoBotEngine:
                 self._last_traded_bar_time = trade_bar_time
                 self.open_position("SELL", comment=f"Sniper {tf_tag} {max_b}B Sell")
                 return
-
-        if ai_enabled and signal_score < min_ai_score:
-            return
 
         # Классические прибыльные стратегии (с фильтром поводыря DXY):
         if self.settings.get("InpStratTrullasFibo", True):
@@ -3129,11 +3118,10 @@ class CryptoBotEngine:
         )
 
         anom_now = getattr(self, "anomaly_state", None) or self.evaluate_anomalous_candles()
-        xray_now = getattr(self, "xray_state", None) or self.evaluate_orderflow_xray()
         dxy_now = getattr(self, "dxy_radar_state", None) or self.evaluate_dxy_lead_radar()
 
         return {
-            "version": "2.76",
+            "version": "2.77",
             "timestamp": int(time.time()),
             "last_update_ts": int(self.last_update_ts),
             "data_source": source_label,
@@ -3160,7 +3148,6 @@ class CryptoBotEngine:
                 "fibo_grid": self.fibo_grid,
                 "anomaly": anom_now,
                 "anomaly_candle": anom_now,
-                "xray": xray_now,
                 "dxy_radar": dxy_now,
                 "historical_boxes": self.historical_boxes,
             },
@@ -3179,7 +3166,6 @@ class CryptoBotEngine:
                 "deposit_calc": self.get_deposit_calc_state(sl_dist),
             },
             "checklist": self.checklist,
-            "ai_agent": getattr(self, "ai_agent_state", None) or self.run_ai_strategy_agent(atr=atr, force_fix=False),
             "positions": self.get_open_positions(),
             "history": self.get_trade_history(25),
             "notifications": self.get_notifications(limit=15),
