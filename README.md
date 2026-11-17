@@ -1,30 +1,25 @@
-# Crypto Bot 24/7 (v2.67) — Автономный торговый робот MT5 + Android-приложение (Метод Давида Трульяса · Фибоначчи)
+# Crypto Bot 24/7 (v2.78) — Автономный торговый робот MT5 + Android-приложение (Личный сервер Нурлана `64.188.62.121`)
 
 > **Актуальная документация для разработчиков и AI-ассистентов (Google Antigravity / Gemini).**
-> Все компоненты системы полностью настроены, синхронизированы с реальным терминалом **MetaTrader 5 (`AMarkets-Demo`, счет `#8112287`)** и работают **24/7 на выделенном VPS-сервере (`72.56.85.128`, `https://webrelax.pro/cryptobot/`)**.
-> В версии **v2.67** оставлен **только Биткоин (`BTCUSD`)** и **только единая стратегия «📐 Метод Давида Трульяса (Фибоначчи)»**, добавлены статусы `🟢 ОТКРЫТА` / `✅ ЗАКРЫТА`, расчет прибыли в `$` и `%`, тихий режим уведомлений и автоматическая сборка APK прямо на сервере при пуше в GitHub.
+> Все компоненты системы полностью перенесены и работают **24/7 на выделенном личном Ubuntu VPS-сервере Нурлана (`64.188.62.121`, адрес `http://64.188.62.121/cryptobot/`)**, синхронизированном с реальным терминалом **MetaTrader 5 (`AMarkets-Demo`, счет `#8112287`)**.
 
 ---
 
-## 🚀 ИНСТРУКЦИЯ ДЛЯ AI-АССИСТЕНТА НУРЛАНА (АВТО-ДЕПЛОЙ И АВТО-ОБНОВЛЕНИЕ APK ЧЕРЕЗ GITHUB)
+## 🚀 ИНСТРУКЦИЯ ДЛЯ AI-АССИСТЕНТА НУРЛАНА (SSH-ДОСТУП И АВТО-ОБНОВЛЕНИЕ НА СЕРВЕРЕ `64.188.62.121`)
 
-На сервере `72.56.85.128` запущен фоновый демон **`cryptobot-sync.service`** ([`server/github_auto_sync.py`](server/github_auto_sync.py)), который **каждые 15 секунд** проверяет ветку `main` репозитория `https://github.com/Nurlan095/Crypto-Bot-MT5`.
+1. **Прямой SSH-доступ к серверу Нурлана:**
+   - **IP-адрес:** `64.188.62.121`
+   - **Пользователь:** `root`
+   - **Пароль (для первичной установки SSH-ключа):** `mv-ahLRBR-YT9U`
+   - **Рабочие директории и сервисы на сервере:**
+     - `/opt/cryptobot/` — серверное ядро (`app.py`, `bot_engine.py`, `dashboard.html`, `github_auto_sync.py`, `Crypto_Bot_v2_50.apk`, `base_template.apk`, `release-key.jks`, `version.json`).
+     - `/opt/mt5/` — терминал MetaTrader 5 (`terminal64.exe` под Wine + Xvfb, советник-мост `ServerBridge.ex5`).
+     - Сервисы `systemd`: `cryptobot.service` (FastAPI на порту `8799`), `mt5-wine.service` (терминал MT5 24/7), `cryptobot-sync.service` (автосинхронизация с GitHub и автосборка APK).
 
-**Тебе НЕ нужен SSH-доступ к серверу и НЕ нужен локальный Android Studio / Gradle, чтобы твои изменения сразу попали на сервер 24/7 и выпустили обновление APK на телефон Нурлана!**
-
-Чтобы изменить логику бота или интерфейс приложения и выпустить новую версию APK:
-1. Сначала всегда сделай `git pull origin main`, чтобы получить актуальные файлы.
-2. Внеси нужные изменения:
-   - Логика сервера и стратегии: [`server/bot_engine.py`](server/bot_engine.py)
-   - Интерфейс Android-приложения и веб-панели: [`android/app/src/main/assets/index.html`](android/app/src/main/assets/index.html) (обязательно скопируй этот же файл в [`server/dashboard.html`](server/dashboard.html), чтобы они были идентичны).
-3. Сделай `git add -A && git commit -m "Описание изменений" && git push origin main`.
-4. **Что произойдет автоматически через 15 секунд после `git push origin main`:**
-   - Сервер `72.56.85.128` автоматически скачает твой коммит из `origin/main`.
-   - Если изменился `server/bot_engine.py` или `server/app.py` — сервер обновит их в `/opt/cryptobot/` и перезапустит `cryptobot.service`.
-   - Если изменился `android/app/src/main/assets/index.html` или `server/dashboard.html` — сервер **САМ автоматически**:
-     1. Увеличит номер версии (`version_code` + 1, например `268` -> `v2.68`) в `/opt/cryptobot/version.json` и пропишет `let localCode = <новый_код>;` внутри HTML.
-     2. Упакует новый `assets/index.html` внутрь `/opt/cryptobot/Crypto_Bot_v2_50.apk`, выровняет через `zipalign` и подпишет релизным ключом через `apksigner`!
-     3. Когда Нурлан откроет приложение на телефоне, у него **сразу автоматически появится окно «🚀 Доступно обновление! ⬇️ Обновить сейчас»**, которое скачает и установит собранный APK с твоими изменениями!
+2. **Автоматический деплой и авто-сборка APK через GitHub (`cryptobot-sync.service`):**
+   - На сервере `64.188.62.121` запущен фоновый демон **`cryptobot-sync.service`** ([`server/github_auto_sync.py`](server/github_auto_sync.py)), который **каждые 15 секунд** проверяет ветку `main` репозитория `https://github.com/Nurlan095/Crypto-Bot-MT5`.
+   - При редактировании [`server/bot_engine.py`](server/bot_engine.py) или [`android/app/src/main/assets/index.html`](android/app/src/main/assets/index.html) (обязательно копируй его в [`server/dashboard.html`](server/dashboard.html)) достаточно сделать `git commit` и `git push origin main` (либо сразу загрузить по SSH на `root@64.188.62.121:/opt/cryptobot/`).
+   - **Важно:** `const SERVER_URL = 'http://64.188.62.121/cryptobot';` в `index.html` и `dashboard.html` всегда должен указывать на сервер Нурлана `http://64.188.62.121/cryptobot`!
 
 ---
 

@@ -1652,7 +1652,7 @@
   </div>
 
   <script>
-    const SERVER_URL = 'https://webrelax.pro/cryptobot';
+    const SERVER_URL = 'http://64.188.62.121/cryptobot';
     const hasNative = typeof window.AndroidBridge !== 'undefined';
     let currentState = null;
     let settingsInitialized = false;
@@ -4244,7 +4244,7 @@
     let latestApkUrl = SERVER_URL + '/Crypto_Bot_v2_50.apk';
 
     function getCurrentLocalVersionCode() {
-      let localCode = 277;
+      let localCode = 278;
       if (hasNative && window.AndroidBridge.getAppVersionCode) {
         try { localCode = Math.max(localCode, Number(window.AndroidBridge.getAppVersionCode())); } catch(e) {}
       }

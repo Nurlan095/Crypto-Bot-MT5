@@ -1,1 +1,6 @@
-﻿{"version_code": 277, "version_name": "2.77", "apk_url": "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk"}
+{
+    "changelog":  "Переезд на личный сервер Нурлана 64.188.62.121 (v2.78)",
+    "version_code":  278,
+    "apk_url":  "http://64.188.62.121/cryptobot/Crypto_Bot_v2_50.apk",
+    "version_name":  "2.78"
+}

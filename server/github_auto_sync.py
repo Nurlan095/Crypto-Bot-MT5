@@ -187,7 +187,7 @@ def sync_once() -> None:
                 new_ver_obj = {
                     "version_code": new_code,
                     "version_name": new_name,
-                    "apk_url": "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk",
+                    "apk_url": "http://64.188.62.121/cryptobot/Crypto_Bot_v2_50.apk",
                     "changelog": commit_msg or f"Автообновление v{new_name}",
                 }
                 with open(VERSION_FILE, "w", encoding="utf-8") as vf:

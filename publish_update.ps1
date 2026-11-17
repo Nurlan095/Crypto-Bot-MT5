@@ -1,4 +1,4 @@
-param(
+﻿param(
     [int]$VersionCode = 251,
     [string]$VersionName = "2.51",
     [string]$Changelog = "Обновление приложения Crypto Bot"
@@ -25,20 +25,20 @@ Copy-Item "d:\Projects\Nurik\android\app\build\outputs\apk\release\app-release.a
 $verObj = @{
     version_code = $VersionCode
     version_name = $VersionName
-    apk_url      = "https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk"
+    apk_url      = "http://64.188.62.121/cryptobot/Crypto_Bot_v2_50.apk"
     changelog    = $Changelog
 }
 $verJson = $verObj | ConvertTo-Json -Depth 3
 [System.IO.File]::WriteAllText("d:\Projects\Nurik\server\version.json", $verJson, $utf8NoBom)
 
-# 4. Upload to Timeweb Ubuntu Server (72.56.85.128)
-scp -i "C:\Users\vspre\.ssh\webrelax" -o StrictHostKeyChecking=no `
+# 4. Upload to Nurik's Timeweb Ubuntu Server (64.188.62.121)
+scp -i "C:\Users\vspre\.ssh\nurik_vps" -o StrictHostKeyChecking=no `
     "d:\Projects\Nurik\Crypto_Bot_v2_50.apk" `
     "d:\Projects\Nurik\server\version.json" `
     "d:\Projects\Nurik\server\app.py" `
     "d:\Projects\Nurik\server\bot_engine.py" `
     "d:\Projects\Nurik\server\dashboard.html" `
-    root@72.56.85.128:/opt/cryptobot/
+    root@64.188.62.121:/opt/cryptobot/
 
-ssh -i "C:\Users\vspre\.ssh\webrelax" -o StrictHostKeyChecking=no root@72.56.85.128 "systemctl restart cryptobot.service"
-Write-Output "=== Релиз v$VersionName (#$VersionCode) успешно опубликован на https://webrelax.pro/cryptobot/Crypto_Bot_v2_50.apk ==="
+ssh -i "C:\Users\vspre\.ssh\nurik_vps" -o StrictHostKeyChecking=no root@64.188.62.121 "cp /opt/cryptobot/Crypto_Bot_v2_50.apk /opt/cryptobot/base_template.apk && systemctl restart cryptobot.service"
+Write-Output "=== Релиз v$VersionName (#$VersionCode) успешно опубликован на http://64.188.62.121/cryptobot/Crypto_Bot_v2_50.apk ==="

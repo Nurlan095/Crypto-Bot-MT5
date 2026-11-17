@@ -1,9 +1,10 @@
 # Crypto Bot 24/7 — Правила для ИИ-Агента (AGENTS.md)
 
 ## Архитектура проекта
-- **Серверное ядро 24/7 (`server/bot_engine.py`, `server/app.py`)**: работает на VPS `72.56.85.128` (`https://webrelax.pro/cryptobot/`) в связке с терминалом MetaTrader 5 (`AMarkets-Demo`, счет `#8112287`) через советник-мост `server/ServerBridge.mq5` (`ServerBridge.ex5`).
-- **Мобильное приложение и веб-терминал (`android/app/src/main/assets/index.html` и `server/dashboard.html`)**: оба файла всегда должны быть полностью идентичны.
-- **Авто-сборка APK и деплой (`server/github_auto_sync.py`)**: при каждом пуше в ветку `main` репозитория `Nurlan095/Crypto-Bot-MT5` сервер автоматически обновляет код, увеличивает версию в `version.json`, пересобирает и подписывает `Crypto_Bot_v2_50.apk`.
+- **Серверное ядро 24/7 (`server/bot_engine.py`, `server/app.py`)**: работает на личном Ubuntu VPS Нурлана `64.188.62.121` (`http://64.188.62.121/cryptobot/`) в связке с терминалом MetaTrader 5 (`AMarkets-Demo`, счет `#8112287`) через советник-мост `server/ServerBridge.mq5` (`ServerBridge.ex5`).
+- **SSH-доступ к серверу Нурлана**: хост `64.188.62.121`, пользователь `root` (пароль `mv-ahLRBR-YT9U`, рекомендуется подключаться по SSH-ключу).
+- **Мобильное приложение и веб-терминал (`android/app/src/main/assets/index.html` и `server/dashboard.html`)**: оба файла всегда должны быть полностью идентичны (`SERVER_URL = 'http://64.188.62.121/cryptobot'`).
+- **Авто-сборка APK и деплой (`server/github_auto_sync.py`)**: при каждом пуше в ветку `main` репозитория `Nurlan095/Crypto-Bot-MT5` демон `cryptobot-sync.service` на сервере `64.188.62.121` автоматически обновляет код, увеличивает версию в `version.json`, пересобирает и подписывает `Crypto_Bot_v2_50.apk`.
 
 ## 4 Профильных актива и 6 Торговых стратегий
 1. **🏆 Метод Давида Трульяса: Фибо 23.6% (`InpStratTrullasFibo`)** — Рекомендация: `(NAS100, US500, BTCUSD)`. Связка `MACD (12, 26, 9)` + `RSI (14)` + `Volume` + вход на пробое `23.6%` Фибоначчи, Сейф 50% на `38.2%`, Тейк на `61.8%`.
